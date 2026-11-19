@@ -4,17 +4,17 @@ import * as F from './fmt.ts'
 import { s } from './dom.ts'
 
 export const BLOCK_NAME: Record<S.BlockId, string> = {
-  home: 'The home farm',
-  brook: 'The intervale, across the brook',
-  ridge: 'The ridge lots, north',
-  dufour: 'The Dufour place, up the road',
+  home: '집터 농장',
+  brook: '시내 건너 골짜기',
+  ridge: '북쪽 마루 밭',
+  dufour: '길 위 두푸르 농장',
 }
 
 export const BLOCK_NOTE: Record<S.BlockId, string> = {
-  home: 'The six fields on the slope below the house.',
-  brook: 'Deep, wet bottom land that grows heavy crops but gets frost, blight and standing water.',
-  ridge: 'Early, dry ground under the spruce.',
-  dufour: 'A second farmstead with its own potato house, a long drive from home.',
+  home: '집 아래 비탈의 밭 여섯 개.',
+  brook: '깊고 젖은 골짜기 땅이라 수확이 크지만 서리, 역병, 고인 물이 듭니다.',
+  ridge: '가문비나무 아래 빠르고 마른 땅.',
+  dufour: '자기 감자 저장고가 있는 두 번째 농가, 집에서 한참 걸립니다.',
 }
 
 // The fields the farm holds this year, in order: the number keys go down this list.
@@ -49,7 +49,7 @@ export function isTract(field: number): boolean {
 // Where a crew is: a field's name, or the yard it is in.
 export function placeName(place: number): string {
   if (place >= 0) return S.FIELD_NAMES[place] ?? ''
-  return place === S.DUFOUR_YARD ? 'the Dufour yard' : 'the home yard'
+  return place === S.DUFOUR_YARD ? '두푸르 마당' : '집 마당'
 }
 
 // Next field after `from` in `list`, walking forward or back and coming round at the ends; -1 for an empty list.
@@ -85,5 +85,5 @@ export function where(c: S.Campaign, here: number, high = 14, people?: { at: num
 
 // Time on the road, as the card says it.
 export function roadTime(days: number): string {
-  return days < 0.05 ? 'a few minutes' : `about ${F.days(days)}`
+  return days < 0.05 ? '몇 분' : `약 ${F.days(days)}`
 }

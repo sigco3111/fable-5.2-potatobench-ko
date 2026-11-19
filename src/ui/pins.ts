@@ -53,9 +53,9 @@ export function pins(ctx: Ctx, layer: HTMLElement, o: { covers: () => DOMRect[];
       const state: PinState = p.hurtUntil >= 0 ? 'hurt' : sign?.cls === 'bad' || stopped.has(p.id) ? 'needs' : app.unit === p.id ? 'picked' : 'rest'
       const u = c.crew.find(x => x.id === p.id)
       const resting = !!u && S.resting(u) && !!c.season
-      const word = resting ? 'resting, worn out' : sign?.cls === 'bad' ? sign.text : doingWord(c, p, waits).toLowerCase()
-      const label = `${p.kind === 'farmer' ? 'You' : firstName(p.name)}, ${word}${state === 'needs' && p.kind !== 'farmer' ? ', needs you' : ''}`
-      return { id: p.id, name: p.kind === 'farmer' ? 'You' : p.name, ring: ringFor(c, p.id), state: app.unit === p.id && state !== 'needs' && state !== 'hurt' ? 'picked' : state, label, rank: app.unit === p.id ? 0 : state === 'needs' ? 1 : state === 'hurt' ? 2 : 3, tired: resting || p.tired >= S.HURT_TIRED }
+      const word = resting ? '쉬는 중, 지침' : sign?.cls === 'bad' ? sign.text : doingWord(c, p, waits).toLowerCase()
+      const label = `${p.kind === 'farmer' ? '당신' : firstName(p.name)}, ${word}${state === 'needs' && p.kind !== 'farmer' ? ', 도움이 필요' : ''}`
+      return { id: p.id, name: p.kind === 'farmer' ? '당신' : p.name, ring: ringFor(c, p.id), state: app.unit === p.id && state !== 'needs' && state !== 'hurt' ? 'picked' : state, label, rank: app.unit === p.id ? 0 : state === 'needs' ? 1 : state === 'hurt' ? 2 : 3, tired: resting || p.tired >= S.HURT_TIRED }
     })
     for (const [id, w] of wraps) if (!models.some(m => m.id === id)) { w.remove(); wraps.delete(id) }
     for (const m of models) {
@@ -185,7 +185,7 @@ export function pins(ctx: Ctx, layer: HTMLElement, o: { covers: () => DOMRect[];
     const ft = picked ? ctx.view.unitFoot(picked.id) : null
     foot.hidden = !picked || !ft?.visible
     if (picked && ft?.visible) {
-      const name = picked.name === 'You' ? 'You' : firstName(picked.name)
+      const name = picked.name === '당신' ? '당신' : firstName(picked.name)
       if (foot.textContent !== name) foot.textContent = name
       foot.style.transform = `translate3d(${toLocal(ft.x).toFixed(1)}px, ${(toLocal(ft.y) + 10).toFixed(1)}px, 0) translateX(-50%)`
     }

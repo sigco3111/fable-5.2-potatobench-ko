@@ -53,7 +53,7 @@ export function tag(o: {
     h(o.still ? 'span' : 'button', face,
     h('i', { class: 'eyelet' }), icon(o.icon, 'i'), h('span', { class: 'nm' }, o.name),
     o.variety ? h('span', { class: 'var' }, o.variety) : null,
-    o.listed ? h('span', { class: 'listed' }, icon(o.listed.icon, 'i'), stamp('On the list', { small: true })) : null,
+    o.listed ? h('span', { class: 'listed' }, icon(o.listed.icon, 'i'), stamp('작업 목록', { small: true })) : null,
     o.said ? h('span', { class: 'sr' }, `. ${o.said}`) : null),
     o.need ?? null)
 }
@@ -77,7 +77,7 @@ export function order(o: {
   o.suggested ? fist() : null,
   o.key ? key(o.key) : h('span', { class: 'key blank', 'aria-hidden': 'true' }), o.icon ? icon(o.icon, 'i') : null,
   h('span', { class: 'name' }, o.name),
-  o.given ? stamp('On the list', { small: true }) : o.cost ? h('span', { class: 'cost num' }, o.cost) : h('span'),
+  o.given ? stamp('작업 목록', { small: true }) : o.cost ? h('span', { class: 'cost num' }, o.cost) : h('span'),
   h('span', { class: 'catch' }, o.catch),
   o.said ? h('span', { class: 'sr' }, `. ${o.said}`) : null,
   o.suggested ? h('span', { class: 'sr' }, '. Suggested now.') : null)
@@ -97,7 +97,7 @@ export function fold(o: { icon: string; name: string; state?: string; figure?: s
 // best: the one that brings most, tabbed and filled, its amount ringed in pencil. Taking the crop is always major.
 export function coupon(o: { icon: string; label: string; amount: Child; does: Child; take: string; key: string; best?: boolean; bestLabel?: string; testid?: string; onclick?: Click }): HTMLElement {
   return h('button', { 'data-w': 'major', class: `way sys${o.best ? ' is-best' : ''}`, type: 'button', testid: o.testid, 'aria-keyshortcuts': o.key, onclick: o.onclick },
-    o.best ? h('span', { class: 'brings' }, fist(), o.bestLabel ?? 'Pays most') : null,
+    o.best ? h('span', { class: 'brings' }, fist(), o.bestLabel ?? '가장 이득') : null,
     h('span', { class: 't-label' }, icon(o.icon, 'i'), o.label),
     h('span', { class: `amount num${o.best ? ' ringed' : ''}` }, o.amount, o.best ? ring() : null),
     h('span', { class: 'does' }, o.does),
@@ -132,7 +132,7 @@ export function range(o: { lo: number; hi: number; max: number; mark?: number; p
 
 // A skill in ten boxes: the levels inked, the next filled in pencil as far as the work has gone.
 export function tens(level: number, progress = 0, o: { best?: boolean; label?: string } = {}): HTMLElement {
-  return h('span', { class: `tens${o.best ? ' best' : ''}`, style: `--lv:${level};--xp:${progress.toFixed(2)}`, role: 'img', 'aria-label': o.label ?? `${level} of 10` })
+  return h('span', { class: `tens${o.best ? ' best' : ''}`, style: `--lv:${level};--xp:${progress.toFixed(2)}`, role: 'img', 'aria-label': o.label ?? `10단계 중 ${level}` })
 }
 
 // A slip from the order book: an alert. bad: a red rule down its edge.
