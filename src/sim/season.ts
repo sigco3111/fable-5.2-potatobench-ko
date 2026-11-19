@@ -212,7 +212,7 @@ function block(c: Campaign, kind: JobKind, field: number, self: Job | null): str
   if (kind === 'fell' || kind === 'rocks' || kind === 'brush') return landBlock(c, s, kind, field, self)
   if (f.status === 'off') {
     if (c.fields[field].tenure === 'none') return 'This field isn\'t yours.'
-    return isOpen(c, field) ? 'It was cleared this season, so you can plant it next spring.' : `${FIELD_NAMES[field]} is still ${COVER_WORD[c.fields[field].cover]}. Clear it first.`
+    return isOpen(c, field) ? '이번 시즌에 개간됐으니 다음 봄에 심을 수 있습니다.' : `${FIELD_NAMES[field]}은(는) 아직 ${COVER_WORD[c.fields[field].cover]}입니다. 먼저 개간하세요.`
   }
   if (f.status === 'rest') return 'This field is resting in oats and clover.'
   if (f.status === 'dug') return 'This field is already dug.'
@@ -222,7 +222,7 @@ function block(c: Campaign, kind: JobKind, field: number, self: Job | null): str
   const alive = f.deadDay < 0
   switch (kind) {
     case 'plant':
-      if (c.fields[field].works) return `The contractor is working in ${FIELD_NAMES[field]}.`
+      if (c.fields[field].works) return `업자가 ${FIELD_NAMES[field]}에서 작업 중입니다.`
       return f.status === 'idle' ? '' : 'Already planted.'
     case 'hill':
       if (f.status === 'idle') return 'Nothing planted yet.'
@@ -546,7 +546,7 @@ function weigh(s: Season, f: FieldSeason, field: number, lot: Lot, out: GameEven
   // can be sold: before it the crop was in barrels or on the way in, and a crop sold off the ticket was never stored.
   lot.aged = s.day + 1
   const total = lotCwt(lot)
-  push(s, out, 'weighed', field, 'good', `The weigh ticket for ${FIELD_NAMES[field]} is in: ${withCommas(total)} cwt in the potato house, ready to sell or store.`, { lot: lot.id })
+  push(s, out, 'weighed', field, 'good', `${FIELD_NAMES[field]}의 계근 전표가 나왔습니다: ${withCommas(total)} cwt가 감자 저장고에 있고, 팔거나 저장할 수 있습니다.`, { lot: lot.id })
   const k = s.jobs.findIndex(j => j.kind === 'haul' && j.field === field)
   if (k >= 0) s.jobs.splice(k, 1)
 }
@@ -579,15 +579,15 @@ function exposure(c: Campaign, s: Season, d: Day, out: GameEvent[]): void {
       // a frost nobody forecast is said to be one, so it doesn't read as a warning that went astray
       if (frozen >= 0.5) {
         push(s, out, 'frozenInField', i, 'bad', s.frostHaul === s.day
-          ? `A hard frost hit the barrels in ${FIELD_NAMES[i]}, and ${withCommas(frozen)} cwt froze before it was hauled in.`
-          : `An unforecast frost hit the barrels in ${FIELD_NAMES[i]}, and ${withCommas(frozen)} cwt froze. The forecast missed it, as it sometimes does.`, { cwt: Math.round(frozen) })
+          ? `강한 서리가 ${FIELD_NAMES[i]}의 통을 덮쳐, 실어 들이기 전에 ${withCommas(frozen)} cwt가 얼었습니다.`
+          : `예보에 없던 서리가 ${FIELD_NAMES[i]}의 통을 덮쳐 ${withCommas(frozen)} cwt가 얼었습니다. 예보가 놓쳤습니다. 가끔 있는 일입니다.`, { cwt: Math.round(frozen) })
       }
     }
     if (bright) lose(f, lot, f.inField * P.GREEN_IN_FIELD, 'green')
     // Barrels standing out three days: said once, with what the sun has cost so far.
     if (s.day - lot.dugDay >= P.BARRELS_SAY && f.inField >= 0.5 && !(s.barrelsSaid ?? []).includes(i)) {
       s.barrelsSaid = [...(s.barrelsSaid ?? []), i]
-      push(s, out, 'barrelsOut', i, 'warn', `The barrels in ${FIELD_NAMES[i]} have stood out ${s.day - lot.dugDay} days, and ${withCommas(Math.round(lot.loss.green))} cwt has gone green in the sun. ${withCommas(Math.round(f.inField))} cwt is still out.`, { cwt: Math.round(f.inField) })
+      push(s, out, 'barrelsOut', i, 'warn', `${FIELD_NAMES[i]}의 통이 ${s.day - lot.dugDay}일째 밭에 있어 ${withCommas(Math.round(lot.loss.green))} cwt가 햇볕에 녹변했습니다. 아직 ${withCommas(Math.round(f.inField))} cwt가 나가 있습니다.`, { cwt: Math.round(f.inField) })
     }
     if (f.status === 'dug' && f.inField < 0.5) weigh(s, f, i, lot, out)
   }
@@ -835,7 +835,7 @@ function stillWanted(c: Campaign, s: Season, job: Job, out: GameEvent[]): boolea
   const k = s.jobs.indexOf(job)
   if (k >= 0) s.jobs.splice(k, 1)
   releaseJob(c, job.id)
-  push(s, out, 'dropped', job.field, 'warn', `${JOB_LABEL[job.kind]} in ${placeName(job.field)} was taken off the work list. ${why}`, { job: job.id, kind: job.kind, why })
+  push(s, out, 'dropped', job.field, 'warn', `${placeName(job.field)}의 ${JOB_LABEL[job.kind]}이(가) 작업 목록에서 내려졌습니다. ${why}`, { job: job.id, kind: job.kind, why })
   return false
 }
 
@@ -944,7 +944,7 @@ function stopDig(c: Campaign, s: Season, u: Unit, job: Job, out: GameEvent[]): v
   letGo(u)
   if ((s.digStop ?? []).includes(job.field)) return
   s.digStop = [...(s.digStop ?? []), job.field]
-  push(s, out, 'digWait', job.field, 'info', `${subject(u, 'stops', 'You stop')} digging ${placeName(job.field)} for today, because frost is forecast tonight and what's dug has to be hauled in first.`, { unit: u.id, job: job.id })
+  push(s, out, 'digWait', job.field, 'info', `${subject(u, `오늘은 ${placeName(job.field)} 캐기를 멈춥니다. 오늘 밤 서리가 예보됐고 캐낸 것은 먼저 실어 들여야 하기 때문입니다`)}.`, { unit: u.id, job: job.id })
 }
 
 // A day's hauling: barrels from the field to the nearest potato house, as much as the rest of the day allows. When
@@ -1005,7 +1005,7 @@ function choose(c: Campaign, s: Season, u: Unit, d: Day, out: GameEvent[], book:
     if (waitFor(c, s, job, d) || rig === null) continue
     if (pick && !(s.pressed ?? []).includes(u.id)) {
       s.pressed = [...(s.pressed ?? []), u.id]
-      push(s, out, 'pressing', job.field, 'info', `${subject(u, 'leaves', 'You leave')} ${pick ? JOB_LABEL[pick.job.kind].toLowerCase() : 'other work'} to do the ${JOB_LABEL[job.kind].toLowerCase()} in ${placeName(job.field)}, because ${pressingWhy(c, s, job)}.`, { unit: u.id, job: job.id })
+      push(s, out, 'pressing', job.field, 'info', `${subject(u, `${pick ? JOB_LABEL[pick.job.kind] : '다른 일'}을(를) 뒤로하고 ${placeName(job.field)}의 ${JOB_LABEL[job.kind]}을(를) 합니다. ${pressingWhy(c, s, job)} 때문입니다`)}.`, { unit: u.id, job: job.id })
     }
     return { job, ...rig }
   }
@@ -1349,9 +1349,9 @@ export function removePerson(c: Campaign, u: Unit): void {
 }
 
 export const JOB_LABEL: Record<JobKind, string> = {
-  plant: 'Planting', hill: 'Hilling', scout: 'Scouting', spray: 'Spraying', water: 'Watering',
-  rogue: 'Roguing', sample: 'Test dig', kill: 'Vine kill', dig: 'Digging',
-  fell: 'Felling', rocks: 'Picking rocks', brush: 'Cutting brush', build: 'Building', haul: 'Hauling',
+  plant: '파종', hill: '북주기', scout: '순찰', spray: '살포', water: '물 주기',
+  rogue: '병든 포기 뽑기', sample: '시험 캐기', kill: '줄기 죽이기', dig: '캐기',
+  fell: '벌목', rocks: '돌 고르기', brush: '관목 베기', build: '건축', haul: '운반',
 }
 
 // The text for the fields a tract sheltered, now that it is down.
@@ -1377,10 +1377,10 @@ function contractors(c: Campaign, s: Season, out: GameEvent[]): void {
     fp.works = null
     if (kind === 'stump') {
       stumped(c, i)
-      push(s, out, 'stumped', i, 'good', `The stumps are out of ${FIELD_NAMES[i]}. It's a field now, with rested but stony new ground, and you can plant it next spring.`)
+      push(s, out, 'stumped', i, 'good', `${FIELD_NAMES[i]}에서 그루터기가 나왔습니다. 이제 밭입니다. 쉬었지만 돌이 많은 새 땅이고, 다음 봄에 심을 수 있습니다.`)
     } else {
       fp.tiled = true
-      push(s, out, 'tiled', i, 'good', `Tile drains are in under ${FIELD_NAMES[i]}, so it now drains like the mid slope and holds a little less water in a drought.`)
+      push(s, out, 'tiled', i, 'good', `${FIELD_NAMES[i]} 아래에 암거 배수관이 들어갔습니다. 이제 중턱처럼 물이 빠지고, 가뭄에는 물을 조금 덜 지닙니다.`)
     }
   }
 }
@@ -1703,10 +1703,10 @@ export function stepDay(world: World, c: Campaign): GameEvent[] {
         finishLot(c, f, lot)
         f.status = 'dug'
         f.dugDay = s.day
-        push(s, out, 'dug', i, 'bad', `${FIELD_NAMES[i]} froze before the digging was finished. What was already hauled in is safe.`, { lot: lot.id })
+        push(s, out, 'dug', i, 'bad', `${FIELD_NAMES[i]}은(는) 수확이 끝나기 전에 얼었습니다. 이미 실어 들인 것은 안전합니다.`, { lot: lot.id })
       } else if (f.status === 'planted' || f.status === 'growing' || f.status === 'dead') {
         f.status = 'lost'
-        push(s, out, 'lost', i, 'bad', `${FIELD_NAMES[i]} froze in the ground, and the crop is lost.`)
+        push(s, out, 'lost', i, 'bad', `${FIELD_NAMES[i]}이(가) 땅에서 얼어 작물을 잃었습니다.`)
       } else if (f.status === 'idle') {
         f.status = 'lost'
       }
@@ -1872,7 +1872,7 @@ export function leftInField(c: Campaign, s: Season, out: GameEvent[], how: strin
     if (f.inField >= 0.5) {
       const cwt = f.inField
       lose(f, lot, cwt, 'frost')
-      push(s, out, 'frozenInField', i, 'bad', `${withCommas(cwt)} cwt in ${FIELD_NAMES[i]} ${how} and never came in.`, { cwt: Math.round(cwt) })
+      push(s, out, 'frozenInField', i, 'bad', `${FIELD_NAMES[i]}의 ${withCommas(cwt)} cwt가 ${how} 들어오지 못했습니다.`, { cwt: Math.round(cwt) })
     }
     weigh(s, f, i, lot, out)
   }
