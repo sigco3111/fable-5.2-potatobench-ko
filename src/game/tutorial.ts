@@ -123,7 +123,7 @@ function fresh(): Progress {
 
 // ---------------------------------------------------------------- reading the farm
 
-const name = (i: number) => S.FIELD_NAMES[i] ?? 'the field'
+const name = (i: number) => S.FIELD_NAMES[i] ?? '그 밭'
 const first = (n: string) => n.split(' ')[0]
 const by = (l: Look, mouse: string, touch: string, keys: string) => l.input === 'touch' ? touch : l.input === 'keys' ? keys : mouse
 const click = (l: Look) => (l.input === 'touch' ? 'Tap' : 'Click')
@@ -149,7 +149,7 @@ function potatoField(c: S.Campaign | null): number {
   return 0
 }
 const farmer = (l: Look) => l.c?.crew[0]?.id ?? 0
-const over = (l: Look) => l.c?.season?.frozen ? 'The ground has frozen, so the season is over.' : 'The crop is in, so the season is over.'
+const over = (l: Look) => l.c?.season?.frozen ? '땅이 얼어 시즌이 끝났습니다.' : '작물 입고가 끝나 시즌이 끝났습니다.'
 const hand = (l: Look) => l.c?.crew.find(u => u.kind !== 'farmer') ?? null
 // A job the routine put on the list by itself (Campaign.routine, where the simulation has it).
 const routineJob = (l: Look) => !!l.c?.season?.jobs.some(j => j.by === 'routine')
@@ -169,9 +169,9 @@ const beyond = (l: Look) => !!l.c?.fields.some((f, i) => i >= S.HOME_FIELDS && f
 const usd = (n: number) => `${n < 0 ? '-' : ''}$${Math.abs(Math.round(n)).toLocaleString('en-US')}`
 // Planting by the one rule the field's card and the routine use.
 const fit = (l: Look, field: number) => !!l.c && field >= 0 && S.plantReady(l.world, l.c, field).ok
-const JOB_WORD: Partial<Record<S.JobKind, string>> = { plant: 'Planting', spray: 'Spraying', haul: 'Hauling', dig: 'Digging', kill: 'Killing the vines', water: 'Watering', rogue: 'Pulling blighted plants', hill: 'Hilling', scout: 'Walking a field', sample: 'A test dig' }
+const JOB_WORD: Partial<Record<S.JobKind, string>> = { plant: '파종', spray: '살포', haul: '운반', dig: '캐기', kill: '줄기 죽이기', water: '물주기', rogue: '병든 포기 뽑기', hill: '북주기', scout: '밭 살펴보기', sample: '시험 캐기' }
 // The first pressing job, in a few words: "Spraying North Ridge".
-const pressed = (l: Look) => { const p = l.c ? S.pressing(l.world, l.c)[0] : undefined; return p ? `${JOB_WORD[p.kind] ?? 'Work'} ${name(p.field)}` : 'Work' }
+const pressed = (l: Look) => { const p = l.c ? S.pressing(l.world, l.c)[0] : undefined; return p ? `${name(p.field)} ${JOB_WORD[p.kind] ?? '일'}` : '일' }
 const owed = () => `$${(S.NOTE_PAYMENT + S.LIVING).toLocaleString('en-US')}`
 const tract = (l: Look) => S.TRACTS.find(i => l.c && l.c.fields[i].tenure !== 'none' && (l.c.fields[i].cover === 'woods' || l.c.fields[i].cover === 'brush')) ?? -1
 
@@ -181,7 +181,7 @@ const firstYear = (l: Look) => !!l.c && l.c.history.length === 0
 function crewKills(l: Look): string {
   if (!l.c) return ''
   for (const p of S.pressing(l.world, l.c)) {
-    const day = p.kind === 'kill' ? p.inWay.match(/vines\b[^.]*?\bon ([A-Z][a-z]+ \d+)/)?.[1] : undefined
+    const day = p.kind === 'kill' ? p.inWay.match(/(\S+요일)에 일꾼들이 이곳의 줄기를/)?.[1] : undefined
     if (day) return day
   }
   return ''
@@ -228,39 +228,39 @@ export const LESSONS: Lesson[] = [
   // The opening: what the game is, then the land. Every note says what it is, why it matters and what to do, in 35
   // words or fewer, and the clock is held while it is up.
   {
-    id: 'frame', part: 'opening', name: 'How a year works', read: true, card: true,
+    id: 'frame', part: 'opening', name: '한 해의 흐름', read: true, card: true,
     when: l => l.screen === 'plan' && firstYear(l),
     done: (l, g) => g.has('noted:frame') || (!!l.c && l.c.phase !== 'plan'),
-    ask: () => 'Your goal is to keep the farm for five years.',
-    why: l => `${alone(l) ? 'You and anyone you hire do' : 'You and your crew do'} the field work, and you make the big decisions. I'll pause the game to explain each one.`,
+    ask: () => '목표는 5년 동안 농장을 지켜내는 것입니다.',
+    why: l => `${alone(l) ? '당신과 고용한 사람들이' : '당신과 일꾼들이'} 밭일을 하고, 큰 결정은 당신이 내립니다. 결정마다 게임을 멈추고 설명하겠습니다.`,
   },
   {
-    id: 'begin', part: 'opening', name: 'Start the first season',
+    id: 'begin', part: 'opening', name: '첫 시즌 시작',
     when: l => l.screen === 'plan' && firstYear(l),
     done: l => !!l.c && (l.c.phase !== 'plan' || l.c.history.length > 0),
-    ask: l => { const a = `Your plan is ready, with ${potatoFields(l.c).length} fields of potatoes.`; return by(l, `${a} Click Start the season.`, `${a} Tap Start the season.`, `${a} Press Enter to start the season.`) },
-    why: () => 'The bank\'s spring loan covers the cost, and your crop pays it back.',
+    ask: l => { const a = `계획이 준비됐습니다. 감자 밭 ${potatoFields(l.c).length}개입니다.`; return by(l, `${a} 시즌 시작을 클릭하세요.`, `${a} 시즌 시작을 탭하세요.`, `${a} Enter를 눌러 시즌을 시작하세요.`) },
+    why: () => '은행의 봄 대출이 비용을 대고, 수확물로 갚습니다.',
     point: () => ({ testid: ['begin-season'] }),
   },
   {
     // The clock, taught by using it. A year has long stretches with nothing to decide, and the one key a new player
     // needs for them is Skip ahead: it runs the days fast and the game stops by itself at the next decision. The tip
     // points at it through the first wait of the year (the soil warming), and goes once it has been used.
-    id: 'clock', part: 'opening', moment: true, name: 'Skip ahead', hint: true,
+    id: 'clock', part: 'opening', moment: true, name: '건너뛰기', hint: true,
     when: (l, g) => inSeason(l) && firstYear(l) && !g.has('fast') && wordAt(l) < 0 && soilWait(l),
     done: (l, g) => g.has('fast') || (inSeason(l) && !soilWait(l)),
-    ask: l => `The soil is too cold to plant. ${by(l, 'Click', 'Tap', 'Tab to')} Skip ahead.`,
-    why: () => 'The game stops itself when you have a decision.',
+    ask: l => by(l, '흙이 너무 차가워 심을 수 없습니다. 건너뛰기를 클릭하세요.', '흙이 너무 차가워 심을 수 없습니다. 건너뛰기를 탭하세요.', '흙이 너무 차가워 심을 수 없습니다. 건너뛰기까지 Tab으로 이동하세요.'),
+    why: () => '결정할 일이 생기면 게임이 알아서 멈춥니다.',
     point: () => ({ testid: ['goal-faster'] }),
   },
   {
     // The first decision of the year: the game has stopped for it by itself (the word to plant), and the tip points
     // at the stamp that gives it. The tags come onto the land with their stamps.
-    id: 'word', part: 'opening', moment: true, name: 'Start planting', reveals: ['tags', 'stamps'],
+    id: 'word', part: 'opening', moment: true, name: '파종 시작', reveals: ['tags', 'stamps'],
     when: l => inSeason(l) && firstYear(l) && wordAt(l) >= 0,
     done: (l, g) => g.has('noted:word') || (!!l.c?.season && S.plantWordGiven(l.c.season)),
-    ask: l => `The soil is ready. ${by(l, 'Click', 'Tap', 'Tab to')} the orange Plant button${l.input === 'keys' ? ', then Enter' : ''}.`,
-    why: l => othersToPlant(l) ? 'One press plants every potato field.' : 'Planting starts there right away.',
+    ask: l => by(l, '흙이 준비됐습니다. 주황색 파종 버튼을 클릭하세요.', '흙이 준비됐습니다. 주황색 파종 버튼을 탭하세요.', '흙이 준비됐습니다. 주황색 파종 버튼까지 Tab으로 이동해 Enter를 누르세요.'),
+    why: l => othersToPlant(l) ? '한 번 누르면 모든 감자 밭을 심습니다.' : '그 밭에서 바로 파종이 시작됩니다.',
     point: l => { const i = wordAt(l); return i >= 0 ? { badge: i } : null },
     show: l => { const i = wordAt(l); return i >= 0 ? { field: i } : null },
     asks: () => true,
@@ -268,153 +268,153 @@ export const LESSONS: Lesson[] = [
   {
     // The game goes on by itself when the word is given. Where it stands all the same (the player stopped it, or
     // gave the word while it was stopped for something else), the first time that happens the way on is pointed at.
-    id: 'run', part: 'opening', moment: true, name: 'Run the days',
+    id: 'run', part: 'opening', moment: true, name: '날 진행',
     when: l => inSeason(l) && firstYear(l) && l.speed === 0 && !!l.c?.season && S.plantWordGiven(l.c.season) && wordAt(l) < 0 && call(l) < 0 && !l.carded && !l.paper && !S.seasonDone(l.c),
     done: (l, _g, since) => !!since && l.speed > 0,
     // (said of planting only while there is planting to come: a player who first paused in late June was told
     // "Planting is ordered")
-    ask: l => `${toPlant(l) ? 'Planting is ordered.' : 'The game is paused.'} ${by(l, 'Press Space', 'Tap the play key', 'Press Space')} to run the days.`,
-    why: l => (toPlant(l) ? 'The game is paused.' : 'It stops by itself only when there is something for you to decide.'),
+    ask: l => `${toPlant(l) ? '파종이 지시됐습니다.' : '게임이 일시 정지됐습니다.'} ${by(l, 'Space를 누르면', '재생 키를 누르면', 'Space를 누르면')} 날이 진행됩니다.`,
+    why: l => (toPlant(l) ? '게임이 일시 정지됐습니다.' : '결정할 일이 있을 때만 알아서 멈춥니다.'),
     point: () => ({ testid: ['paused-go', 'speed-0', 'speed-toggle'] }),
   },
   {
-    id: 'plantday', part: 'opening', moment: true, name: 'Planting day', read: true, reveals: ['people', 'stamps', 'forecast'],
+    id: 'plantday', part: 'opening', moment: true, name: '파종일', read: true, reveals: ['people', 'stamps', 'forecast'],
     // The word given (or three days gone by with none), in this season or an older save's.
     when: l => inSeason(l) && firstYear(l) && !!l.c?.season && S.plantWordGiven(l.c.season),
     done: (_l, g) => g.has('noted:plantday'),
-    ask: l => l.c?.season?.plantWordBy === 'crew' ? 'Your crew started planting on its own.' : 'Planting has started.',
-    why: () => 'You work too. Your face at the bottom shows what you\'re doing.',
+    ask: l => l.c?.season?.plantWordBy === 'crew' ? '일꾼들이 알아서 파종을 시작했습니다.' : '파종이 시작됐습니다.',
+    why: () => '당신도 일합니다. 아래쪽의 당신 얼굴이 하고 있는 일을 보여줍니다.',
     point: l => ({ unit: farmer(l) }),
   },
   {
     // A day at the first speed is minutes long, there to be watched: once planting has begun the tip says the days can
     // be run faster, and points at the next speed. It goes when a faster speed has been used.
-    id: 'fast', part: 'year', name: 'Run the days faster', hint: true,
+    id: 'fast', part: 'year', name: '날 빨리 진행', hint: true,
     when: (l, g) => inSeason(l) && firstYear(l) && g.passed('plantday') && l.speed === 1 && call(l) < 0 && wordAt(l) < 0 && !g.has('faster'),
     done: (l, g, since) => g.has('faster') || (!!since && l.speed >= 2),
-    ask: l => `Watch the work, or run the days faster: ${by(l, `click ${SPEED_X[2]} or ${SPEED_X[3]}`, `tap ${SPEED_X[2]} or ${SPEED_X[3]}`, 'press +')}.`,
-    why: () => 'The game stops when you have a decision.',
+    ask: l => `일을 지켜보거나 날을 빨리 진행하세요. ${by(l, `${SPEED_X[2]} 또는 ${SPEED_X[3]}을(를) 클릭하세요`, `${SPEED_X[2]} 또는 ${SPEED_X[3]}을(를) 탭하세요`, '+를 누르세요')}.`,
+    why: () => '결정할 일이 생기면 게임이 멈춥니다.',
     point: () => ({ testid: ['speed-2', 'speed-cycle'] }),
   },
   {
-    id: 'list', part: 'year', name: 'The work list', read: true, reveals: ['list'],
+    id: 'list', part: 'year', name: '작업 목록', read: true, reveals: ['list'],
     // (once it has come it stays until it has been read: tied only to a spray being on the list, it went with each
     // spray as the days ran fast and came back with the next, eight times in a season)
     when: (l, g) => inSeason(l) && auto(l, 'spray') && (jobOn(l, 'spray') || g.has('show:list')),
     done: (_l, g) => g.has('noted:list'),
-    ask: () => 'Your crew sprays on its own now.',
-    why: () => 'The work list at the bottom shows their jobs in order.',
+    ask: () => '이제 일꾼들이 알아서 살포합니다.',
+    why: () => '아래쪽 작업 목록이 일을 순서대로 보여줍니다.',
     point: () => ({ testid: ['queue-*'] }),
   },
   {
-    id: 'stamp', part: 'year', name: 'A decision on a field', read: true, reveals: ['stamps', 'list'],
+    id: 'stamp', part: 'year', name: '밭의 결정', read: true, reveals: ['stamps', 'list'],
     when: l => inSeason(l) && call(l) >= 0,
     done: (l, g, since) => g.has('noted:stamp') || (!!since && call(l) < 0),
-    ask: () => 'A ringed stamp is a decision for you.',
-    why: l => by(l, 'Click it to give the order. It goes on the work list.', 'Tap it to give the order. It goes on the work list.', 'Tab to the field, then Enter to give the order.'),
+    ask: () => '테두리 있는 도장은 당신이 내릴 결정입니다.',
+    why: l => by(l, '도장을 클릭해 지시하세요. 작업 목록에 오릅니다.', '도장을 탭해 지시하세요. 작업 목록에 오릅니다.', 'Tab으로 밭까지 이동해 Enter로 지시하세요.'),
     point: l => { const i = call(l); return i >= 0 ? { badge: i } : null },
     show: l => { const i = call(l); return i >= 0 ? { field: i } : null },
     asks: () => true,
   },
   {
-    id: 'kill', part: 'year', name: 'Kill the vines', read: true, reveals: ['stamps', 'list', 'forecast'],
+    id: 'kill', part: 'year', name: '줄기 죽이기', read: true, reveals: ['stamps', 'list', 'forecast'],
     when: l => inSeason(l) && (needFor(l, 'kill') >= 0 || !!crewKills(l) || jobOn(l, 'kill')),
     done: (_l, g) => g.has('noted:kill'),
-    ask: () => 'Killing the vines toughens the skins for harvest.',
+    ask: () => '줄기를 죽이면 수확할 수 있게 껍질이 굳어집니다.',
     why: l => {
       const day = crewKills(l)
-      if (day) return `Your crew does it ${day}, or ${click(l).toLowerCase()} a Kill stamp.`
+      if (day) return `일꾼들이 ${day}에 합니다. 아니면 줄기 죽이기 도장을 ${l.input === 'touch' ? '탭하세요' : '클릭하세요'}.`
       const i = killAt(l)
-      return i >= 0 ? `${click(l)} the ringed stamp on ${name(i)} to order it.` : 'It\'s on the work list already.'
+      return i >= 0 ? by(l, `${name(i)}의 테두리 있는 도장을 클릭해 지시하세요.`, `${name(i)}의 테두리 있는 도장을 탭해 지시하세요.`, `${name(i)}까지 Tab으로 이동해 지시하세요.`) : '이미 작업 목록에 있습니다.'
     },
     point: l => { const i = killAt(l); return i >= 0 && !crewKills(l) ? { badge: i } : null },
     show: l => { const i = killAt(l); return i >= 0 && !crewKills(l) ? { field: i } : null },
     asks: l => killAt(l) >= 0 && !crewKills(l),
   },
   {
-    id: 'frost', part: 'year', name: 'Frost on the barrels', read: true, urgent: true,
+    id: 'frost', part: 'year', name: '배럴 위의 서리', read: true, urgent: true,
     // The warning itself, not a pause for it: the game no longer stops for a frost by itself.
     when: l => inSeason(l) && frostWarned(l) && !!frostNow(l),
     done: (_l, g) => g.has('noted:frost'),
-    ask: () => 'Frost tonight ruins a fifth of the barrels outside.',
+    ask: () => '오늘 밤 서리가 밖의 배럴 5분의 1을 망칩니다.',
     // Never a promise the night may break (a tractor hauls about 900 cwt a day, the forecast misses, and what is dug
     // after the haul stays out): what the player can do now, by the same order and the same words as the frost
     // toast's key (the haulNow command), whose answer says how much comes in by dark and how much stays out.
     why: l => {
       const f = frostNow(l)
-      return f ? `Haul it in now sends a hauler to ${name(f.field)} today.` : 'Your crew hauls barrels in ahead of everything else.'
+      return f ? `지금 들이기를 누르면 오늘 ${name(f.field)}에 운반 일꾼을 보냅니다.` : '일꾼들이 다른 일보다 배럴 들이기를 먼저 합니다.'
     },
     show: l => { const f = frostNow(l); return f ? { field: f.field } : null },
     act: l => {
       const f = frostNow(l)
-      return f ? { label: 'Haul it in now', cmds: [{ t: 'haulNow', field: f.field }] } : null
+      return f ? { label: '지금 들이기', cmds: [{ t: 'haulNow', field: f.field }] } : null
     },
   },
   {
-    id: 'dig', part: 'year', name: 'The harvest', read: true, reveals: ['people', 'forecast', 'list', 'stamps'],
+    id: 'dig', part: 'year', name: '수확', read: true, reveals: ['people', 'forecast', 'list', 'stamps'],
     when: l => inSeason(l) && anyField(l, f => f.status === 'digging' || f.status === 'dug' || f.inField >= 0.5),
     done: (_l, g) => g.has('noted:dig'),
-    ask: () => 'The harvest has started.',
-    why: () => 'Your crew digs and hauls. Each field is weighed once its barrels are in.',
+    ask: () => '수확이 시작됐습니다.',
+    why: () => '일꾼들이 캐고 운반합니다. 배럴이 모두 들어오면 밭별로 계근합니다.',
   },
   {
-    id: 'bills', part: 'year', name: 'The year-end bills', read: true, reveals: ['after'],
+    id: 'bills', part: 'year', name: '연말 청구서', read: true, reveals: ['after'],
     when: l => inSeason(l) && anyField(l, f => f.weighed) && !l.papers.includes('weighin'),
     done: (l, g, since) => g.has('noted:bills') || (!!since && !!l.c && l.c.phase !== 'season'),
     // By the words on the money board: its second figure is labelled "Year-end cash".
-    ask: () => '"Year-end cash" is what you\'ll keep after bills.',
-    why: () => 'It counts the crop still in the ground, so it will change.',
+    ask: () => '"연말 현금"은 청구서를 내고 남는 돈입니다.',
+    why: () => '아직 땅에 있는 작물까지 계산하므로 바뀔 수 있습니다.',
     point: () => ({ testid: ['outlook'] }),
   },
   {
-    id: 'close', part: 'year', name: 'Close out the season', urgent: true,
+    id: 'close', part: 'year', name: '시즌 마무리', urgent: true,
     when: l => inSeason(l) && !!l.c && S.seasonDone(l.c),
     done: (l, _g, since) => !!since && !!l.c && l.c.phase !== 'season',
-    ask: l => by(l, `${over(l)} Click Close out the season.`, `${over(l)} Tap Close out the season.`, `${over(l)} Close out the season.`),
-    why: () => 'Winter comes next, and that\'s when you can sell what you stored.',
+    ask: l => by(l, `${over(l)} 시즌 마무리를 클릭하세요.`, `${over(l)} 시즌 마무리를 탭하세요.`, `${over(l)} 시즌을 마무리하세요.`),
+    why: () => '다음은 겨울이며, 저장한 것을 팔 수 있는 때입니다.',
     point: () => ({ testid: ['end-season'] }),
   },
   {
-    id: 'cellar', part: 'year', name: 'Winter in the cellar',
+    id: 'cellar', part: 'year', name: '저장고의 겨울',
     when: l => l.screen === 'cellar' && !!l.c,
     done: (l, _g, since) => !!since && !!l.c && (l.c.phase !== 'cellar' || l.c.month > since.m),
     ask: l => !l.c || S.openLots(l.c).length > 0
-      ? 'It\'s winter. Sell your stored potatoes when you like the price, then move on to the next month.'
-      : `It's winter. Your cellar is empty, so you can end the year. ${by(l, 'Click', 'Tap', 'Press')} Close the year.`,
+      ? '겨울입니다. 가격이 마음에 들 때 저장한 감자를 팔고 다음 달로 넘어가세요.'
+      : `겨울입니다. 저장고가 비어 해를 마칠 수 있습니다. ${by(l, '해 마치기를 클릭하세요.', '해 마치기를 탭하세요.', '해 마치기를 누르세요.')}`,
     why: l => !l.c || S.openLots(l.c).length > 0
-      ? 'Each month the price changes, storage costs a little, and your stored potatoes shrink.'
-      : 'If you\'d stored potatoes, each winter month would be a chance to sell at a better price.',
+      ? '매달 가격이 바뀌고 보관비가 조금 들며 저장한 감자가 줄어듭니다.'
+      : '감자를 저장했다면 겨울 매달이 더 좋은 가격에 팔 기회였을 것입니다.',
     point: () => ({ testid: ['month-next'] }),
   },
   {
-    id: 'fell', part: 'year', name: 'Fell woods in winter',
+    id: 'fell', part: 'year', name: '겨울에 숲 벌목',
     when: (l, g) => l.screen === 'cellar' && g.passed('cellar') && tract(l) >= 0,
     done: (l, g) => g.has('noted:fell') || !!l.c?.crew.some(u => u.winter === 'woods') || (!!l.c && S.TRACTS.some(i => l.c!.fields[i].felled > 0 || l.c!.fields[i].cover !== S.PARCELS[i].cover)),
-    ask: () => 'Winter is a good time to fell (cut down) woods. Set yourself to Woods and the logs go to your yard.',
-    why: () => 'Once the stumps and stones are out, the cleared land becomes a new field.',
+    ask: () => '겨울은 숲을 벌목(나무를 베는 일)하기 좋은 때입니다. 당신을 숲일로 설정하면 통나무가 마당에 쌓입니다.',
+    why: () => '그루터기와 돌을 치우면 개간된 땅이 새 밭이 됩니다.',
     point: l => ({ testid: [`winter-${farmer(l)}-woods`] }),
   },
   {
-    id: 'yard', part: 'year', name: 'Put up a building', uses: ['fold:raise'],
+    id: 'yard', part: 'year', name: '건물 짓기', uses: ['fold:raise'],
     when: (l, g) => l.screen === 'cellar' && g.passed('cellar') && !!l.c && S.goalCosts(l.c).some(x => x.id.startsWith('build:') && x.can),
     done: (l, g) => g.has('fold:raise') || (!!l.c && l.c.buildings.length > 0),
     // By the words on the control: the sheet's heading, and the key under it (src/ui/winter.ts).
-    ask: l => `Under Put up a building, ${l.input === 'touch' ? 'tap' : 'click'} "${toRaise(l.c)} to choose from" to raise one this winter.`,
-    why: () => 'Whoever you set to Build works on it, using your own logs and stone.',
+    ask: l => `건물 짓기 아래에서 "${toRaise(l.c)}개 중 선택"을 ${l.input === 'touch' ? '탭해' : '클릭해'} 이번 겨울에 하나를 지으세요.`,
+    why: () => '건축으로 설정한 사람이 당신의 통나무와 돌을 써서 짓습니다.',
     point: () => ({ testid: ['raise-open'] }),
   },
   {
-    id: 'book', part: 'year', name: 'The ledger',
+    id: 'book', part: 'year', name: '장부',
     when: l => l.screen === 'ledger' && !!l.c,
     done: (l, _g, since) => !!since && !!l.c && l.c.phase !== 'ledger',
-    ask: () => 'This is the ledger, which shows the year\'s money in and out. Your yearly bank payment comes out here.',
-    why: () => 'See where your money went, then plan your second year.',
+    ask: () => '장부입니다. 한 해의 수입과 지출을 보여주고, 연간 은행 상환금도 여기서 나갑니다.',
+    why: () => '돈이 어디에 쓰였는지 보고 둘째 해를 계획하세요.',
     point: () => ({ testid: ['year-next'] }),
   },
 
   // The second spring's catalogue, then the season's own work first; people and blocks as the farm grows into them.
   {
-    id: 'seed', part: 'spring', name: 'Pick a field to plan', uses: ['select:plan'],
+    id: 'seed', part: 'spring', name: '계획할 밭 고르기', uses: ['select:plan'],
     when: l => l.screen === 'plan' && !!l.c && l.c.history.length > 0,
     done: (_l, g) => g.has('select:plan'),
     ask: l => {
@@ -427,7 +427,7 @@ export const LESSONS: Lesson[] = [
   {
     // The field's record is open: this step is the player's until they close it or say Got it. Nothing after it
     // comes on a timer or on another click.
-    id: 'crop', part: 'spring', name: 'Choose what a field grows', read: true, follows: true,
+    id: 'crop', part: 'spring', name: '밭의 작물 고르기', read: true, follows: true,
     // (a field that can be planted: a tract's record offers clearing, not a crop)
     when: (l, g) => l.screen === 'plan' && !!l.c && l.c.history.length > 0 && g.passed('seed') && l.selection.length > 0 && S.held(l.c, l.selection[0]) && l.c.fields[l.selection[0]].cover === 'open',
     done: (l, g, since) => g.has('noted:crop') || (!!since && l.selection.length === 0),
@@ -435,7 +435,7 @@ export const LESSONS: Lesson[] = [
     why: l => `Take your time. ${by(l, 'Click', 'Tap', 'Press')} Got it or close the record when you're done, and I'll go on.`,
   },
   {
-    id: 'people', part: 'spring', name: 'Hire a hand', uses: ['fold:crew'],
+    id: 'people', part: 'spring', name: '일꾼 고용', uses: ['fold:crew'],
     when: l => l.screen === 'plan' && !!l.c && l.c.history.length > 0,
     done: (l, g) => g.has('fold:crew') || (!!l.c && l.c.crew.length > 1),
     ask: l => `${l.input === 'touch' ? 'Tap' : 'Open'} People to see who's looking for work and what each person is best at.`,
@@ -445,7 +445,7 @@ export const LESSONS: Lesson[] = [
     point: () => ({ testid: ['crew-open'] }),
   },
   {
-    id: 'hire', part: 'spring', name: 'Choose who to hire', read: true, follows: true,
+    id: 'hire', part: 'spring', name: '고용할 사람 고르기', read: true, follows: true,
     when: (l, g) => l.screen === 'plan' && l.fold === 'crew' && g.passed('people') && !!l.c && l.c.crew.length === 1,
     done: (l, g, since) => g.has('noted:hire') || (!!l.c && l.c.crew.length > 1) || (!!since && l.fold !== 'crew'),
     ask: l => `Each person asks for a monthly wage. ${by(l, 'Click Hire next to the one you want.', 'Tap Hire next to the one you want.', 'Press Tab to reach Hire next to the one you want.')}`,
@@ -453,7 +453,7 @@ export const LESSONS: Lesson[] = [
     point: () => ({ testid: ['applicant-hire-*', 'hire-*'] }),
   },
   {
-    id: 'land', part: 'spring', name: 'Rent or buy land', uses: ['fold:land'],
+    id: 'land', part: 'spring', name: '땅 임대·구매', uses: ['fold:land'],
     when: l => l.screen === 'plan' && !!l.c && l.c.history.length > 0,
     done: (l, g) => g.has('fold:land') || (!!l.c && l.c.fields.some((f, i) => i < S.TRACTS[0] && i >= 6 && f.tenure !== 'none')),
     ask: l => `${l.input === 'touch' ? 'Tap' : 'Open'} Land to rent a field by the year or buy one with a mortgage.`,
@@ -463,14 +463,14 @@ export const LESSONS: Lesson[] = [
   {
     // The Land fold is open: the agent says what it shows and that it is a choice, and waits for Got it or the fold
     // to close. The tutorial never goes quiet while a fold it asked for is open.
-    id: 'lots', part: 'spring', name: 'Look over the land', read: true, follows: true,
+    id: 'lots', part: 'spring', name: '땅 살펴보기', read: true, follows: true,
     when: (l, g) => l.screen === 'plan' && l.fold === 'land' && g.passed('land') && !!l.c && l.c.history.length > 0,
     done: (l, g, since) => g.has('noted:lots') || (!!since && l.fold !== 'land'),
     ask: () => 'Each lot lists its rent for the year, then its price to buy.',
     why: l => `More land is a choice, and the land you have is enough for now. ${by(l, 'Click', 'Tap', 'Press')} Got it when you've looked, and I'll go on.`,
   },
   {
-    id: 'loan', part: 'spring', name: 'Money and the spring loan', uses: ['paper:money'],
+    id: 'loan', part: 'spring', name: '돈과 봄 대출', uses: ['paper:money'],
     when: l => l.screen === 'plan' && !!l.c && l.c.history.length > 0,
     done: (_l, g) => g.has('paper:money') || g.has('noted:loan'),
     ask: l => `${l.input === 'touch' ? 'Tap' : 'Click'} See the money to check what this plan costs and how much the spring loan covers.`,
@@ -478,7 +478,7 @@ export const LESSONS: Lesson[] = [
     point: () => ({ testid: ['money-open'] }),
   },
   {
-    id: 'begin2', part: 'spring', name: 'Start the second season',
+    id: 'begin2', part: 'spring', name: '둘째 시즌 시작',
     when: l => l.screen === 'plan' && !!l.c && l.c.history.length > 0,
     done: (l, _g, since) => !!since && !!l.c && l.c.phase !== 'plan',
     // The walk's closing line.
@@ -487,14 +487,14 @@ export const LESSONS: Lesson[] = [
     point: () => ({ testid: ['begin-season'] }),
   },
   {
-    id: 'calls2', part: 'spring', name: 'Your decisions this season', read: true,
+    id: 'calls2', part: 'spring', name: '이번 시즌의 결정', read: true,
     when: l => inSeason(l) && !!l.c && l.c.history.length > 0,
     done: (_l, g) => g.has('noted:calls2'),
     ask: () => 'It\'s a new season. The game pauses when the soil is ready, and planting waits for you.',
     why: () => 'Your other big decisions are spray, water and kill the vines, and a stamp appears when one is due.',
   },
   {
-    id: 'hand', part: 'spring', name: 'Meet your hired hand', read: true, uses: ['unit:hand'],
+    id: 'hand', part: 'spring', name: '고용한 일꾼 만나기', read: true, uses: ['unit:hand'],
     when: (l, g) => inSeason(l) && !!hand(l) && g.passed('calls2'),
     done: (_l, g) => g.has('unit:hand') || g.has('noted:hand'),
     ask: l => {
@@ -506,7 +506,7 @@ export const LESSONS: Lesson[] = [
     asks: () => true,
   },
   {
-    id: 'grid', part: 'spring', name: 'Who does what', read: true, uses: ['open:work-grid'],
+    id: 'grid', part: 'spring', name: '각자의 일', read: true, uses: ['open:work-grid'],
     when: l => inSeason(l) && !!l.c && l.c.crew.length >= 3,
     done: (l, g) => g.has('open:work-grid') || g.has('noted:grid') || !!l.c?.crew.some(u => u.foreman !== ''),
     ask: l => by(l, 'Click the grid at the bottom to see who does what and which jobs each person does first.', 'Tap the grid at the bottom to see who does what and which jobs each person does first.', 'Press G to open the grid and see who does what and which jobs each person does first.'),
@@ -514,7 +514,7 @@ export const LESSONS: Lesson[] = [
     point: () => ({ testid: ['grid-open'] }),
   },
   {
-    id: 'foreman', part: 'spring', name: 'Name a foreman', read: true,
+    id: 'foreman', part: 'spring', name: '작업반장 지정', read: true,
     // Only where a foreman pays: two hired hands at least (one can be spared from field work) and fields away from
     // home for them to run. With one hand it would take the only help out of the field for 40% more pay.
     when: (l, g) => inSeason(l) && hands(l).length >= 2 && beyond(l) && g.passed('hand') && !!l.c && S.goalCosts(l.c).some(x => x.id === 'foreman' && x.can),
