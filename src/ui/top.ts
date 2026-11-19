@@ -14,10 +14,10 @@ import { BLIGHT_RISK, firstName, forecastSky, JOB_DOING, JOB_VERB, jobText, plan
 import { fist } from './system/parts.ts'
 
 export const PHASE_LABEL: Record<S.Phase, string> = {
-  plan: 'Spring plan', season: 'Growing season', cellar: 'In the cellar', ledger: 'Year end', over: 'The end',
+  plan: '봄 계획', season: '농사 시즌', cellar: '저장고에서', ledger: '연말 결산', over: '끝',
 }
 
-const SPEED_NAME = ['Paused', `${SPEED_X[1]} speed`, `${SPEED_X[2]} speed`, `${SPEED_X[3]} speed`]
+const SPEED_NAME = ['일시 정지', `${SPEED_X[1]}`, `${SPEED_X[2]}`, `${SPEED_X[3]}`]
 
 // The date leaf: in the season the day, its month and weekday; outside it, one word for where the year is.
 function leaf(c: S.Campaign): HTMLElement {
@@ -33,7 +33,7 @@ function leaf(c: S.Campaign): HTMLElement {
         h('span', { class: 'weekday', 'data-day': F.weekday(c.year, d) }, F.weekday(c.year, d), h('span', { class: 'hour num', testid: 'hour' }))),
       year)
   }
-  const word = c.phase === 'cellar' ? S.CELLAR_MONTHS[c.month] : c.phase === 'plan' ? 'Spring' : c.phase === 'ledger' ? 'Year end' : 'The end'
+  const word = c.phase === 'cellar' ? S.CELLAR_MONTHS[c.month] : c.phase === 'plan' ? '봄' : c.phase === 'ledger' ? '연말' : '끝'
   return h('div', { class: 'leaf word' }, h('span', { class: 'date', testid: 'date' }, word), year)
 }
 
@@ -54,22 +54,22 @@ function seasonTrack(c: S.Campaign): HTMLElement | null {
     ends(F.monthName(S.SEASON_START.month, true), PHASES[at]?.short ?? ''),
     h('span', {
       class: 'bar', role: 'img',
-      'aria-label': `The season runs from ${F.date(y, a)} to ${F.date(y, b)}, and it's ${Math.round(((now - a) / (b - a)) * 100)}% done.${ss.watchDay >= 0 ? ` The blight watch started on ${F.date(y, ss.watchDay)}.` : ''}`,
+      'aria-label': `시즌은 ${F.date(y, a)}부터 ${F.date(y, b)}까지이고 ${Math.round(((now - a) / (b - a)) * 100)}% 지났습니다.${ss.watchDay >= 0 ? ` 역병 감시는 ${F.date(y, ss.watchDay)}에 시작했습니다.` : ''}`,
     },
     h('i', { style: `width:${x(now)}` }),
     frosts.map(d => h('u', { class: 'frost', style: `left:${x(d)}` })),
     ss.watchDay >= 0 ? h('u', { class: 'watch', style: `left:${x(ss.watchDay)}` }) : null,
     h('b', { style: `left:${x(now)}` })),
-    ends(F.monthName(S.SEASON_LAST.month, true), PHASES[at + 1] ? `then ${PHASES[at + 1].short}` : ''))
+    ends(F.monthName(S.SEASON_LAST.month, true), PHASES[at + 1] ? `다음 ${PHASES[at + 1].short}` : ''))
 }
 
 // What the year asks, in order: where the farm is in it, and what comes next. For every player.
 const PHASES: { id: string; glyph: string; name: string; short: string; from: [number, number]; says: string }[] = [
-  { id: 'plant', glyph: 'plant', name: 'Plant', short: 'Plant', from: [S.SEASON_START.month, S.SEASON_START.dom], says: 'Plant. In May, once the soil is warm enough, your crew plants each field when you give the word.' },
-  { id: 'tend', glyph: 'hill', name: 'Tend', short: 'Tend', from: [6, 1], says: 'Tend. Your crew hills and scouts the fields. Spraying is your decision when blight weather arrives.' },
-  { id: 'kill', glyph: 'kill', name: 'Kill the vines', short: 'Kill', from: [9, 1], says: 'Kill the vines. This happens in September, so the skins toughen up for harvest.' },
-  { id: 'dig', glyph: 'dig', name: 'Harvest', short: 'Dig', from: [9, 20], says: 'Harvest. Your crew digs and hauls each field, and the crop is weighed at the potato house.' },
-  { id: 'sell', glyph: 'ticket', name: 'Sell or store', short: 'Sell', from: [10, 20], says: 'Sell or store. You can sell each weighed crop right away, or store it to sell over the winter.' },
+  { id: 'plant', glyph: 'plant', name: '심기', short: '심기', from: [S.SEASON_START.month, S.SEASON_START.dom], says: '심기. 5월에 흙이 충분히 따뜻해지면, 당신이 말할 때 일꾼들이 밭마다 심습니다.' },
+  { id: 'tend', glyph: 'hill', name: '돌보기', short: '돌보기', from: [6, 1], says: '돌보기. 일꾼들이 북주기를 하고 밭을 살핍니다. 역병 날씨가 오면 살포는 당신의 결정입니다.' },
+  { id: 'kill', glyph: 'kill', name: '줄기 죽이기', short: '죽이기', from: [9, 1], says: '줄기 죽이기. 9월에 하며, 수확 전에 껍질이 굳도록 합니다.' },
+  { id: 'dig', glyph: 'dig', name: '수확', short: '캐기', from: [9, 20], says: '수확. 일꾼들이 밭마다 캐고 날라오며, 작물은 감자 저장고에서 달아봅니다.' },
+  { id: 'sell', glyph: 'ticket', name: '판매 또는 저장', short: '판매', from: [10, 20], says: '판매 또는 저장. 달아본 작물은 바로 팔거나 저장해 겨울에 팔 수 있습니다.' },
 ]
 
 // The phase the farm is in, by what the fields show, not by the date alone.
@@ -92,7 +92,7 @@ function phaseRow(c: S.Campaign): HTMLElement | null {
   const at = PHASES.findIndex(p => p.id === now)
   const end = S.dayIndex(y, S.SEASON_LAST.month, S.SEASON_LAST.dom)
   const start = (k: number) => (k < PHASES.length ? S.dayIndex(y, PHASES[k].from[0], PHASES[k].from[1]) : end)
-  return h('ol', { class: 'phases', testid: 'phases', 'aria-label': `The stages of the year. Now: ${PHASES[at]?.name ?? ''}.${PHASES[at + 1] ? ` Next: ${PHASES[at + 1].name}.` : ''}` },
+  return h('ol', { class: 'phases', testid: 'phases', 'aria-label': `한 해의 단계. 현재: ${PHASES[at]?.name ?? ''}.${PHASES[at + 1] ? ` 다음: ${PHASES[at + 1].name}.` : ''}` },
     PHASES.map((p, k) => h('li', {
       class: `term${k === at ? ' now' : k < at ? ' past' : ''}`, style: `flex:${start(k + 1) - start(k)} 0 auto`, tabindex: '0', 'data-tip': p.says, 'aria-current': k === at ? 'step' : null,
     }, icon(p.glyph, 'i'), k === at ? p.short : h('span', { class: 'sr' }, p.name))))
@@ -105,13 +105,13 @@ function cells(ctx: Ctx, c: S.Campaign): Cell[] {
   if (!t) return []
   const d = t.day
   const out: Cell[] = [{
-    day: 'Today', sky: t.sky, hi: d.tmax, rain: -1, blight: Math.min(3, t.severity), frost: d.tmin <= 0 ? 100 : 0,
-    said: `Today: ${SKY_WORD[t.sky].toLowerCase()}, high ${F.temp(d.tmax)}, low ${F.temp(d.tmin)}${d.prcp >= 0.5 ? `, rain ${F.rain(d.prcp)}` : ''}${t.severity > 0 ? ', blight weather' : ''}.`,
+    day: '오늘', sky: t.sky, hi: d.tmax, rain: -1, blight: Math.min(3, t.severity), frost: d.tmin <= 0 ? 100 : 0,
+    said: `오늘: ${SKY_WORD[t.sky]}, 최고 ${F.temp(d.tmax)}, 최저 ${F.temp(d.tmin)}${d.prcp >= 0.5 ? `, 비 ${F.rain(d.prcp)}` : ''}${t.severity > 0 ? ', 역병 날씨' : ''}.`,
   }]
   for (const f of S.forecast(ctx.app.world, c, 5)) {
     out.push({
       day: F.weekday(c.year, f.day, true), sky: forecastSky(f), hi: f.hi, rain: f.rainChance, blight: f.blight, frost: f.frostChance,
-      said: `${F.weekday(c.year, f.day)}: high about ${F.temp(f.hi)}, low about ${F.temp(f.lo)}, ${f.rainChance}% chance of rain${f.blight > 0 ? `, blight risk ${BLIGHT_RISK[f.blight]}` : ''}${f.frostChance >= 30 ? `, ${f.frostChance}% chance of frost` : ''}.`,
+      said: `${F.weekday(c.year, f.day)}: 최고 약 ${F.temp(f.hi)}, 최저 약 ${F.temp(f.lo)}, 비 올 확률 ${f.rainChance}%${f.blight > 0 ? `, 역병 위험 ${BLIGHT_RISK[f.blight]}` : ''}${f.frostChance >= 30 ? `, 서리 확률 ${f.frostChance}%` : ''}.`,
     })
   }
   return out
@@ -123,7 +123,7 @@ export function clock(ctx: Ctx, compact: boolean, onMenu?: () => void): HTMLElem
   const app = ctx.app
   const c = app.campaign!
   if (S.seasonDone(c) && !ctx.awaiting) {
-    return h('div', { class: 'clock sys done' }, h('button', { class: 'btn go wide', type: 'button', testid: 'end-season', onclick: () => ctx.run({ t: 'endSeason' }) }, 'Close out the season', icon('arrow', 'i')),
+    return h('div', { class: 'clock sys done' }, h('button', { class: 'btn go wide', type: 'button', testid: 'end-season', onclick: () => ctx.run({ t: 'endSeason' }) }, '시즌 마무리하기', icon('arrow', 'i')),
       onMenu ? menuKey(ctx, onMenu) : null)
   }
   const keys = !ctx.touch()
@@ -132,28 +132,28 @@ export function clock(ctx: Ctx, compact: boolean, onMenu?: () => void): HTMLElem
   const at = paused ? app.resumeSpeed || 1 : app.speed
   const pause = h('button', {
     class: `k${paused ? ' stopped' : ''}`, type: 'button', testid: compact ? 'speed-toggle' : 'speed-0', 'aria-pressed': String(paused),
-    'aria-label': paused ? `Paused. Resume at ${SPEED_X[at]}${keys ? ' (Space)' : ''}` : `Pause${keys ? ' (Space)' : ''}`,
-    title: keys ? (paused ? `Resume at ${SPEED_X[at]} (Space)` : 'Pause (Space)') : undefined,
-    onclick: () => { if (!app.pressPause()) ctx.announce(`The game is running at ${SPEED_X[app.speed]}.`) },
+    'aria-label': paused ? `일시 정지됨. ${SPEED_X[at]}로 재개${keys ? ' (Space)' : ''}` : `일시 정지${keys ? ' (Space)' : ''}`,
+    title: keys ? (paused ? `${SPEED_X[at]}로 재개 (Space)` : '일시 정지 (Space)') : undefined,
+    onclick: () => { if (!app.pressPause()) ctx.announce(`게임이 ${SPEED_X[app.speed]} 속도로 돌아갑니다.`) },
   }, icon(paused ? 'play' : 'pause'))
   if (compact) {
     const next = (at % 3 + 1) as 1 | 2 | 3
-    return h('div', { class: 'clock sys compact', role: 'group', 'aria-label': 'Game speed' }, pause,
+    return h('div', { class: 'clock sys compact', role: 'group', 'aria-label': '게임 속도' }, pause,
       h('button', { class: 'k speed-x num', type: 'button', testid: 'speed-cycle', 'aria-pressed': String(!paused), onclick: () => app.setSpeed(next) },
-        SPEED_X[at], h('span', { class: 'sr' }, ` speed${paused ? ', paused' : ''}. Change to ${SPEED_NAME[next]}`)),
+        SPEED_X[at], h('span', { class: 'sr' }, ` 속도${paused ? ', 일시 정지됨' : ''}. ${SPEED_NAME[next]} 속도로 변경`)),
       onMenu ? menuKey(ctx, onMenu) : null)
   }
-  return h('div', { class: 'clock sys', role: 'group', 'aria-label': 'Game speed' }, pause,
+  return h('div', { class: 'clock sys', role: 'group', 'aria-label': '게임 속도' }, pause,
     ([1, 2, 3] as const).map(k => h('button', {
       class: `k speed-x num${paused && k === at ? ' armed' : ''}`, type: 'button', testid: `speed-${k}`, 'aria-pressed': String(app.speed === k),
-      title: keys ? `${SPEED_NAME[k]} (press F to cycle through the speeds, or + and − to change it)` : undefined,
+      title: keys ? `${SPEED_NAME[k]} 속도 (F로 속도를 순환하거나 +와 −로 변경)` : undefined,
       onclick: () => app.setSpeed(k),
-    }, SPEED_X[k], h('span', { class: 'sr' }, ` speed${paused && k === at ? ', the speed the game will resume at' : ''}`))),
+    }, SPEED_X[k], h('span', { class: 'sr' }, ` 속도${paused && k === at ? ', 게임이 재개될 속도' : ''}`))),
     onMenu ? menuKey(ctx, onMenu) : null)
 }
 
 function menuKey(ctx: Ctx, onMenu: () => void): HTMLElement {
-  return h('button', { class: 'menu', type: 'button', testid: 'menu-open', 'aria-label': `Menu${ctx.touch() ? '' : ' (M)'}`, title: ctx.touch() ? undefined : 'Menu (M)', onclick: () => onMenu() }, icon('menu'))
+  return h('button', { class: 'menu', type: 'button', testid: 'menu-open', 'aria-label': `메뉴${ctx.touch() ? '' : ' (M)'}`, title: ctx.touch() ? undefined : '메뉴 (M)', onclick: () => onMenu() }, icon('menu'))
 }
 
 // How far along a goal is, in a figure: "2/4", or "40%".
@@ -183,18 +183,18 @@ export function outlook(ctx: Ctx, c: S.Campaign): Outlook {
   const lines = sumLines(m.parts, figure)
   // The crop is counted from the season's first day (S.moneyNow), so the only warning is the bank's own: callRisk.
   const limit = F.money(-S.CREDIT_LIMIT)
-  const verdict = m.callRisk === 'likely' ? ` Even a good crop would leave you more than ${limit} in the red, so the bank would foreclose.`
-    : m.callRisk === 'possible' ? ` With an average crop you'd end the year more than ${limit} in the red, which is the bank's limit.` : ''
+  const verdict = m.callRisk === 'likely' ? ` 좋은 작물이라도 ${limit} 이상 적자가 나면 은행이 농장을 넘겨받습니다.`
+    : m.callRisk === 'possible' ? ` 평년 작물로는 연말에 ${limit} 이상 적자가 되는데, 그것이 은행의 한도입니다.` : ''
   // While some crop is not yet weighed, where the figure is likely to end (S.moneyNow's range); none once all is in.
   const unweighed = c.phase === 'season' && !!s && s.fields.some((f, i) => S.isField(c, i) && f.status !== 'rest' && f.status !== 'off' && f.status !== 'lost' && !f.weighed)
   const spread = unweighed ? Math.round((m.range.hi - m.range.lo) / 2 / 100) * 100 : 0
   const range = spread ? rangeSays(m.range) : ''
-  const head = c.phase === 'cellar' ? 'If you sold everything in storage today:' : 'If the crop sold today:'
+  const head = c.phase === 'cellar' ? '저장한 것을 오늘 모두 판다면:' : '작물을 오늘 판다면:'
   const says = `${range}${verdict}`.trim()
   return {
-    figure, before: false, spread, risk: m.callRisk, label: 'Year-end cash', look: S.moneyLook(world, c), lines, head, says,
+    figure, before: false, spread, risk: m.callRisk, label: '연말 현금', look: S.moneyLook(world, c), lines, head, says,
     reach: !!spread && m.range.lo < S.CREDIT_LIMIT,
-    why: `${head} ${lines.map(p => `${p.label} ${signed(p.amount)}`).join(', ')}, which makes ${F.money(figure)} after year-end bills. ${says}`.trim(),
+    why: `${head} ${lines.map(p => `${p.label} ${signed(p.amount)}`).join(', ')}, 연말 결산 뒤 ${F.money(figure)}이(가) 됩니다. ${says}`.trim(),
   }
 }
 
@@ -206,7 +206,7 @@ export function logsWanted(c: S.Campaign): string {
   const want = S.BUILDING_KINDS.filter(k => S.BUILDINGS[k].logs > 0 && !S.buildingAt(c, k, S.HOME_YARD))
     .map(k => ({ name: S.BUILDINGS[k].name.toLowerCase(), logs: S.BUILDINGS[k].logs })).sort((a, b) => b.logs - a.logs).slice(0, 2)
   if (!want.length) return ''
-  return `Keep some for building. ${F.upper(F.list(want.map(w => `${S.article(w.name)} ${w.name} takes ${w.logs} loads`)))}, and logs cost ${F.money(S.MILL_PRICE)} a load to buy back.`
+  return `일부는 건축에 남기세요. ${F.list(want.map(w => `${w.name}에는 통나무 ${w.logs}적재분이 듭니다`))}. 통나무는 적재분당 ${F.money(S.MILL_PRICE)}에 다시 사야 합니다.`
 }
 
 // A goal's when, run into a line: its first word lower-cased, a month's name left as it is.
@@ -214,9 +214,9 @@ const lowerFirst = (t: string) => t ? t[0].toLowerCase() + t.slice(1) : t
 
 // The year's money, by what it was for, from the campaign's own running totals: what moved between two looks.
 const MONEY_PARTS: [keyof S.Campaign, string, 1 | -1][] = [
-  ['yearWages', 'wages', -1], ['yearStorage', 'storage', -1], ['yearRent', 'rent', -1], ['yearLand', 'land', -1], ['yearMortgage', 'mortgage', -1],
-  ['yearWorks', 'contractor', -1], ['yearBuilding', 'building', -1], ['yearPacking', 'packing', -1], ['yearPenalties', 'penalty', -1],
-  ['yearContracts', 'delivery', 1], ['yearLogs', 'logs', 1], ['yearStand', 'stand', 1], ['yearRest', 'oats', 1],
+  ['yearWages', '임금', -1], ['yearStorage', '저장', -1], ['yearRent', '임차료', -1], ['yearLand', '땅', -1], ['yearMortgage', '모기지', -1],
+  ['yearWorks', '도급', -1], ['yearBuilding', '건축', -1], ['yearPacking', '포장', -1], ['yearPenalties', '위약금', -1],
+  ['yearContracts', '납품', 1], ['yearLogs', '통나무', 1], ['yearStand', '직판장', 1], ['yearRest', '오트', 1],
 ]
 type MoneyLook = Record<string, number>
 
@@ -239,10 +239,10 @@ export function moneyMoved(a: MoneyLook, b: MoneyLook): string {
   }
   const otherOut = (b.costs - a.costs) - named
   const otherIn = (b.revenue - a.revenue) - namedIn
-  if (otherOut >= 0.5) parts.push(`orders −${F.money(otherOut)}`)
-  if (otherIn >= 0.5) parts.push(`sales +${F.money(otherIn)}`)
+  if (otherOut >= 0.5) parts.push(`주문 −${F.money(otherOut)}`)
+  if (otherIn >= 0.5) parts.push(`판매 +${F.money(otherIn)}`)
   const rest = (b.cash - a.cash) - ((b.revenue - a.revenue) - (b.costs - a.costs))
-  if (Math.abs(rest) >= 0.5) parts.push(`${rest < 0 ? 'bank' : 'other'} ${rest < 0 ? '−' : '+'}${F.money(Math.abs(rest))}`)
+  if (Math.abs(rest) >= 0.5) parts.push(`${rest < 0 ? '은행' : '기타'} ${rest < 0 ? '−' : '+'}${F.money(Math.abs(rest))}`)
   return parts.join(', ')
 }
 
@@ -262,7 +262,7 @@ interface Call { id: string; act: string; field: number; text: string; why: stri
 // Who a priority fix puts first, as the slip says it: "You" for the farmer, else their first name.
 function whoFirst(c: S.Campaign, fix: S.Cmd): string {
   const u = c.crew.find(x => x.id === (fix as { unit: number }).unit)
-  return !u ? 'Someone' : u.kind === 'farmer' ? 'You' : firstName(u.name)
+  return !u ? '누군가' : u.kind === 'farmer' ? '당신' : firstName(u.name)
 }
 
 // Brings a control forward once the screen has drawn it: in view, ringed, under the keyboard.
@@ -282,7 +282,7 @@ export function light(selector: string, o: { open?: boolean; top?: boolean } = {
 // Where a spring goal's Show me ends: the fold that holds its control, brought to the top of the sheet and ringed.
 const FOLD_OF: Partial<Record<string, string>> = { tool: 'equipment-open', hire: 'crew-open', contract: 'contracts-open', land: 'land-open' }
 // A goal named by a word a newcomer has not met says what it is, in a clause.
-const GLOSS: Partial<Record<string, string>> = { foreman: 'a hand who runs your fields away from home' }
+const GLOSS: Partial<Record<string, string>> = { foreman: '집에서 떨어진 밭을 맡아 돌보는 일꾼' }
 // The crop's own steps: in spring they wait for the season to start.
 const CROP_STEPS = new Set(['plant', 'walk', 'hill', 'spray', 'sample', 'kill', 'dig', 'haul'])
 
@@ -342,7 +342,7 @@ export function topBar(ctx: Ctx, o: { onMenu: () => void; onAlmanac?: () => void
   const order = (why: S.MoneyCause) => {
     if (why.field === undefined || !why.remedy) return
     const r = app.order(why.remedy, { fields: [why.field], unit: -1 })[0]
-    if (r?.ok) ctx.say(`${JOB_DOING[why.remedy]} ${S.FIELD_NAMES[why.field]} is on the work list.`, 'info')
+    if (r?.ok) ctx.say(`${S.FIELD_NAMES[why.field]} ${JOB_DOING[why.remedy]}을(를) 작업 목록에 올렸습니다.`, 'info')
     else { fix(why); if (r?.err) ctx.say(`${S.FIELD_NAMES[why.field]}: ${r.err}`, 'info') }
   }
   let leaving = 0
@@ -356,7 +356,7 @@ export function topBar(ctx: Ctx, o: { onMenu: () => void; onAlmanac?: () => void
     if (shown && next?.id !== shown.id && goals(c).find(x => x.id === shown!.id)?.done) {
       met = { goal: shown, until: now + (ctx.reduced() ? 0 : MOMENT_MS) }
       fresh = next?.id ?? ''
-      ctx.announce(`Done: ${shown.title}.${next ? ` Next: ${next.title}.` : ''}`)
+      ctx.announce(`완료: ${shown.title}.${next ? ` 다음: ${next.title}.` : ''}`)
       setTimeout(() => ctx.dirty(), MOMENT_MS + 30)
     }
     shown = next
@@ -377,15 +377,15 @@ export function topBar(ctx: Ctx, o: { onMenu: () => void; onAlmanac?: () => void
       cls === 'now' ? h('span', { class: 'gl-why' }, x.why, !x.now ? ` ${x.when}.` : '') : cls === 'later' ? h('span', { class: 'gl-when' }, x.block && x.now ? notYet(c, x) : x.when) : null,
       cls === 'now' && x.block ? h('span', { class: 'gl-when c-red' }, F.localize(x.block)) : null,
       !x.done && x.now && !x.block && o.show && o.canShow?.(x)
-        ? h('button', { class: 'btn', type: 'button', testid: cls === 'now' ? 'goal-show' : `goal-show-${x.id}`, onclick: () => showGoal(x) }, icon('arrow', 'i'), 'Show me') : null)
-    return h('div', { class: 'tb-pop goals-pop sheet', testid: 'goals', role: 'dialog', 'aria-label': 'Goals' },
-      h('p', { class: 't-label' }, 'Your goals'),
+        ? h('button', { class: 'btn', type: 'button', testid: cls === 'now' ? 'goal-show' : `goal-show-${x.id}`, onclick: () => showGoal(x) }, icon('arrow', 'i'), '보여주기') : null)
+    return h('div', { class: 'tb-pop goals-pop sheet', testid: 'goals', role: 'dialog', 'aria-label': '목표' },
+      h('p', { class: 't-label' }, '당신의 목표'),
       h('ol', { class: 'gls' },
-        reached.length > 3 ? h('li', { class: 'gl done more' }, h('i', { class: 'tick on', 'aria-hidden': 'true' }), h('span', { class: 'gl-t' }, `${reached.length - 3} more done`)) : null,
+        reached.length > 3 ? h('li', { class: 'gl done more' }, h('i', { class: 'tick on', 'aria-hidden': 'true' }), h('span', { class: 'gl-t' }, `${reached.length - 3}개 더 완료`)) : null,
         reached.slice(-3).map(x => row(x, 'done')),
         g && !g.long ? row(g, 'now') : null,
         ahead.map(x => row(x, 'later'))),
-      c.history.length ? [h('p', { class: 't-label' }, 'Long-term goals'),
+      c.history.length ? [h('p', { class: 't-label' }, '장기 목표'),
         h('ol', { class: 'gls' }, all.filter(x => x.long).map(x => row(x, x.done ? 'done' : x.id === g?.id ? 'now' : 'long')))] : null)
   }
 
@@ -393,15 +393,15 @@ export function topBar(ctx: Ctx, o: { onMenu: () => void; onAlmanac?: () => void
     const m = S.materialsInfo(c)
     const some = Math.min(5, Math.floor(m.logs))
     const sell = (loads: number) => { const r = ctx.run({ t: 'sellLogs', loads }); if (r.ok) ctx.announce(F.localize(r.events[0]?.text ?? '')) }
-    return h('div', { class: 'tb-pop mat-pop sheet', testid: 'materials-pop', role: 'dialog', 'aria-label': 'Logs and stone' },
-      h('p', { class: 'mat-row' }, icon('logs', 'i'), h('b', { class: 'num' }, `${F.num(m.logs, m.logs % 1 && m.logs < 10 ? 1 : 0)} loads of logs`)),
-      h('p', { class: 't-caption' }, `The mill pays ${F.money(m.logPrice)} a load.`),
+    return h('div', { class: 'tb-pop mat-pop sheet', testid: 'materials-pop', role: 'dialog', 'aria-label': '통나무와 돌' },
+      h('p', { class: 'mat-row' }, icon('logs', 'i'), h('b', { class: 'num' }, `통나무 ${F.num(m.logs, m.logs % 1 && m.logs < 10 ? 1 : 0)}적재분`)),
+      h('p', { class: 't-caption' }, `제재소에서 적재분당 ${F.money(m.logPrice)}를 줍니다.`),
       logsWanted(c) ? h('p', { class: 't-caption c-red', testid: 'logs-wanted' }, logsWanted(c)) : null,
       m.sellWhy ? h('p', { class: 't-caption' }, m.sellWhy) : h('div', { class: 'mat-sell' },
-        some >= 1 && some < m.logs - 0.05 ? h('button', { class: 'btn', type: 'button', testid: 'sell-logs-some', onclick: () => sell(some) }, `Sell ${some}`, h('span', { class: 'sub num' }, F.money(some * m.logPrice))) : null,
-        h('button', { class: 'btn', type: 'button', testid: 'sell-logs-all', onclick: () => sell(m.logs) }, 'Sell all', h('span', { class: 'sub num' }, F.money(m.logs * m.logPrice)))),
-      h('p', { class: 'mat-row' }, icon('stone', 'i'), h('b', { class: 'num' }, `${F.num(m.stone, m.stone % 1 && m.stone < 10 ? 1 : 0)} loads of fieldstone`)),
-      h('p', { class: 't-caption' }, `Used for building. It costs ${F.money(m.quarryPrice)} a load to buy at the quarry.`))
+        some >= 1 && some < m.logs - 0.05 ? h('button', { class: 'btn', type: 'button', testid: 'sell-logs-some', onclick: () => sell(some) }, `${some} 판매`, h('span', { class: 'sub num' }, F.money(some * m.logPrice))) : null,
+        h('button', { class: 'btn', type: 'button', testid: 'sell-logs-all', onclick: () => sell(m.logs) }, '모두 판매', h('span', { class: 'sub num' }, F.money(m.logs * m.logPrice)))),
+      h('p', { class: 'mat-row' }, icon('stone', 'i'), h('b', { class: 'num' }, `돌 ${F.num(m.stone, m.stone % 1 && m.stone < 10 ? 1 : 0)}적재분`)),
+      h('p', { class: 't-caption' }, `건축에 씁니다. 채석장에서 사면 적재분당 ${F.money(m.quarryPrice)}입니다.`))
   }
 
   // The season's call that cannot wait for a goal: a field's spray, water, roguing or vine kill, or any work marked
@@ -425,19 +425,19 @@ export function topBar(ctx: Ctx, o: { onMenu: () => void; onAlmanac?: () => void
     const urgent: Call[] = S.pressing(app.world, c).map(p => ({
       id: `p-${p.kind}-${p.field}`, act: p.kind, field: p.field, text: `${JOB_VERB[p.kind]} ${S.FIELD_NAMES[p.field]}`, why: `${F.upper(p.why)}. ${p.inWay}`,
       line: p.kind === 'kill' ? p.inWay.replace(/, so .*$/, '').replace(/\.$/, '') : undefined,
-      fix: p.fix, fixLabel: p.fix?.t === 'job' ? 'Order it' : p.fix?.t === 'priority' ? (whoFirst(c, p.fix) === 'You' ? 'Do it yourself next' : `Have ${whoFirst(c, p.fix)} do it next`) : 'Show me',
-      done: p.fix?.t === 'priority' ? `${jobText(p)} is next for ${whoFirst(c, p.fix) === 'You' ? 'you' : whoFirst(c, p.fix)}.` : p.fix?.t === 'job' ? `${jobText(p)} is on the work list.` : undefined,
+      fix: p.fix, fixLabel: p.fix?.t === 'job' ? '지시하기' : p.fix?.t === 'priority' ? (whoFirst(c, p.fix) === '당신' ? '직접 다음으로 하기' : `${whoFirst(c, p.fix)}이(가) 다음으로 하게 하기`) : '보여주기',
+      done: p.fix?.t === 'priority' ? `${whoFirst(c, p.fix) === '당신' ? '당신의' : whoFirst(c, p.fix) + '의'} 다음 차례: ${jobText(p)}.` : p.fix?.t === 'job' ? `${jobText(p)}을(를) 작업 목록에 올렸습니다.` : undefined,
     }))
     const calls: Call[] = app.needs().map((n, field) => ({ need: n.need!, field }))
       .filter(x => x.need && x.need.act !== 'close' && x.need.act !== 'wait' && x.need.act !== 'sell' && (CALLS[x.need.act] !== undefined || x.need.urgent))
       .sort((a, b) => (CALLS[a.need.act] ?? 9) - (CALLS[b.need.act] ?? 9) || Number(b.need.urgent) - Number(a.need.urgent))
-      .map(x => ({ id: x.need.id, act: x.need.act, field: x.field, text: F.localize(x.need.text), why: F.localize(x.need.why), fix: null, fixLabel: 'Show me' }))
+      .map(x => ({ id: x.need.id, act: x.need.act, field: x.field, text: F.localize(x.need.text), why: F.localize(x.need.why), fix: null, fixLabel: '보여주기' }))
     return [...urgent, ...calls.filter(x => !urgent.some(u => u.act === x.act && u.field === x.field))]
   }
 
   function takeCall(call: Call): void {
     // What the fix did is said where the player looks, not only to a screen reader.
-    if (call.fix) { const r = ctx.run(call.fix); if (r.ok) ctx.say(call.done ?? F.localize(r.events[0]?.text ?? `Done: ${call.text}.`), 'good') }
+    if (call.fix) { const r = ctx.run(call.fix); if (r.ok) ctx.say(call.done ?? F.localize(r.events[0]?.text ?? `완료: ${call.text}.`), 'good') }
     if (call.field >= 0) { app.select(call.field); app.focus(call.field) }
     ctx.dirty()
   }
@@ -447,8 +447,8 @@ export function topBar(ctx: Ctx, o: { onMenu: () => void; onAlmanac?: () => void
   // key pressed puts the order on the list, says what it is for, and shows its place. Build opens the build menu.
   function giveFree(w: FreeWork): void {
     const r = app.order(w.kind, { fields: [w.field] })[0]
-    if (r?.ok) ctx.say(`${JOB_DOING[w.kind]} ${S.FIELD_NAMES[w.field]} is on the work list. ${w.gain}`, 'good')
-    else ctx.say(`${S.FIELD_NAMES[w.field]}: ${r?.err ?? 'that can\'t be ordered now.'}`, 'info')
+    if (r?.ok) ctx.say(`${S.FIELD_NAMES[w.field]} ${JOB_DOING[w.kind]}을(를) 작업 목록에 올렸습니다. ${w.gain}`, 'good')
+    else ctx.say(`${S.FIELD_NAMES[w.field]}: ${r?.err ?? '지금은 지시할 수 없습니다.'}`, 'info')
     app.setHover(-1)
     app.focus(w.field)
     ctx.dirty()
@@ -457,17 +457,17 @@ export function topBar(ctx: Ctx, o: { onMenu: () => void; onAlmanac?: () => void
     const idle = c.phase === 'season' ? idleWork(c) : null
     if (!idle) return null
     const one = c.crew.find(u => u.id === idle.who[0])
-    const who = idle.who.length === c.crew.length && c.crew.length > 1 ? 'Everyone is idle' : idle.who.length === 1 && one ? (one.kind === 'farmer' ? 'You are idle' : `${firstName(one.name)} is idle`) : `${idle.who.length} people idle`
+    const who = idle.who.length === c.crew.length && c.crew.length > 1 ? '모두 한가합니다' : idle.who.length === 1 && one ? (one.kind === 'farmer' ? '당신은 한가합니다' : `${firstName(one.name)}은(는) 한가합니다`) : `${idle.who.length}명이 한가합니다`
     // (one line: who, and each job as a key that names it; its place is on the key's slip, lit on the land under the
     // pointer, and said when the order is given)
-    return h('div', { class: 'idle-row', testid: 'idle', role: 'group', 'aria-label': 'People with nothing to do' },
+    return h('div', { class: 'idle-row', testid: 'idle', role: 'group', 'aria-label': '할 일이 없는 사람들' },
       h('span', { class: 'sr' }, `${who}. `),
       idle.options.map((w, k) => h('button', {
-        class: 'btn idle-key', type: 'button', testid: `idle-do-${k}`, 'data-kind': w.kind, 'aria-label': `${w.kind === 'fell' ? 'Cut trees: logs' : w.kind === 'brush' ? 'Cut brush: less frost' : 'Pick rocks: stone'}, ${S.FIELD_NAMES[w.field]}`,
-        title: ctx.touch() ? undefined : `${S.FIELD_NAMES[w.field]}. ${w.gain} Work on the crop comes first: anyone needed there leaves this for it.`,
+        class: 'btn idle-key', type: 'button', testid: `idle-do-${k}`, 'data-kind': w.kind, 'aria-label': `${w.kind === 'fell' ? '나무 베기: 통나무' : w.kind === 'brush' ? '덤불 자르기: 서리 감소' : '돌 줍기: 돌'}, ${S.FIELD_NAMES[w.field]}`,
+        title: ctx.touch() ? undefined : `${S.FIELD_NAMES[w.field]}. ${w.gain} 작물 작업이 먼저입니다. 거기 필요한 사람은 이 일을 내려놓습니다.`,
         onclick: () => giveFree(w),
         onpointerenter: (e: Event) => { if ((e as PointerEvent).pointerType === 'mouse') app.setHover(w.field) }, onpointerleave: () => { if (app.hover === w.field) app.setHover(-1) },
-      }, icon(w.kind, 'i'), w.kind === 'fell' ? 'Cut trees: logs' : w.kind === 'brush' ? 'Cut brush: less frost' : 'Pick rocks: stone')))
+      }, icon(w.kind, 'i'), w.kind === 'fell' ? '나무 베기: 통나무' : w.kind === 'brush' ? '덤불 자르기: 서리 감소' : '돌 줍기: 돌')))
   }
 
   // Why a goal is not the fist's to point at now, in a few words.
@@ -475,13 +475,13 @@ export function topBar(ctx: Ctx, o: { onMenu: () => void; onAlmanac?: () => void
     const act = GOAL_ROUTINE[g.id]
     if (!g.now) return lowerFirst(g.when)
     if (g.block) return F.localize(g.block).replace(/\.$/, '')
-    if (act && c.season?.jobs.some(j => j.kind === act)) return 'on the work list'
+    if (act && c.season?.jobs.some(j => j.kind === act)) return '작업 목록에 있음'
     // The vine kill: the day the coach expects to ask for it on the first field due (S.killOutlook).
     if (g.id === 'kill' && c.season) {
       const due = c.season.fields.map((_, i) => S.isField(c, i) ? S.killOutlook(c, i) : null).filter((k): k is S.KillOutlook => !!k).sort((a, b) => a.day - b.day)[0]
-      if (due) return due.asked ? `due since ${F.date(c.year, due.day, true)}` : `due around ${F.date(c.year, due.day, true)}`
+      if (due) return due.asked ? `${F.date(c.year, due.day, true)}부터 해야 함` : `${F.date(c.year, due.day, true)}쯤 해야 함`
     }
-    if (act && S.routineInfo(c).some(r => r.kind === act && r.auto)) return 'your crew handles it automatically'
+    if (act && S.routineInfo(c).some(r => r.kind === act && r.auto)) return '작업반이 자동으로 처리함'
     if (g.id === 'hire') { const why = S.hireRoom(c); if (why) return F.localize(why).replace(/\.$/, '').toLowerCase() }
     return lowerFirst(g.when)
   }
@@ -503,7 +503,7 @@ export function topBar(ctx: Ctx, o: { onMenu: () => void; onAlmanac?: () => void
     let later: Goal | null = null
     if (season && g && !CROP_STEPS.has(g.id)) { const st = seasonStep(c); if (st) { later = g; g = st } }
     // The line under it names the farmstead goal only while that goal can be taken: not a contract in July.
-    const then = later && later.now && !later.block ? `then ${later.title.toLowerCase()}${GLOSS[later.id] ? ` (${GLOSS[later.id]})` : ''}` : ''
+    const then = later && later.now && !later.block ? `그다음 ${later.title}${GLOSS[later.id] ? ` (${GLOSS[later.id]})` : ''}` : ''
     const gloss = g && GLOSS[g.id] ? GLOSS[g.id]! : ''
     // Before the ground is fit, the planting goal says plainly how long it will be, counting down by the day.
     // (Once the word is given the planting is under way: the slip says how far along it is, not the soil again.)
@@ -515,16 +515,16 @@ export function topBar(ctx: Ctx, o: { onMenu: () => void; onAlmanac?: () => void
     const word = !!g && g.id === 'plant' && season && !!c.season && !S.plantWordGiven(c.season) && app.needs().some(n => n.need?.act === 'plant')
     // On the spring plan the one way on is Start the season: the slip names that key, not what comes after it.
     const toStart = c.phase === 'plan' && !!g && CROP_STEPS.has(g.id) && g.now
-    const title = toStart ? 'Start the season' : ready ? `Plant when the soil reaches ${F.temp(ready.need)}` : word ? 'Start planting' : g?.title ?? ''
-    const n = wait > 1 ? `about ${F.plural(wait, 'day')}` : wait === 1 ? 'any day now' : g ? progressText(g) : ''
+    const title = toStart ? '시즌 시작하기' : ready ? `흙이 ${F.temp(ready.need)}에 이르면 심기` : word ? '심기 시작하기' : g?.title ?? ''
+    const n = wait > 1 ? `약 ${wait}일` : wait === 1 ? '곧' : g ? progressText(g) : ''
     const when = !g ? null : !g.now ? h('span', { class: 'goal-when' }, lowerFirst(g.when))
-      : toStart ? h('span', { class: 'goal-when' }, 'your plan is ready, and the rest is optional')
-        : ready && !then ? h('span', { class: 'goal-when' }, `it's ${F.temp(ready.soilT)} today`)
+      : toStart ? h('span', { class: 'goal-when' }, '계획이 준비됐고 나머지는 선택입니다')
+        : ready && !then ? h('span', { class: 'goal-when' }, `오늘 ${F.temp(ready.soilT)}입니다`)
           : null
     // While the soil warms there is nothing to do but wait: a key beside the slip lets the weeks go by at 3x.
     const faster = wait > 0 && app.speed < 3 && !S.seasonDone(c)
-      ? h('button', { class: 'btn goal-go', type: 'button', testid: 'goal-faster', title: ctx.touch() ? undefined : 'Runs fast until there\'s something for you to decide, then goes back to the speed you had', onclick: () => app.skipAhead() },
-        icon('fast', 'i'), 'Skip ahead') : null
+      ? h('button', { class: 'btn goal-go', type: 'button', testid: 'goal-faster', title: ctx.touch() ? undefined : '결정할 일이 생길 때까지 빠르게 돌리고 원래 속도로 돌아갑니다', onclick: () => app.skipAhead() },
+        icon('fast', 'i'), '앞으로 건너뛰기') : null
     // The fist points only at what can be done now and paid for: the season's pressing call first (a long goal waits
     // in the quiet line under it), then the goal when its control can be reached; anything else is said quietly.
     const reach = !!g && wait <= 0 && g.now && !g.block && (o.canShow?.(g) ?? false)
@@ -544,21 +544,21 @@ export function topBar(ctx: Ctx, o: { onMenu: () => void; onAlmanac?: () => void
         class: `goal${callFirst || busy ? '' : ' later'}`, type: 'button', testid: 'goal', k: callFirst ? `goal-call-${call!.id}` : `goal-${busy ? 'busy' : 'later'}-${g!.id}`, 'data-waiting': mine ? 'crew' : undefined, 'aria-expanded': String(pop === 'goals'),
         title: ctx.touch() ? undefined : callFirst ? F.localize(call!.why) : g!.why,
         onclick: () => { pop = pop === 'goals' ? '' : 'goals'; ctx.dirty() },
-      }, callFirst || busy ? fist() : null, h('span', { class: 'goal-body' }, h('span', { class: 'sr' }, callFirst || busy ? 'Now: ' : 'Next goal: '),
-        h('b', { class: 'goal-t' }, callFirst ? F.localize(call!.text).replace(/\.$/, '') : busy ? 'Keep your crew busy' : mine ? mine.title : g!.title),
-        callFirst ? (call!.line ? h('span', { class: 'goal-when' }, call!.line) : g && !crewOwn(g) ? h('span', { class: 'goal-when' }, `then ${g.title.toLowerCase()}${reach ? '' : ` (${notYet(c, g)})`}`) : null) : h('span', { class: 'goal-when' }, busy ? `${mine!.title}${/^due /.test(mine!.when) ? `, ${F.localize(mine!.when.split(',')[0])}` : ''}` : `${mine ? F.localize(mine.when) : notYet(c, g!)}${then ? ` · ${then}` : ''}`)),
-      h('span', { class: 'sr' }, `. ${callFirst ? F.localize(call!.why) : g!.why} Press to open your goals.`))
+      }, callFirst || busy ? fist() : null, h('span', { class: 'goal-body' }, h('span', { class: 'sr' }, callFirst || busy ? '지금: ' : '다음 목표: '),
+        h('b', { class: 'goal-t' }, callFirst ? F.localize(call!.text).replace(/\.$/, '') : busy ? '일꾼을 바쁘게 두기' : mine ? mine.title : g!.title),
+        callFirst ? (call!.line ? h('span', { class: 'goal-when' }, call!.line) : g && !crewOwn(g) ? h('span', { class: 'goal-when' }, `그다음 ${g.title}${reach ? '' : ` (${notYet(c, g)})`}`) : null) : h('span', { class: 'goal-when' }, busy ? `${mine!.title}${/^due /.test(mine!.when) ? `, ${F.localize(mine!.when.split(',')[0])}` : ''}` : `${mine ? F.localize(mine.when) : notYet(c, g!)}${then ? ` · ${then}` : ''}`)),
+      h('span', { class: 'sr' }, `. ${callFirst ? F.localize(call!.why) : g!.why} 누르면 목표가 열립니다.`))
       const go = callFirst ? h('button', { class: 'btn goal-go', type: 'button', testid: 'goal-do', onclick: () => takeCall(call!) }, icon(call!.fix ? 'check' : 'arrow', 'i'), call!.fixLabel)
         // Waiting on the crop with nothing to decide: the same key as while the soil warms. (Round ten: all three players'
         // first complaint was the waiting, "a 'skip to the next thing that needs me' button".)
         // (at a wide desk only: beside the slip on a smaller window the key took 48 px of height from a card opened
         // under it, and a hired hand's card lost its last key there)
-        : mine && !busy && season && !S.seasonDone(c) && app.skipBack === 0 && ctx.layout() === 'wide' ? h('button', { class: 'btn goal-go', type: 'button', testid: 'goal-faster', title: ctx.touch() ? undefined : 'Runs the days fast until there\'s something for you to decide, then goes back to the speed you had', onclick: () => app.skipAhead() },
-          icon('fast', 'i'), 'Skip ahead')
+        : mine && !busy && season && !S.seasonDone(c) && app.skipBack === 0 && ctx.layout() === 'wide' ? h('button', { class: 'btn goal-go', type: 'button', testid: 'goal-faster', title: ctx.touch() ? undefined : '결정할 일이 생길 때까지 날을 빠르게 돌리고 원래 속도로 돌아갑니다', onclick: () => app.skipAhead() },
+          icon('fast', 'i'), '앞으로 건너뛰기')
           : null
       return go ? h('div', { class: 'goal-row' }, quiet, go) : quiet
     }
-    const doIt = g && reach && o.show ? h('button', { class: 'btn goal-go', type: 'button', testid: 'goal-do', onclick: () => showGoal(g) }, icon('arrow', 'i'), 'Show me') : null
+    const doIt = g && reach && o.show ? h('button', { class: 'btn goal-go', type: 'button', testid: 'goal-do', onclick: () => showGoal(g) }, icon('arrow', 'i'), '보여주기') : null
     // A goal that waits for another part of the year, or for money the farm has not got, is said without the fist.
     const quiet = !!g && (!g.now || !!g.block)
     const slip = h('button', {
@@ -566,11 +566,11 @@ export function topBar(ctx: Ctx, o: { onMenu: () => void; onAlmanac?: () => void
       'aria-expanded': String(pop === 'goals'), title: ctx.touch() || !g ? undefined : ready ? F.localize(ready.why) : g.why,
       onclick: () => { pop = pop === 'goals' ? '' : 'goals'; ctx.dirty() },
     },
-    gone ? h('span', { class: 'was struck' }, h('span', { class: 'sr' }, 'Done: '), gone.title) : null,
+    gone ? h('span', { class: 'was struck' }, h('span', { class: 'sr' }, '완료: '), gone.title) : null,
     g ? [quiet ? null : fist(), h('span', { class: 'goal-body' },
-      h('span', { class: 'sr' }, 'Next goal: '), h('b', { class: 'goal-t' }, title), quiet ? h('span', { class: 'goal-when' }, `${notYet(c, g)}${then ? ` · ${then}` : ''}`) : when ?? (then || gloss ? h('span', { class: 'goal-when' }, then || gloss) : null)),
+      h('span', { class: 'sr' }, '다음 목표: '), h('b', { class: 'goal-t' }, title), quiet ? h('span', { class: 'goal-when' }, `${notYet(c, g)}${then ? ` · ${then}` : ''}`) : when ?? (then || gloss ? h('span', { class: 'goal-when' }, then || gloss) : null)),
     n ? h('span', { class: 'count goal-n num', testid: wait > 0 ? 'goal-wait' : undefined }, n) : null,
-    h('span', { class: 'sr' }, `. ${g.why} Press to open your goals.`)] : null)
+    h('span', { class: 'sr' }, `. ${g.why} 누르면 목표가 열립니다.`)] : null)
     return faster || doIt ? h('div', { class: 'goal-row' }, slip, faster ?? doIt) : slip
   }
 
@@ -643,18 +643,18 @@ export function topBar(ctx: Ctx, o: { onMenu: () => void; onAlmanac?: () => void
         h('button', {
           class: 'after-key t-label', type: 'button', testid: 'outlook-key', 'aria-expanded': String(pop === 'money'), 'aria-controls': 'money-pop',
           onclick: () => openMoney('press'), onpointerenter: (e: Event) => { if ((e as PointerEvent).pointerType === 'mouse' && pop !== 'money') openMoney('hover') }, onpointerleave: leaveMoney,
-        }, h('span', { class: 'long' }, view.label), h('span', { class: 'short', 'aria-hidden': 'true' }, view.before ? 'Before crop' : 'After bills'), h('span', { class: 'sr' }, '. Press to see how it is made up.')),
+        }, h('span', { class: 'long' }, view.label), h('span', { class: 'short', 'aria-hidden': 'true' }, view.before ? '수확 전' : '결산 후'), h('span', { class: 'sr' }, '. 누르면 구성을 봅니다.')),
         h('span', { class: 't-figure num' }, F.money(view.figure)),
         view.reach ? h('span', { class: 'give num', testid: 'outlook-spread', 'aria-hidden': 'true' }, `±${F.money(view.spread)}`) : h('span', { class: 'give idle', 'aria-hidden': 'true' }, '\u00a0'),
         h('span', { class: 'sr' }, `. ${view.why}`)) : null
       // Cash below zero through the season and the winter is what the bank has lent, said as that, not as a loss.
       const borrowed = !!after && c.cash < 0
       const balance = h('div', { class: `balance${after ? ' two' : ''}` },
-        h('span', { class: `t-label when${c.cash < 0 ? ' owed' : ''}` }, borrowed ? 'You owe' : c.cash < 0 ? 'In the red' : after ? 'Cash' : 'Balance'),
+        h('span', { class: `t-label when${c.cash < 0 ? ' owed' : ''}` }, borrowed ? '빚' : c.cash < 0 ? '적자' : after ? '현금' : '잔액'),
         h('span', {
           class: `t-figure cash${c.cash < 0 && !borrowed ? ' neg' : ''}${c.cash < 0 ? ' owed' : ''}`, testid: 'cash',
-          title: ctx.touch() ? undefined : `${c.cash >= 0 ? '' : borrowed ? BORROWED_SAYS : 'You owe this on the spring loan, and the crop pays it back. The bank will foreclose if you end the year too far in the red.'}${lastMoved ? `${c.cash >= 0 ? '' : ' '}Last change: ${lastMoved}.` : ''}` || undefined,
-        }, h('span', { class: 'sr' }, borrowed ? 'You owe the bank: ' : 'Cash: '), h('span', { class: 'cash-v num' }, F.money(borrowed ? -c.cash : c.cash))),
+          title: ctx.touch() ? undefined : `${c.cash >= 0 ? '' : borrowed ? BORROWED_SAYS : '봄 융자로 진 빚이며 작물이 갚아줍니다. 연말에 적자가 너무 크면 은행이 농장을 넘겨받습니다.'}${lastMoved ? ` 마지막 변동: ${lastMoved}.` : ''}` || undefined,
+        }, h('span', { class: 'sr' }, borrowed ? '은행 빚: ' : '현금: '), h('span', { class: 'cash-v num' }, F.money(borrowed ? -c.cash : c.cash))),
         moved && lines ? h('span', { class: 'cash-moved', testid: 'cash-moved', role: 'status' }, moved.text) : null,
         // The cash's line and the figure's line keep their rows whether they say anything or not, so the keys under
         // the board never move.
@@ -665,12 +665,12 @@ export function topBar(ctx: Ctx, o: { onMenu: () => void; onAlmanac?: () => void
         after && lines ? h('span', { class: `after-why${whyNow ? '' : ' goal-line'}`, testid: whyNow ? 'outlook-why' : 'outlook-goal', role: whyNow ? 'status' : undefined },
           whyNow ? [h('span', { class: 'why-t' }, whyNow.cause.text), Math.abs(whyNow.cause.amount) < 0.5 ? null : h('span', { class: 'why-amt num' }, `: ${signedMoney(whyNow.cause.amount)}`),
             whyNow.cause.remedy && !remedied(c) ? [' ', h('button', { class: 'why-key fix-key', type: 'button', testid: 'outlook-fix', onclick: () => (REMEDY[whyNow!.cause.remedy!] ? order(whyNow!.cause) : fix(whyNow!.cause)) },
-              REMEDY[whyNow.cause.remedy] ? [REMEDY[whyNow.cause.remedy], ' ', h('span', { class: 'num' }, F.money(S.jobCost(c, whyNow.cause.remedy, whyNow.cause.field ?? -1)))] : 'Show me')] : null,
-            whyNow.ask ? [' ', h('button', { class: 'why-key', type: 'button', testid: 'outlook-why-open', 'aria-label': 'Why?', title: ctx.touch() ? undefined : 'Why?', 'aria-expanded': String(pop === 'money'), onclick: () => openMoney('press') }, icon('help', 'i'))] : null]
-            : h('span', { class: 'why-t' }, `Goal: end the year above $0`)) : null)
+              REMEDY[whyNow.cause.remedy] ? [REMEDY[whyNow.cause.remedy], ' ', h('span', { class: 'num' }, F.money(S.jobCost(c, whyNow.cause.remedy, whyNow.cause.field ?? -1)))] : '보여주기')] : null,
+            whyNow.ask ? [' ', h('button', { class: 'why-key', type: 'button', testid: 'outlook-why-open', 'aria-label': '왜?', title: ctx.touch() ? undefined : '왜?', 'aria-expanded': String(pop === 'money'), onclick: () => openMoney('press') }, icon('help', 'i'))] : null]
+            : h('span', { class: 'why-t' }, `목표: 연말에 $0 이상으로 끝내기`)) : null)
       // The sum that makes the figure, under the board, clear of the speed keys.
       const money = pop === 'money' && view ? h('div', {
-        class: 'tb-pop money-pop sheet', id: 'money-pop', testid: 'money-pop', role: 'dialog', 'aria-label': 'How the year-end figure is made up',
+        class: 'tb-pop money-pop sheet', id: 'money-pop', testid: 'money-pop', role: 'dialog', 'aria-label': '연말 수치의 구성',
         onpointerleave: leaveMoney,
       }, h('p', { class: 'mp-head it' }, view.head),
       h('table', { class: 'mp-sum' }, h('tbody', null, view.lines.map((p, i) => h('tr', { class: p.id === 'spent' ? 'spent' : null },
@@ -679,13 +679,13 @@ export function topBar(ctx: Ctx, o: { onMenu: () => void; onAlmanac?: () => void
       h('tfoot', null, h('tr', { class: 'total' }, h('th', { scope: 'row' }, view.label), h('td', { class: 'num' }, F.money(view.figure))))),
       view.says ? h('p', { class: 't-caption' }, view.says) : null) : null
       return [
-        h('section', { class: 'almanac', 'aria-label': 'Date, weather and your next goal' },
+        h('section', { class: 'almanac', 'aria-label': '날짜, 날씨와 다음 목표' },
           h('div', { class: 'mount' },
             h('div', { class: `face${season ? '' : ' plain'}` },
               leaf(c),
               season ? h('button', { class: 'forecast', type: 'button', testid: 'forecast', onclick: () => o.onAlmanac?.() },
                 // The figures are for the eye; a screen reader gets the days in words.
-                h('span', { class: 'sr' }, `${fc.map(x => x.said).join(' ')} Press to open the almanac for the full forecast.`),
+                h('span', { class: 'sr' }, `${fc.map(x => x.said).join(' ')} 누르면 연감에서 전체 예보를 봅니다.`),
                 // (each day says itself under the pointer: a player hovered the red blight mark and got nothing)
                 fc.slice(0, days).map(x => h('span', { class: 'd', 'aria-hidden': 'true', title: ctx.touch() ? undefined : x.said },
                   h('span', { class: 't-label' }, x.day),
@@ -704,7 +704,7 @@ export function topBar(ctx: Ctx, o: { onMenu: () => void; onAlmanac?: () => void
           ...((): Child[] => { const slip = goalSlip(c, g, gone, season), idle = season ? idleRow(c) : null; return idle ? [h('div', { class: 'goal-stack' }, slip, idle)] : [slip] })(),
           pop === 'goals' ? ladder(c, g) : null,
           phone ? money : null),
-        phone ? null : h('section', { class: 'bank', 'aria-label': 'Money, game speed and contracts' },
+        phone ? null : h('section', { class: 'bank', 'aria-label': '돈, 게임 속도와 계약' },
           h('div', { class: 'mount' },
             h('div', { class: 'face' },
               balance,
@@ -713,13 +713,13 @@ export function topBar(ctx: Ctx, o: { onMenu: () => void; onAlmanac?: () => void
               mats ? h('button', {
                 class: 'materials', type: 'button', testid: 'materials', 'aria-expanded': String(pop === 'materials'),
                 onclick: () => { pop = pop === 'materials' ? '' : 'materials'; ctx.dirty() },
-              }, c.logs >= 0.05 ? [icon('logs', 'i'), h('span', { class: 'num' }, F.plural(Math.floor(c.logs), 'log'))] : null,
-              c.logs >= 0.05 && c.stone >= 0.05 ? h('span', { class: 'sr' }, ' and ') : null, c.stone >= 0.05 ? [icon('stone', 'i'), h('span', { class: 'num' }, `${F.num(Math.floor(c.stone))} stone`)] : null,
-              h('span', { class: 'sr' }, ' in the yard, counted in loads. Press to see them or sell logs.')) : null,
+              }, c.logs >= 0.05 ? [icon('logs', 'i'), h('span', { class: 'num' }, `통나무 ${Math.floor(c.logs)}`)] : null,
+              c.logs >= 0.05 && c.stone >= 0.05 ? h('span', { class: 'sr' }, ' 및 ') : null, c.stone >= 0.05 ? [icon('stone', 'i'), h('span', { class: 'num' }, `돌 ${F.num(Math.floor(c.stone))}`)] : null,
+              h('span', { class: 'sr' }, ' 마당에 있습니다(적재분 기준). 누르면 보거나 통나무를 팝니다.')) : null,
               season || c.phase === 'cellar' ? contracts.part(c) : null)),
           pop === 'materials' && mats ? materials(c) : null,
           money,
-          stopped ? h('p', { class: 'stopped-tag', role: 'status' }, icon('pause', 'i'), 'Waiting for you') : null),
+          stopped ? h('p', { class: 'stopped-tag', role: 'status' }, icon('pause', 'i'), '당신을 기다리는 중') : null),
       ]
     })
     // Out of season the cash moves in a few large steps: each one counts, so it is seen to move.

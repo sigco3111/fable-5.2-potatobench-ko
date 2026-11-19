@@ -255,7 +255,7 @@ export function forecastSky(d: S.ForecastDay): string {
 export const SKY_WORD: Record<string, string> = {
   clear: '맑음', cloud: '구름 조금', overcast: '흐림', rain: '비', storm: '폭우', fog: '안개로 습함', snow: '눈', shower: '소나기 가능',
 }
-export const BLIGHT_RISK = ['none', 'some', 'high', 'severe']
+export const BLIGHT_RISK = ['없음', '약간', '높음', '심각']
 
 // The usual price through the season relative to the season average (USDA monthly record, as the simulation holds it).
 function usualFactor(day: number): number {
