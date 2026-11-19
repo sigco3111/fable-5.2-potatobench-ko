@@ -801,12 +801,12 @@ function command(world: World, c: Campaign, cmd: Cmd): Result {
       cost(c, P.TILE_FEE)
       c.yearWorks += P.TILE_FEE
       c.fields[cmd.field].works = { kind: 'tile', left: P.TILE_DAYS }
-      return ok([note(c, 'tiling', 'info', `A contractor will lay tile drains under ${FIELD_NAMES[cmd.field]}. It costs $${withCommas(P.TILE_FEE)} and takes about ${P.TILE_DAYS} season days.`, cmd.field)])
+      return ok([note(c, 'tiling', 'info', `업자가 ${FIELD_NAMES[cmd.field]} 아래에 암거 배수관을 깝니다. 비용은 $${withCommas(P.TILE_FEE)}이고 시즌 약 ${P.TILE_DAYS}일 걸립니다.`, cmd.field)])
     }
     case 'sellLogs': {
-      if (c.phase !== 'plan' && c.phase !== 'season' && c.phase !== 'cellar') return fail('You can sell logs in spring, during the season, or in winter.')
-      if (!Number.isFinite(cmd.loads) || cmd.loads <= 0) return fail('Choose how many loads to sell.')
-      if (cmd.loads > c.logs + 1e-9) return fail(`There ${c.logs >= 1 && c.logs < 2 ? 'is' : 'are'} only ${Math.floor(c.logs * 10) / 10} loads of logs in the yard.`)
+      if (c.phase !== 'plan' && c.phase !== 'season' && c.phase !== 'cellar') return fail('통나무는 봄, 시즌 중, 또는 겨울에 팔 수 있습니다.')
+      if (!Number.isFinite(cmd.loads) || cmd.loads <= 0) return fail('팔 트럭 수를 고르세요.')
+      if (cmd.loads > c.logs + 1e-9) return fail(`마당에 통나무가 ${Math.floor(c.logs * 10) / 10}트럭뿐입니다.`)
       const loads = Math.min(cmd.loads, c.logs)
       const money = loads * P.LOG_PRICE
       c.logs -= loads
@@ -814,15 +814,15 @@ function command(world: World, c: Campaign, cmd: Cmd): Result {
       c.cash += money
       c.yearRevenue += money
       c.yearLogs += money
-      return ok([note(c, 'logsSold', 'good', `Sold ${Math.round(loads * 10) / 10} loads of logs to the mill for $${withCommas(money)}.`)])
+      return ok([note(c, 'logsSold', 'good', `통나무 ${Math.round(loads * 10) / 10}트럭을 제재소에 $${withCommas(money)}에 팔았습니다.`)])
     }
     case 'payMortgage': {
-      if (c.phase !== 'plan') return fail('You can only pay extra on the mortgage in spring.')
+      if (c.phase !== 'plan') return fail('추가 상환은 봄에만 할 수 있습니다.')
       const owed = mortgageOwed(c)
-      if (owed <= 0) return fail('Nothing is owed on the land.')
-      if (!Number.isFinite(cmd.amount) || cmd.amount <= 0) return fail('Choose how much to pay.')
-      if (cmd.amount > owed + 1e-6) return fail(`Only $${withCommas(owed)} is owed.`)
-      if (c.cash - cmd.amount < 0) return fail('You don\'t have enough cash.')
+      if (owed <= 0) return fail('땅에 남은 빚이 없습니다.')
+      if (!Number.isFinite(cmd.amount) || cmd.amount <= 0) return fail('상환할 금액을 고르세요.')
+      if (cmd.amount > owed + 1e-6) return fail(`남은 빚은 $${withCommas(owed)}뿐입니다.`)
+      if (c.cash - cmd.amount < 0) return fail('현금이 부족합니다.')
       let left = Math.min(cmd.amount, owed)
       const paid = left
       for (const m of c.mortgages) {
@@ -833,19 +833,19 @@ function command(world: World, c: Campaign, cmd: Cmd): Result {
       c.mortgages = c.mortgages.filter(m => m.owed > 0.005)
       cost(c, paid)
       c.yearMortgage += paid
-      return ok([note(c, 'mortgagePaid', 'good', `You paid $${withCommas(paid)} off the land mortgage and still owe $${withCommas(mortgageOwed(c))}.`)])
+      return ok([note(c, 'mortgagePaid', 'good', `땅 담보 대출에서 $${withCommas(paid)}를 갚았고 아직 $${withCommas(mortgageOwed(c))}가 남았습니다.`)])
     }
     case 'accept': {
-      if (c.phase !== 'plan') return fail('You can only sign contracts in spring.')
+      if (c.phase !== 'plan') return fail('계약은 봄에만 맺을 수 있습니다.')
       const k = c.offers.findIndex(o => o.id === cmd.offer)
-      if (k < 0) return fail('No such offer.')
+      if (k < 0) return fail('그런 제안이 없습니다.')
       const [o] = c.offers.splice(k, 1)
       const signed: Contract = { ...o, delivered: 0, paid: 0, penalty: 0, settled: false }
       c.contracts.push(signed)
-      return ok([note(c, 'accepted', 'info', `You signed a contract with ${o.buyer.toLowerCase()} for ${withCommas(o.cwt)} cwt of ${variety(o.variety).name} at $${o.price.toFixed(2)} a cwt.`)])
+      return ok([note(c, 'accepted', 'info', `${o.buyer.toLowerCase()}와(과) ${variety(o.variety).name} ${withCommas(o.cwt)} cwt를 cwt당 $${o.price.toFixed(2)}에 계약했습니다.`)])
     }
     case 'begin': {
-      if (c.phase !== 'plan') return fail('The season has already started.')
+      if (c.phase !== 'plan') return fail('시즌이 이미 시작됐습니다.')
       const short = savedSeedShort(c)
       if (short) return fail(short)
       const pc = planCosts(c)
@@ -880,40 +880,40 @@ function command(world: World, c: Campaign, cmd: Cmd): Result {
     case 'unhire': {
       const k = c.phase === 'plan' ? c.spring?.hired.findIndex(x => x.unit === cmd.unit) ?? -1 : -1
       const u = c.crew.find(x => x.id === cmd.unit)
-      if (k < 0 || !u) return fail(c.phase === 'plan' ? 'They weren\'t hired this spring, so it can\'t be undone.' : 'A hire can only be undone in spring, before the season starts.')
+      if (k < 0 || !u) return fail(c.phase === 'plan' ? '올봄에 고용한 사람이 아니라 취소할 수 없습니다.' : '고용 취소는 시즌 시작 전 봄에만 할 수 있습니다.')
       const h = c.spring!.hired.splice(k, 1)[0]
       removePerson(c, u)
       if (h.applicant) c.applicants.push(h.applicant)
-      return ok([note(c, 'unhired', 'info', `${u.name} isn't hired after all, and no wages are owed.`)])
+      return ok([note(c, 'unhired', 'info', `${u.name} 고용이 취소됐고 품값은 없습니다.`)])
     }
     case 'dismiss': {
-      if (c.phase !== 'plan' && c.phase !== 'season') return fail('You can let people go in spring or during the season.')
+      if (c.phase !== 'plan' && c.phase !== 'season') return fail('해고는 봄이나 시즌 중에 할 수 있습니다.')
       const u = c.crew.find(x => x.id === cmd.unit)
-      if (!u) return fail('No such hand.')
-      if (u.kind === 'farmer') return fail('You\'re the farmer, so you stay.')
+      if (!u) return fail('그런 일꾼이 없습니다.')
+      if (u.kind === 'farmer') return fail('당신은 농장주라 남습니다.')
       removePerson(c, u)
-      return ok([note(c, 'dismissed', 'info', `${u.name} has been let go.`)])
+      return ok([note(c, 'dismissed', 'info', `${u.name}을(를) 보냈습니다.`)])
     }
     case 'raise': {
-      if (c.phase === 'over') return fail('The farm is gone.')
+      if (c.phase === 'over') return fail('농장이 없어졌습니다.')
       const u = c.crew.find(x => x.id === cmd.unit)
-      if (!u) return fail('No such person.')
-      if (u.kind === 'farmer') return fail('As the farmer you don\'t draw a wage. Your family\'s living costs come out at the end of the year.')
-      if (!Number.isFinite(cmd.wage)) return fail('Choose what the wage should be.')
+      if (!u) return fail('그런 사람이 없습니다.')
+      if (u.kind === 'farmer') return fail('농장주는 품값을 받지 않습니다. 가족 생계비는 연말에 나갑니다.')
+      if (!Number.isFinite(cmd.wage)) return fail('품값을 정하세요.')
       const wage = Math.round(cmd.wage)
-      if (wage < P.WAGE_MIN || wage > P.WAGE_MAX) return fail(`A wage has to be between $${withCommas(P.WAGE_MIN)} and $${withCommas(P.WAGE_MAX)} a month.`)
-      if (wage === u.wage) return fail(`${u.name} is already paid $${withCommas(wage)} a month.`)
+      if (wage < P.WAGE_MIN || wage > P.WAGE_MAX) return fail(`품값은 월 $${withCommas(P.WAGE_MIN)}~$${withCommas(P.WAGE_MAX)} 사이여야 합니다.`)
+      if (wage === u.wage) return fail(`${u.name}은(는) 이미 월 $${withCommas(wage)}를 받습니다.`)
       const was = u.wage
       u.wage = wage
-      return ok([note(c, 'raise', 'info', `${u.name}'s wage goes from $${withCommas(was)} to $${withCommas(wage)} a month. They asked for $${withCommas(u.ask)}.`)])
+      return ok([note(c, 'raise', 'info', `${u.name}의 품값이 월 $${withCommas(was)}에서 $${withCommas(wage)}로 바뀝니다. 요구는 $${withCommas(u.ask)}였습니다.`)])
     }
     case 'priority': {
-      if (c.phase === 'over') return fail('The farm is gone.')
+      if (c.phase === 'over') return fail('농장이 없어졌습니다.')
       const u = c.crew.find(x => x.id === cmd.unit)
-      if (!u) return fail('No such person.')
-      if (!P.SKILLS.includes(cmd.work)) return fail('No such kind of work.')
-      if (!Number.isInteger(cmd.level) || cmd.level < 0 || cmd.level > P.PRIORITY_MAX) return fail(`A priority runs from 1 (first) to ${P.PRIORITY_MAX}, or 0 for never.`)
-      if (u.prio[cmd.work] === cmd.level) return fail(`${subject(u, 'already has', 'You already have')} ${SKILL_LABEL[cmd.work]} at priority ${cmd.level}.`)
+      if (!u) return fail('그런 사람이 없습니다.')
+      if (!P.SKILLS.includes(cmd.work)) return fail('그런 일이 없습니다.')
+      if (!Number.isInteger(cmd.level) || cmd.level < 0 || cmd.level > P.PRIORITY_MAX) return fail(`우선순위는 1(맨 먼저)~${P.PRIORITY_MAX}, 안 하려면 0입니다.`)
+      if (u.prio[cmd.work] === cmd.level) return fail(`${subject(u, `${SKILL_LABEL[cmd.work]} 우선순위가 이미 ${cmd.level}입니다`)}.`)
       u.prio[cmd.work] = cmd.level
       if (cmd.level === 0) {
         // Set never to do this work: orders of that kind pinned to them are anyone's, and one held goes back.
@@ -926,33 +926,33 @@ function command(world: World, c: Campaign, cmd: Cmd): Result {
       return ok()
     }
     case 'foreman': {
-      if (c.phase === 'over') return fail('The farm is gone.')
+      if (c.phase === 'over') return fail('농장이 없어졌습니다.')
       const u = c.crew.find(x => x.id === cmd.unit)
-      if (!u) return fail('No such person.')
-      if (u.kind === 'farmer') return fail('You\'re the farmer and already run the whole farm. A foreman has to be someone you hired.')
+      if (!u) return fail('그런 사람이 없습니다.')
+      if (u.kind === 'farmer') return fail('당신은 농장주라 이미 농장 전체를 맡고 있습니다. 작업반장은 고용한 사람이어야 합니다.')
       if (cmd.block === null) {
-        if (!u.foreman) return fail(`${u.name} isn't a foreman.`)
+        if (!u.foreman) return fail(`${u.name}은(는) 작업반장이 아닙니다.`)
         u.foreman = ''
-        return ok([note(c, 'foreman', 'info', `${u.name} goes back to field work.`)])
+        return ok([note(c, 'foreman', 'info', `${u.name}은(는) 밭일로 돌아갑니다.`)])
       }
       const block = cmd.block as BlockId
-      if (!BLOCKS.includes(block)) return fail('No such block.')
-      if (u.foreman === block) return fail(`${u.name} is already foreman there.`)
-      if (!PARCELS.some((p, i) => p.block === block && held(c, i))) return fail('You hold no land there.')
+      if (!BLOCKS.includes(block)) return fail('그런 구역이 없습니다.')
+      if (u.foreman === block) return fail(`${u.name}은(는) 이미 그곳의 작업반장입니다.`)
+      if (!PARCELS.some((p, i) => p.block === block && held(c, i))) return fail('그곳에 가진 땅이 없습니다.')
       const other = c.crew.find(x => x.foreman === block)
-      if (other) return fail(`${other.name} is already foreman there.`)
+      if (other) return fail(`${other.name}이(가) 이미 그곳의 작업반장입니다.`)
       u.foreman = block
       for (const j of c.season?.jobs ?? []) if (j.unit === u.id) j.unit = -1
       letGo(u)
       delete u.help
-      return ok([note(c, 'foreman', 'info', `${u.name} is now foreman of ${BLOCK_NAME[block]}. They'll add whatever its fields need to the work list, and won't do field work themselves.`)])
+      return ok([note(c, 'foreman', 'info', `${u.name}이(가) ${BLOCK_NAME[block]}의 작업반장이 됐습니다. 그 밭에 필요한 일을 작업 목록에 올리고, 직접 밭일은 하지 않습니다.`)])
     }
     case 'sundays': {
-      if (c.phase === 'over') return fail('The farm is gone.')
-      if (typeof cmd.off !== 'boolean') return fail('Choose whether Sundays are off.')
-      if (c.sundaysOff === cmd.off) return fail(cmd.off ? 'Sundays are already off.' : 'Your farm already works Sundays.')
+      if (c.phase === 'over') return fail('농장이 없어졌습니다.')
+      if (typeof cmd.off !== 'boolean') return fail('일요일 휴일 여부를 고르세요.')
+      if (c.sundaysOff === cmd.off) return fail(cmd.off ? '일요일은 이미 휴일입니다.' : '농장은 이미 일요일에도 일합니다.')
       c.sundaysOff = cmd.off
-      return ok([note(c, 'sundays', 'info', cmd.off ? 'Sundays are off now, so nobody works on a Sunday.' : 'Your farm works Sundays now. That\'s one more day each week, but everyone gets more tired.')])
+      return ok([note(c, 'sundays', 'info', cmd.off ? '이제 일요일은 쉽니다.' : '이제 일요일에도 일합니다. 주에 하루가 더 생기지만 모두 더 빨리 지칩니다.')])
     }
     case 'pickers': {
       const s = c.season
@@ -964,9 +964,9 @@ function command(world: World, c: Campaign, cmd: Cmd): Result {
       return ok([note(c, 'pickers', 'info', cmd.on ? `A picking crew is hired at $${withCommas(P.PICKER_DAY)} for each day worked, and digging goes faster.` : 'The pickers are sent home.')])
     }
     case 'winter': {
-      if (c.phase === 'over') return fail('The farm is gone.')
+      if (c.phase === 'over') return fail('농장이 없어졌습니다.')
       const u = c.crew.find(x => x.id === cmd.unit)
-      if (!u) return fail('No such person.')
+      if (!u) return fail('그런 사람이 없습니다.')
       if (!WINTER_WORKS.includes(cmd.work)) return fail('No such winter work.')
       const field = cmd.work === 'woods' ? cmd.field ?? -1 : -1
       if (u.winter === cmd.work && u.winterField === field) return fail(`${subject(u, 'is', 'You\'re')} already set to that for the winter.`)
@@ -989,9 +989,9 @@ function command(world: World, c: Campaign, cmd: Cmd): Result {
       return ok(word ? [word] : [])
     }
     case 'rest': {
-      if (c.phase === 'over') return fail('The farm is gone.')
+      if (c.phase === 'over') return fail('농장이 없어졌습니다.')
       const u = c.crew.find(x => x.id === cmd.unit)
-      if (!u) return fail('No such person.')
+      if (!u) return fail('그런 사람이 없습니다.')
       const mode = cmd.mode ?? 'now'
       if (mode !== 'now' && mode !== 'auto' && mode !== 'push') return fail('Choose one: rest now, rest when worn out, or keep working.')
       if (u.rest === mode) return fail(mode === 'now' ? `${subject(u, 'is', 'You\'re')} already resting.` : mode === 'push' ? `${subject(u, 'is', 'You\'re')} already told to keep working.` : `${subject(u, 'already rests', 'You already rest')} when worn out.`)
@@ -1013,7 +1013,7 @@ function command(world: World, c: Campaign, cmd: Cmd): Result {
         : `Your crew will kill the vines in ${FIELD_NAMES[cmd.field]} automatically when they're due.`)])
     }
     case 'sprayWay': {
-      if (c.phase === 'over') return fail('The farm is gone.')
+      if (c.phase === 'over') return fail('농장이 없어졌습니다.')
       if (cmd.way !== 'auto' && cmd.way !== 'ask' && cmd.way !== 'none') return fail('Choose one: keep the fields sprayed, ask each time, or not this year.')
       if (sprayWayNow(c) === cmd.way) return fail('Spraying is already done that way this year.')
       c.sprayWay = { year: c.year, way: cmd.way }
@@ -1026,7 +1026,7 @@ function command(world: World, c: Campaign, cmd: Cmd): Result {
         : cmd.way === 'ask' ? 'Spraying now waits for your order.' : 'No spraying this year. You won\'t be asked to spray any field, and if blight comes, nothing will stop it.')])
     }
     case 'routine': {
-      if (c.phase === 'over') return fail('The farm is gone.')
+      if (c.phase === 'over') return fail('농장이 없어졌습니다.')
       if (!(P.ROUTINE_KINDS as JobKind[]).includes(cmd.kind)) return fail(`${JOB_LABEL[cmd.kind] ?? 'That'} is never ordered automatically.`)
       if (typeof cmd.auto !== 'boolean') return fail('Choose whether it\'s done automatically.')
       const kind = cmd.kind as RoutineKind
