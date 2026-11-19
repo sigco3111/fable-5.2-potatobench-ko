@@ -5,7 +5,7 @@ import * as F from './fmt.ts'
 
 export const USUAL_YEAR = { lo: -24000, mid: -14000, hi: -4000 }
 
-const range = () => `${F.money(-USUAL_YEAR.hi)} to ${F.money(-USUAL_YEAR.lo)}`
+const range = () => `${F.money(-USUAL_YEAR.hi)}~${F.money(-USUAL_YEAR.lo)}`
 
 // Short, for the order blank; the whole of it for the hover.
 export function usualFirstYear(bills: number): { short: string; full: string } {
