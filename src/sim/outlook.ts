@@ -764,7 +764,7 @@ export function moneyWatch(w: MoneyWatch | null, now: MoneyLook): { cause: Money
   }
   if (cause) return { cause, watch: { since: now, before: w.since, part: cause.part, counted: w.counted, last, today: now }, cancel: false }
   if (w.counted !== now.year && now.sold - w.since.sold >= MONEY_STEP && Math.abs(now.after - w.since.after) < MONEY_STEP) {
-    return { cause: { amount: 0, part: 'sold', share: 1, text: 'Sold what was already counted' }, watch: { since: now, before: null, counted: now.year, last, today: now }, cancel: false }
+    return { cause: { amount: 0, part: 'sold', share: 1, text: '이미 계산한 것을 판매함' }, watch: { since: now, before: null, counted: now.year, last, today: now }, cancel: false }
   }
   return { cause: null, watch: { ...w, last, today: now }, cancel: false }
 }

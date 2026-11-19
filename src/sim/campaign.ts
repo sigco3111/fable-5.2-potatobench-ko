@@ -114,7 +114,7 @@ function savedSeedShort(c: Campaign): string {
   c.plans.forEach((p, i) => { if (held(c, i) && p.crop === 'potato' && p.seed === 'saved') need[p.variety] = (need[p.variety] ?? 0) + 1 })
   for (const id of Object.keys(need)) {
     const have = c.seedStock.filter(s => s.variety === id).reduce((a, s) => a + s.fields, 0)
-    if (have < need[id]) return `You don't have enough saved ${variety(id as FieldPlan['variety']).name} seed. The cellar holds enough for ${have} ${have === 1 ? 'field' : 'fields'}.`
+    if (have < need[id]) return `자가 ${variety(id as FieldPlan['variety']).name} 종자가 부족합니다. 저장고에는 ${have}개 밭 분량뿐입니다.`
   }
   return ''
 }
@@ -125,11 +125,11 @@ export interface PotatoHouse { name: string; at: number; cwt: number }
 // built there while Dufour land is held. Ventilation is in the home houses.
 export function potatoHouses(c: Campaign): PotatoHouse[] {
   const home = c.upgrades.vent ? P.CELLAR_CWT_VENT : P.CELLAR_CWT
-  const out: PotatoHouse[] = [{ name: 'Home potato house', at: HOME_YARD, cwt: home }]
-  if (hasBuilt(c, 'house', HOME_YARD)) out.push({ name: 'Second potato house', at: HOME_YARD, cwt: home })
+  const out: PotatoHouse[] = [{ name: '집 감자 저장고', at: HOME_YARD, cwt: home }]
+  if (hasBuilt(c, 'house', HOME_YARD)) out.push({ name: '두 번째 감자 저장고', at: HOME_YARD, cwt: home })
   if (holdsDufour(c)) {
-    out.push({ name: 'Dufour potato house', at: DUFOUR_YARD, cwt: YARDS[1].cellar })
-    if (hasBuilt(c, 'house', DUFOUR_YARD)) out.push({ name: 'New Dufour potato house', at: DUFOUR_YARD, cwt: P.HOUSE_CWT })
+    out.push({ name: '뒤푸르 감자 저장고', at: DUFOUR_YARD, cwt: YARDS[1].cellar })
+    if (hasBuilt(c, 'house', DUFOUR_YARD)) out.push({ name: '새 뒤푸르 감자 저장고', at: DUFOUR_YARD, cwt: P.HOUSE_CWT })
   }
   return out
 }
@@ -188,7 +188,7 @@ function settleContracts(c: Campaign, due: Due | 'all', out: GameEvent[]): void 
       if (k.cwt - k.delivered <= 1e-6) break
       if (lot.variety !== k.variety || (c.season && c.phase === 'season' && !c.season.fields[lot.field]?.weighed)) continue
       const d = deliverLot(c, lot, k)
-      if (d.take > 1e-6) out.push(note(c, 'delivered', 'good', `${k.buyer} collected ${withCommas(d.take)} cwt of ${variety(k.variety).name} from your potato house toward the contract and paid $${withCommas(d.money)}.`, lot.field))
+      if (d.take > 1e-6) out.push(note(c, 'delivered', 'good', `${k.buyer}이(가) 계약분으로 당신의 감자 저장고에서 ${variety(k.variety).name} ${withCommas(d.take)} cwt를 가져가고 $${withCommas(d.money)}를 지불했습니다.`, lot.field))
     }
     k.settled = true
     const short = k.cwt - k.delivered
@@ -198,9 +198,9 @@ function settleContracts(c: Campaign, due: Due | 'all', out: GameEvent[]): void 
       k.penalty = pen
       cost(c, pen)
       c.yearPenalties += pen
-      out.push(note(c, 'contractShort', 'bad', `You came up ${withCommas(short)} cwt of ${name} short on ${k.buyer.toLowerCase()}'s contract, and the penalty is $${withCommas(pen)}.`))
+      out.push(note(c, 'contractShort', 'bad', `${k.buyer.toLowerCase()} 계약에 ${name} ${withCommas(short)} cwt가 모자라 위약금은 $${withCommas(pen)}입니다.`))
     } else {
-      out.push(note(c, 'contractFilled', 'good', `${k.buyer}'s contract for ${withCommas(k.cwt)} cwt of ${name} is filled.`))
+      out.push(note(c, 'contractFilled', 'good', `${k.buyer}의 ${name} ${withCommas(k.cwt)} cwt 계약이 이행됐습니다.`))
     }
   }
 }
@@ -222,11 +222,11 @@ function endSeason(world: World, c: Campaign): GameEvent[] {
       }
       f.status = f.status === 'digging' ? 'dug' : 'lost'
       if (f.status === 'lost') out.push(f.plantDay < 0
-        ? note(c, 'lost', 'warn', `${FIELD_NAMES[i]} was never planted.`, i)
-        : note(c, 'lost', 'bad', `${FIELD_NAMES[i]} was left in the ground.`, i))
+        ? note(c, 'lost', 'warn', `${FIELD_NAMES[i]}은(는) 심지 않았습니다.`, i)
+        : note(c, 'lost', 'bad', `${FIELD_NAMES[i]}이(가) 땅에 남겨졌습니다.`, i))
     }
   }
-  leftInField(c, s, out, 'was left in the barrels')
+  leftInField(c, s, out, '통에 남겨져')
   closeIncidents(c, s, out)
   s.jobs = []
   // The crews go home for the winter.
@@ -244,7 +244,7 @@ function endSeason(world: World, c: Campaign): GameEvent[] {
       const frac = Math.min(1, (total - cap) / have)
       const money = sellLot(world, c, lot, frac)
       total -= have * frac
-      out.push(note(c, 'overflow', 'warn', `The cellar is full, so ${withCommas(have * frac)} cwt of ${variety(lot.variety).name} was sold straight from the field for $${withCommas(money)}.`, lot.field))
+      out.push(note(c, 'overflow', 'warn', `저장고가 가득 차 ${variety(lot.variety).name} ${withCommas(have * frac)} cwt가 밭에서 바로 $${withCommas(money)}에 팔렸습니다.`, lot.field))
     }
   }
   // What was kept has been sitting in the cellar since its dig: that time is charged and shrinks the pile too.
@@ -255,10 +255,10 @@ function endSeason(world: World, c: Campaign): GameEvent[] {
     kept += lotCwt(lot)
   }
   if (rent > 0) {
-    out.push(note(c, 'stored', 'info', `${withCommas(kept)} cwt is in the cellar. Storing it since harvest has cost $${withCommas(rent)}.`))
+    out.push(note(c, 'stored', 'info', `${withCommas(kept)} cwt가 저장고에 있습니다. 수확 후 저장 비용으로 $${withCommas(rent)}이 들었습니다.`))
   }
   const rest = c.yearRest
-  if (rest > 0) out.push(note(c, 'rest', 'info', `The oats and clover brought in $${withCommas(rest)}.`))
+  if (rest > 0) out.push(note(c, 'rest', 'info', `귀리와 클로버가 $${withCommas(rest)}를 벌어들였습니다.`))
   c.phase = 'cellar'
   c.month = 0
   return out
@@ -275,7 +275,7 @@ function storeMonth(c: Campaign, out: GameEvent[]): void {
     const stored = dayIndex(lot.year, 10, 1) - lot.dugDay + lot.months * 30
     if (!lot.sprouted && stored > v.dormancy + P.COOL_CELLAR_DAYS + (vent ? P.VENT_DAYS : 0)) {
       lot.sprouted = true
-      out.push(note(c, 'sprout', 'warn', `The ${v.name} from ${FIELD_NAMES[lot.field]} has started to sprout.`, lot.field))
+      out.push(note(c, 'sprout', 'warn', `${FIELD_NAMES[lot.field]}의 ${v.name}에 싹이 트기 시작했습니다.`, lot.field))
     }
     if (lot.sprouted) shrink += P.SPROUT_SHRINK
     let rotLoss = 0
@@ -287,9 +287,9 @@ function storeMonth(c: Campaign, out: GameEvent[]): void {
         lot.broke = true
         rotLoss = 0.55
         lot.rot = 0.06
-        const seed = lot.seedHeld > 0 ? ' The seed you held back from it is lost too.' : ''
+        const seed = lot.seedHeld > 0 ? ' 남겨둔 종자도 잃었습니다.' : ''
         lot.seedHeld = 0
-        out.push(note(c, 'breakdown', 'bad', `Rot has spread through the ${v.name} from ${FIELD_NAMES[lot.field]}, and more than half of it is gone.${seed}`, lot.field))
+        out.push(note(c, 'breakdown', 'bad', `${FIELD_NAMES[lot.field]}의 ${v.name}에 부패가 퍼져 절반 이상이 사라졌습니다.${seed}`, lot.field))
       }
     }
     const keep = (1 - shrink) * (1 - rotLoss)
@@ -306,7 +306,7 @@ function storeMonth(c: Campaign, out: GameEvent[]): void {
 
 export const WINTER_WORKS: WinterWork[] = ['off', 'woods', 'pack', 'build']
 export const WINTER_LABEL: Record<WinterWork, string> = {
-  off: 'laid off', woods: 'felling in the woods', pack: 'packing in the packing shed', build: 'building',
+  off: '겨울 해고', woods: '숲 벌목', pack: '포장실 포장', build: '건축',
 }
 
 // Whether today falls in the harvest break, when the schools close and pickers can be had.
@@ -330,10 +330,10 @@ function takeOn(c: Campaign, u: Unit): GameEvent {
     u.paidTo = c.season.day + P.WAGE_DAYS
   }
   c.crew.push(u)
-  const as = u.kind === 'hand' ? 'a field hand' : 'a tractor operator'
+  const as = u.kind === 'hand' ? '밭일꾼' : '트랙터 운전자'
   // What a hand will do, so the farmer keeps to the machines.
-  const does = u.kind === 'hand' && u.prio.field > 0 ? ` ${u.name.split(' ')[0]} will scout, pull blighted plants and do test digs${u.prio.machine > 0 ? ', and drive when you can\'t' : ''}, so you can stay on the tractor.` : ''
-  return note(c, 'hired', 'info', `${u.name} is hired as ${as} at $${withCommas(u.wage)} a month.${does}`)
+  const does = u.kind === 'hand' && u.prio.field > 0 ? ` ${u.name.split(' ')[0]}이(가) 순찰, 병든 포기 뽑기, 시험 캐기를 맡습니다${u.prio.machine > 0 ? ', 당신이 못할 때는 운전도 합니다' : ''}. 트랙터에만 집중하세요.` : ''
+  return note(c, 'hired', 'info', `${u.name}이(가) ${as}(으)로 고용됐습니다. 품값은 월 $${withCommas(u.wage)}입니다.${does}`)
 }
 
 // The tracts the farm holds with standing woods or brush to fell.
@@ -346,23 +346,23 @@ export function timberTracts(c: Campaign): number[] {
 // Why a person cannot be set to this winter work, or '' when they can. Woods work names the tract to fell.
 export function winterBlock(c: Campaign, u: Unit, work: WinterWork, field = -1): string {
   if (work === 'off') return ''
-  if (u.trait === 'homebody') return `${u.name} is a homebody and won't work winters.`
+  if (u.trait === 'homebody') return `${u.name}은(는) 집을 좋아해 겨울 일은 하지 않습니다.`
   switch (work) {
     case 'woods': {
       if (!Number.isInteger(field) || field < 0 || field >= P.FIELD_COUNT) {
-        return timberTracts(c).length ? 'Pick a tract to fell.' : 'There\'s no standing timber on your farm to fell.'
+        return timberTracts(c).length ? '벨 구역을 고르세요.' : '농장에 벨 만한 수림이 없습니다.'
       }
-      if (c.fields[field].tenure === 'none') return `${FIELD_NAMES[field]} isn't yours.`
-      if (!standing(c.fields[field].cover)) return `There's nothing left to fell on ${FIELD_NAMES[field]}.`
+      if (c.fields[field].tenure === 'none') return `${FIELD_NAMES[field]}은(는) 당신의 땅이 아닙니다.`
+      if (!standing(c.fields[field].cover)) return `${FIELD_NAMES[field]}에는 더 벨 것이 없습니다.`
       return ''
     }
     case 'pack':
-      if (!hasBuilt(c, 'packing')) return 'Packing needs a packing shed.'
-      return unpacked(c) >= 1 ? '' : 'There\'s nothing left in storage to pack.'
+      if (!hasBuilt(c, 'packing')) return '포장하려면 포장실이 필요합니다.'
+      return unpacked(c) >= 1 ? '' : '포장할 저장 물량이 남지 않았습니다.'
     case 'build':
-      return c.buildings.some(b => buildable(c, b)) ? '' : 'Nothing is being built.'
+      return c.buildings.some(b => buildable(c, b)) ? '' : '짓고 있는 것이 없습니다.'
   }
-  return 'No such winter work.'
+  return '그런 겨울 일이 없습니다.'
 }
 
 // One month of winter. Someone kept on is paid and puts in WINTER_DAYS crew-days at their skill; the farmer works
@@ -386,7 +386,7 @@ function winterMonth(c: Campaign, out: GameEvent[]): void {
     const skill = WINTER_SKILL[u.winter]
     const time = u.kind === 'farmer' ? P.FARMER_WINTER_DAYS : P.WINTER_DAYS
     winterWork(c, u, time * speed(u, skill), out)
-    for (const level of gainXp(u, skill, time)) out.push(note(c, 'skillUp', 'good', `${subject(u, 'is', 'You are')} better at ${SKILL_LABEL[skill]}: level ${level}.`))
+    for (const level of gainXp(u, skill, time)) out.push(note(c, 'skillUp', 'good', `${subject(u, `${SKILL_LABEL[skill]}이(가) 늘었습니다: ${level}레벨`)}.`))
   }
   // Work that ran out this month lays its people off now, not a month on, so the winter's lines say what they do.
   for (const u of c.crew) {
@@ -394,7 +394,7 @@ function winterMonth(c: Campaign, out: GameEvent[]): void {
     const why = winterBlock(c, u, u.winter, u.winterField)
     if (!why) continue
     const other = u.winter === 'woods' ? timberTracts(c).filter(i => i !== u.winterField) : []
-    const more = other.length ? ` ${FIELD_NAMES[other[0]]} is still standing if you want it felled.` : ''
+    const more = other.length ? ` 더 벌목하려면 ${FIELD_NAMES[other[0]]}이(가) 아직 서 있습니다.` : ''
     out.push(note(c, 'winterIdle', 'info', `${winterOff(u)}. ${why}${more}`))
     u.winter = 'off'
     u.winterField = -1
@@ -402,7 +402,7 @@ function winterMonth(c: Campaign, out: GameEvent[]): void {
 }
 
 function winterOff(u: Unit): string {
-  return subject(u, 'is laid off for the rest of the winter', 'You\'re done working for the rest of the winter')
+  return subject(u, '남은 겨울 동안 해고됐습니다', '')
 }
 
 const WINTER_SKILL: Record<Exclude<WinterWork, 'off'>, 'woods' | 'pack' | 'build'> = { woods: 'woods', pack: 'pack', build: 'build' }
@@ -416,13 +416,13 @@ function winterWork(c: Campaign, u: Unit, days: number, out: GameEvent[]): void 
       if (!buildable(c, b) || left <= 0) continue
       const use = Math.min(left, b.need - b.done)
       left -= use
-      if (buildWork(c, b, use)) out.push(note(c, 'built', 'good', `The ${P.BUILDINGS[b.kind].name.toLowerCase()} in ${YARD_NAME[b.yard]} was built over the winter. ${P.BUILDINGS[b.kind].does}`))
+      if (buildWork(c, b, use)) out.push(note(c, 'built', 'good', `${YARD_NAME[b.yard]}에 ${P.BUILDINGS[b.kind].name}이(가) 겨울 동안 지어졌습니다. ${P.BUILDINGS[b.kind].does}`))
     }
   }
   if (u.winter === 'woods') {
     const i = u.winterField
     if (fell(c, i, days, u)) {
-      out.push(note(c, 'felled', 'good', `${FIELD_NAMES[i]} was felled over the winter. The stumps are still there, and a contractor can pull them.${sheltering(c, i)}`, i))
+      out.push(note(c, 'felled', 'good', `${FIELD_NAMES[i]}이(가) 겨울 동안 벌목됐습니다. 그루터기는 남아 있고 업자가 뽑을 수 있습니다.${sheltering(c, i)}`, i))
     }
   }
 }
