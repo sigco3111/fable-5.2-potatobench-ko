@@ -172,7 +172,8 @@ describe('the guided first year', () => {
   })
 
   it('every lesson has a name, and the first year is short', () => {
-    for (const x of LESSONS) expect(x.name.length).toBeGreaterThan(1)
+    expect(LESSONS.some(x => x.name === '장부')).toBe(true) // 유효한 최소 길이(2자) 이름 사례
+    for (const x of LESSONS) expect(x.name.length).toBeGreaterThan(1) // 한국어 이름은 두 글자도 충분
     expect(LESSONS.filter(x => x.part !== 'spring').length).toBeLessThanOrEqual(20)
   })
 

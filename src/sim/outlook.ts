@@ -680,7 +680,7 @@ function causeText(a: MoneyLook, b: MoneyLook, part: string, x: number, d: Recor
     switch (why) {
       case 'dry': return `${name} 건조`
       case 'scab': return `${name} 더뎅이병, 마른 흙`
-      case 'blight': return now.protect >= 0.35 ? `${name} 역병` : days < 0 ? `${name} 역병, 한 번도 살포 안 함` : `${name} ${days}일째 살포 안 함`
+      case 'blight': return now.protect >= 0.35 ? `${name} 역병` : days < 0 ? `${name} 역병, 살포 없음` : `${name} ${days}일째 살포 안 함`
       case 'frost': return `${name}에 서리`
       case 'virus': return `${name} 바이러스`
       default: return `${name} 잡초, 북주기 안 함`
@@ -701,7 +701,7 @@ function causeText(a: MoneyLook, b: MoneyLook, part: string, x: number, d: Recor
     const top = Object.entries(d).filter(([k, v]) => k.startsWith('crop:') && Math.sign(v) === Math.sign(x)).sort((p, q) => Math.abs(q[1]) - Math.abs(p[1]))[0]
     if (!top) return `밭 작황이 ${up ? '좋아짐' : '나빠짐'}`
     const i = Number(top[0].slice(5))
-    return seen(i, FIELD_NAMES[i], true) || `밭 작황이 ${up ? '좋아짐' : '나빠짐'}, ${FIELD_NAMES[i]}이(가) 가장 큼`
+    return seen(i, FIELD_NAMES[i], true) || `밭 작황 ${up ? '호전' : '악화'}, ${FIELD_NAMES[i]} 최대`
   }
   if (part.startsWith('crop:')) {
     const i = Number(part.slice(5))

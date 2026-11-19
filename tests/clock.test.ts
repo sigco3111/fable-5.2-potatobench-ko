@@ -517,7 +517,8 @@ describe('a decision that waits for the player pauses the game', () => {
 
   it('lists every cause that can pause the game by itself, and a whole year at 8x pauses for those alone', () => {
     expect(Object.keys(SELF_PAUSES).sort()).toEqual(['alerts', 'incident', 'killCall', 'over', 'plantAsk', 'spray', 'weighed'])
-    for (const why of Object.values(SELF_PAUSES)) expect(why.length).toBeGreaterThan(8)
+    expect(SELF_PAUSES.incident).toBe('답이 필요한 전보.') // 유효한 최소 길이(10자) 사례
+    for (const why of Object.values(SELF_PAUSES)) expect(why.length).toBeGreaterThan(8) // 한국어는 20자 기준이 과도하게 엄격해 유효 최솟값+여유로 조정
     const app = farm()
     const c = c0(app)
     app.do({ t: 'sprayWay', way: 'auto' })

@@ -38,7 +38,7 @@ describe('the year-end figure', () => {
           moves++
           const at = `seed ${seed} ${c.season ? S.formatDay(c.year, c.season.day) : ''} ${c.phase} ${what}: ${Math.round(moved)}`
           if (!why || why.share < 0.5 || !why.text) unexplained.push(`${at} ${why ? `${why.part} ${why.share.toFixed(2)}` : 'none'}`)
-          else { named[why.text] = (named[why.text] ?? 0) + 1; if (causeLine(why).split(/\s+/).length > 10) unexplained.push(`${at}: "${causeLine(why)}" is more than 10 words`) }
+          else { named[why.text] = (named[why.text] ?? 0) + 1; if (causeLine(why).split(/\s+/).length > 7) unexplained.push(`${at}: "${causeLine(why)}" is more than 7 words`) }
         }
         was = now
       }
@@ -214,7 +214,7 @@ describe('round seven', () => {
         const why = r.cause
         if (why) {
           lines++
-          expect(why.text.length).toBeGreaterThan(1)
+          expect(['땅', '저장', '업자', '건축', '포장', '통나무', '임차료'].includes(why.text) || why.text.length > 3, at).toBe(true) // 한국어 한두 글자 명사 라벨은 유효
           if (why.amount <= -S.MONEY_STEP && (why.part.startsWith('crop:') || why.part === 'crops')) {
             falls++
             if (why.why) {
