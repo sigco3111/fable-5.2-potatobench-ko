@@ -18,9 +18,9 @@ export async function startNewFarm(ctx: Ctx, guided = false): Promise<void> {
   const saved = app.savedGame()?.campaign
   if (saved && saved.phase !== 'over' && saved.outcome !== 'lost') {
     const ok = await confirmPaper(ctx, {
-      title: 'Start a new farm?',
-      text: h('p', null, `This replaces the farm saved in this browser (${seasonCount(saved)}, ${PHASE_LABEL[saved.phase].toLowerCase()}). Save a copy from the menu first if you want to keep it.`),
-      yes: 'Start a new farm', no: 'Keep this farm', danger: true,
+      title: '새 농장을 시작할까요?',
+      text: h('p', null, `이 브라우저에 저장된 농장(${seasonCount(saved)}, ${PHASE_LABEL[saved.phase].toLowerCase()})을 대신합니다. 남기고 싶으면 먼저 메뉴에서 사본을 저장하세요.`),
+      yes: '새 농장 시작', no: '이 농장 두기', danger: true,
     })
     if (!ok) return
   }
@@ -51,21 +51,21 @@ export function titleScreen(ctx: Ctx, o: { onMenu: () => void; onHelp: () => voi
   const app = ctx.app
   const menu = h('nav', { class: 'cv-menu', 'aria-label': 'The County' })
   const cover = h('section', { class: 'cover sheet sys', 'aria-label': 'The County' },
-    h('p', { class: 'cv-top', 'aria-hidden': 'true' }, h('span', null, 'Potato farming'), h('i', { class: 'orn' }), h('span', null, 'Northern Maine')),
+    h('p', { class: 'cv-top', 'aria-hidden': 'true' }, h('span', null, '감자 농사'), h('i', { class: 'orn' }), h('span', null, '메인 북부')),
     h('h1', { class: 'cv-name title-name' }, h('span', { class: 'the' }, 'The'), h('span', { class: 'county' }, 'County')),
     h('hr', { class: 'rule oxford' }),
     h('figure', { class: 'cv-cut' }, engraving(),
-      h('p', null, 'Run a potato farm in northern Maine. Plant your fields, hire a crew, sell the harvest, and keep the farm going for five years.'),
-      h('figcaption', { class: 'it' }, 'Fig. 1. A potato plant.')),
+      h('p', null, '메인 북부에서 감자 농장을 꾸리세요. 밭을 심고, 작업반을 고용하고, 수확을 팔고, 농장을 5년 동안 이어가세요.'),
+      h('figcaption', { class: 'it' }, '그림 1. 감자 포기.')),
     menu,
     h('footer', { class: 'imprint', testid: 'credit' },
       h('p', { class: 'a' }, 'Fable 5.2 - PotatoBench'),
-      h('p', { class: 'b' }, 'PotatoBench made by TheMizeGuy')))
+      h('p', { class: 'b' }, 'PotatoBench 제작 TheMizeGuy · 한글판 sigco3111')))
   // The frame's dressing: bars, a little dark at its corners and behind the name, and the black the first frame comes
   // up out of. All of it lies under the name and the menu and takes no press. The picture itself is left clean.
   const barT = h('div', { class: 'cine-bar t' }), barB = h('div', { class: 'cine-bar b' })
   const el = h('main', { class: 'title-screen cine sys' }, h('div', { class: 'title-shade' }), h('div', { class: 'cine-vignette' }),
-    barT, barB, cover, h('p', { class: 'cine-hint', 'aria-hidden': 'true' }, 'Enter to play'), h('div', { class: 'cine-fade' }))
+    barT, barB, cover, h('p', { class: 'cine-hint', 'aria-hidden': 'true' }, 'Enter로 시작'), h('div', { class: 'cine-fade' }))
   // The entrance plays once a visit, the first time the landing is shown.
   if (!entered) {
     entered = true
@@ -87,17 +87,17 @@ export function titleScreen(ctx: Ctx, o: { onMenu: () => void; onHelp: () => voi
       const layout = ctx.layout()
       el.dataset.layout = layout
       patch(menu, JSON.stringify([c?.year, c?.phase, c?.yearIdx, c?.outcome]), () => [
-        h('p', { class: 't-label' }, 'Contents'),
+        h('p', { class: 't-label' }, '차례'),
         // The strong action is the one most players want: go on with the farm they have, or start one.
-        c ? h('button', { class: 'btn go wide', type: 'button', testid: 'continue', onclick: () => { if (!app.continueGame()) ctx.say('The saved farm couldn\'t be loaded. Start a new farm to play.', 'warn'); else resumeOnLand(ctx) } },
-          h('span', null, 'Continue', h('span', { class: 'sub-go' }, `${seasonCount(c)}, ${PHASE_LABEL[c.phase].toLowerCase()}`)), icon('arrow', 'i'))
-          : h('button', { class: 'btn go wide', type: 'button', testid: 'play', onclick: () => { void startNewFarm(ctx) } }, 'Play', icon('arrow', 'i')),
+        c ? h('button', { class: 'btn go wide', type: 'button', testid: 'continue', onclick: () => { if (!app.continueGame()) ctx.say('저장된 농장을 불러오지 못했습니다. 새 농장으로 시작하세요.', 'warn'); else resumeOnLand(ctx) } },
+          h('span', null, '이어하기', h('span', { class: 'sub-go' }, `${seasonCount(c)}, ${PHASE_LABEL[c.phase].toLowerCase()}`)), icon('arrow', 'i'))
+          : h('button', { class: 'btn go wide', type: 'button', testid: 'play', onclick: () => { void startNewFarm(ctx) } }, '시작하기', icon('arrow', 'i')),
         c ? h('button', { class: 'cv-item lead', type: 'button', testid: 'play', onclick: () => { void startNewFarm(ctx) } },
-          h('b', null, 'New farm'), h('span', { class: 'dots' }), h('span', { class: 'it quiet' }, 'from the first spring')) : null,
+          h('b', null, '새 농장'), h('span', { class: 'dots' }), h('span', { class: 'it quiet' }, '첫 봄부터')) : null,
         h('button', { class: 'cv-item lead', type: 'button', testid: 'play-guided', onclick: () => { void startNewFarm(ctx, true) } },
-          h('b', null, 'Guided first year'), h('span', { class: 'dots' }), h('span', { class: 'it quiet' }, 'a new farm with a tutorial')),
-        h('button', { class: 'cv-item lead', type: 'button', testid: 'how-open', onclick: () => o.onHelp() }, h('b', null, 'How to play'), h('span', { class: 'dots' }), h('span', { class: 'chev', 'aria-hidden': 'true' }, '›')),
-        h('button', { class: 'cv-item lead', type: 'button', testid: 'menu-open', onclick: () => o.onMenu() }, h('b', null, 'Settings'), h('span', { class: 'dots' }), h('span', { class: 'chev', 'aria-hidden': 'true' }, '›')),
+          h('b', null, '배우며 하는 첫해'), h('span', { class: 'dots' }), h('span', { class: 'it quiet' }, '레슨과 함께하는 새 농장')),
+        h('button', { class: 'cv-item lead', type: 'button', testid: 'how-open', onclick: () => o.onHelp() }, h('b', null, '플레이 방법'), h('span', { class: 'dots' }), h('span', { class: 'chev', 'aria-hidden': 'true' }, '›')),
+        h('button', { class: 'cv-item lead', type: 'button', testid: 'menu-open', onclick: () => o.onMenu() }, h('b', null, '설정'), h('span', { class: 'dots' }), h('span', { class: 'chev', 'aria-hidden': 'true' }, '›')),
       ])
       // The strong action is under the keyboard from the start; the focus is tried again until the land is up and it takes.
       if (!focused && !ctx.papers.isOpen()) {
