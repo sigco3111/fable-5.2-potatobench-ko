@@ -29,7 +29,7 @@ function prices(c: Campaign): Record<string, Price> {
     const by = (a: GoalCost, b: GoalCost) => a.cost - b.cost
     const can = list.filter(g => g.can).sort(by)[0]
     if (can) return { cost: can.cost, block: '' }
-    const open = list.filter(g => !/already/i.test(g.why)).sort(by)[0]
+    const open = list.filter(g => !/이미/.test(g.why)).sort(by)[0]
     return open ? { cost: open.cost, block: open.why } : { cost: 0, block: '' }
   }
   // A machine is a goal only while buying it keeps the note's worth in hand: equipment comes out of cash, and a farm
@@ -37,7 +37,7 @@ function prices(c: Campaign): Record<string, Price> {
   const tool = cheapest(all.filter(g => g.id.startsWith('buy:')))
   const left = c.cash - tool.cost
   const floor = c.phase === 'plan' && !tool.block && tool.cost > 0 && left < NOTE_PAYMENT
-    ? `That would leave ${money(left)}, less than the ${money(NOTE_PAYMENT)} yearly bank payment.` : ''
+    ? `그러면 ${money(left)}가 남아 연간 은행 상환금 ${money(NOTE_PAYMENT)}보다 적습니다.` : ''
   return {
     stump: one('stump'), hire: one('hire'), foreman: one('foreman'), land: one('rent'),
     tool: floor ? { cost: tool.cost, block: floor } : tool, build: cheapest(all.filter(g => g.id.startsWith('build:'))),
@@ -76,27 +76,27 @@ export function goals(c: Campaign, o: { thisSeason?: boolean } = {}): Goal[] {
 
   // The first season, in the order the crop asks for it. A later step done means every earlier one is behind the farm.
   const season: Spec[] = [
-    { id: 'plant', title: 'Plant the fields', why: 'Planting can start once the soil has warmed up. Your crew then waits for you, so order Plant on one field and they\'ll plant the rest.', when: 'During the season',
+    { id: 'plant', title: '밭에 심기', why: '흙이 따뜻해지면 파종할 수 있습니다. 일꾼들은 당신을 기다리니 한 밭에 파종을 지시하면 나머지도 심습니다.', when: '시즌 중',
       done: past || (potato.length > 0 && planted.length === potato.length) || any(f => f.tiDay >= 0), now: crop,
       progress: potato.length ? { n: planted.length, of: potato.length } : null },
-    { id: 'walk', title: 'Walk a field for blight', why: 'Blight only shows up close, so walking a field catches it while it\'s still small.', when: 'Once the rows are up',
+    { id: 'walk', title: '밭을 돌며 역병 보기', why: '역병은 가까이에서만 보이니 밭을 돌아보면 작을 때 잡을 수 있습니다.', when: '열이 나오면',
       done: past || any(f => f.lastScout >= 0), now: crop },
-    { id: 'hill', title: 'Hill the rows', why: 'Hilling (piling soil over the rows) protects the potatoes from sunlight and blight.', when: 'Once the plants are a hand tall',
+    { id: 'hill', title: '북주기', why: '북주기(열에 흙을 덮기)는 감자를 햇볕과 역병에서 지킵니다.', when: '식물이 한 뼘 자라면',
       done: past || any(f => f.hillPasses > 0), now: crop,
       progress: planted.length ? { n: planted.filter(i => fields[i].hillPasses > 0).length, of: planted.length } : null },
-    { id: 'spray', title: 'Spray before blight arrives', why: 'Spray only protects leaves it reaches before the blight does.', when: 'While the vines are green',
+    { id: 'spray', title: '역병 전에 살포', why: '약은 역병보다 먼저 닿은 잎만 지킵니다.', when: '줄기가 푸를 때',
       done: past || any(f => f.lastSpray >= 0), now: crop },
-    { id: 'sample', title: 'Do a test dig', why: 'Digging up one plant shows how the potatoes are coming along.', when: 'Once potatoes have formed',
+    { id: 'sample', title: '시험 캐기', why: '한 포기를 캐보면 감자가 어떻게 여물고 있는지 알 수 있습니다.', when: '감자가 맺히면',
       done: past || any(f => f.samples.length > 0), now: crop },
-    { id: 'kill', title: 'Kill the vines', why: 'This stops the growth, and the skins toughen over about two weeks.', when: 'In September',
+    { id: 'kill', title: '줄기 죽이기', why: '생장이 멈추고 껍질이 약 2주에 걸쳐 굳습니다.', when: '9월에',
       done: past || any(f => f.killDay >= 0 || f.deadDay >= 0), now: crop },
-    { id: 'dig', title: 'Dig a field', why: 'The digger lifts the potatoes out of the ground and into barrels.', when: 'Once the skins toughen',
+    { id: 'dig', title: '밭 수확', why: '수확기가 감자를 땅에서 들어 통에 담습니다.', when: '껍질이 굳으면',
       done: past || any(f => f.status === 'digging' || f.status === 'dug'), now: crop },
-    { id: 'haul', title: 'Bring the crop in', why: 'Potatoes wait in barrels until they\'re hauled in, and a hard frost will ruin some of them. Each field is weighed once everything is in.', when: 'After digging',
+    { id: 'haul', title: '수확물 들이기', why: '감자는 실어 들일 때까지 통에서 기다리고, 강한 서리는 일부를 상하게 합니다. 모두 들어오면 밭마다 계근합니다.', when: '수확 후',
       done: past || any(f => f.weighed), now: crop },
-    { id: 'sell', title: 'Sell some potatoes', why: 'Sell straight from the field now, or store them and sell over the winter.', when: 'After the weigh-in',
+    { id: 'sell', title: '감자 팔기', why: '지금 밭에서 바로 팔거나, 저장해 겨울에 팔 수 있습니다.', when: '계근 후',
       done: o.thisSeason ? c.lots.some(l => l.year === c.year && l.sold > 0) : c.lots.some(l => l.sold > 0) || c.history.some(y => y.cwtSold > 0), now: c.phase === 'season' || c.phase === 'cellar' },
-    { id: 'year', title: 'Get through the year', why: 'Make your yearly bank payment at the end of the year, and spring comes around again.', when: 'At the end of the year',
+    { id: 'year', title: '해 넘기기', why: '연말에 연간 은행 상환금을 내면 다시 봄이 옵니다.', when: '연말에',
       done: past && c.outcome !== 'lost', now: true },
   ]
 
@@ -108,42 +108,42 @@ export function goals(c: Campaign, o: { thisSeason?: boolean } = {}): Goal[] {
   const noTract = mine.length === 0
   const clearing: Spec[] = [
     // Felling waits until the crop is in the ground: in a season it is the work of the quiet weeks.
-    { id: 'fell', title: 'Fell a woodlot', why: 'Cutting the woods down is the first step to a new field. The logs go to your yard, and the stumps and stones come out next.', when: noTract ? 'Once you own a woodlot, which you can buy in spring under Land' : 'Once the crop is planted, or over the winter',
+    { id: 'fell', title: '산벌하기', why: '나무를 베는 것이 새 밭의 첫걸음입니다. 통나무는 마당으로 가고, 이어서 그루터기와 돌을 치웁니다.', when: noTract ? '산을 소유하면 됩니다. 봄에 땅에서 살 수 있습니다' : '작물을 심은 후나 겨울에',
       done: mine.some(t => t.f.cover === 'stumps' || t.f.cover === 'open'), now: !noTract && ((inSeason && planted.length === potato.length) || c.phase === 'cellar'),
       progress: felledMost > 0 ? { n: Math.round(felledMost * 100), of: 100 } : null },
-    { id: 'stump', title: 'Pull the stumps', why: 'A contractor with a bulldozer pulls them for a fee.', when: 'In spring or during the season',
+    { id: 'stump', title: '그루터기 뽑기', why: '불도저 업자가 비용을 받고 뽑아줍니다.', when: '봄이나 시즌 중',
       done: clearedMine.length > 0, now: spring || inSeason, price: price.stump },
-    { id: 'rocks', title: 'Pick rocks off new ground', why: 'Newly cleared land is full of rocks. Use Pick rocks on its card to have someone clear them so it can be planted, and the stones go to your yard for building.', when: 'During the season',
+    { id: 'rocks', title: '새 땅의 돌 고르기', why: '갓 개간한 땅은 돌투성이입니다. 카드의 돌 고르기로 치우면 심을 수 있고, 돌은 건축에 쓸 마당으로 갑니다.', when: '시즌 중',
       done: clearedMine.some(t => t.f.stones < ROCKS_ADVISE), now: inSeason && clearedMine.length > 0 },
-    { id: 'newfield', title: 'Farm the new ground', why: 'Grow oats and clover on it for a year, then plant potatoes in the fresh soil.', when: 'Starting next spring',
+    { id: 'newfield', title: '새 땅 일구기', why: '1년간 귀리와 클로버를 키운 뒤 새 흙에 감자를 심습니다.', when: '다음 봄부터',
       done: clearedMine.some(t => !t.f.raw || (inSeason && fields[t.i] && fields[t.i].status !== 'off')), now: (spring || inSeason) && clearedMine.length > 0 },
   ]
 
   const ladder: Spec[] = [
     ...chain(season),
-    { id: 'tool', title: 'Buy a machine', why: 'Equipment speeds up the jobs that matter most.', when: 'In spring, during the season or in winter',
+    { id: 'tool', title: '기계 사기', why: '장비는 가장 중요한 일을 빠르게 합니다.', when: '봄, 시즌 중 또는 겨울',
       done: Object.values(c.upgrades).some(Boolean), now: spring || inSeason || c.phase === 'cellar', price: price.tool },
-    ...(handNeeded || hired || c.history.some(y => y.wages > 0) ? [{ id: 'hire', title: 'Hire a hand', why: 'A second pair of hands helps you get through the work list.', when: 'In spring or during the season',
+    ...(handNeeded || hired || c.history.some(y => y.wages > 0) ? [{ id: 'hire', title: '일꾼 고용', why: '손이 하나 더 있으면 작업 목록을 감당할 수 있습니다.', when: '봄이나 시즌 중',
       done: hired || c.history.some(y => y.wages > 0), now: spring || inSeason, price: price.hire }] : []),
-    { id: 'contract', title: 'Sign a contract', why: 'A buyer locks in a price, and you have to deliver the potatoes.', when: 'In spring',
+    { id: 'contract', title: '계약 맺기', why: '구매자가 가격을 확정하고, 당신은 감자를 납품해야 합니다.', when: '봄에',
       done: c.contracts.length > 0 || c.history.some(y => y.contracts > 0), now: spring },
-    { id: 'land', title: 'Farm more land', why: 'Rent or buy fields beyond your six home fields.', when: 'In spring, under Land',
+    { id: 'land', title: '더 많은 땅 일구기', why: '집 여섯 밭 너머의 밭을 임차하거나 사세요.', when: '봄에, 땅 메뉴',
       done: c.fields.some((f, i) => i < TRACTS[0] && PARCELS[i].block !== 'home' && f.tenure !== 'none') || c.history.some(y => y.rent > 0 || y.land > 0), now: spring, price: price.land },
     ...chain(clearing),
-    { id: 'build', title: 'Raise a building', why: 'Your crew builds it using your own logs and stone.', when: 'In spring, during the season or in winter',
+    { id: 'build', title: '건물 짓기', why: '일꾼들이 당신의 통나무와 돌로 짓습니다.', when: '봄, 시즌 중 또는 겨울',
       done: c.buildings.some(b => b.built), now: spring || inSeason || c.phase === 'cellar',
       progress: building ? { n: Math.round(building.done), of: building.need } : null, price: building ? undefined : price.build },
-    ...(foremanPays || hasForeman ? [{ id: 'foreman', title: 'Name a foreman', why: 'A foreman orders the work on your fields away from home each morning, so nothing out there waits for you. They earn 40% more and stop doing field work.', when: 'Once you\'ve hired two people and farm fields away from home',
+    ...(foremanPays || hasForeman ? [{ id: 'foreman', title: '작업반장 임명', why: '작업반장이 매일 아침 외지 밭의 일을 지시하니 거기서는 당신을 기다리지 않습니다. 품값이 40% 오르고 밭일은 그만둡니다.', when: '두 명을 고용하고 외지 밭을 일구면',
       done: hasForeman, now: foremanPays, price: price.foreman }] : []),
-    { id: 'five', title: 'Keep the farm five years', why: 'Make it through five years and the farm is yours for good.', when: 'At the end of every year',
+    { id: 'five', title: '농장을 5년 지키기', why: '5년을 버티면 농장은 완전히 당신의 것입니다.', when: '매년 연말',
       done: c.outcome === 'kept', now: true, progress: { n: Math.min(c.goalYears, c.history.length), of: c.goalYears } },
-    { id: 'cleared', title: 'Clear every tract', why: 'Turn every woodlot, swale and burnt hill into a field.', when: 'Any year', long: true,
+    { id: 'cleared', title: '모든 구역 개간', why: '모든 수림·습지·탄 언덕을 밭으로 만듭니다.', when: '아무 해나', long: true,
       done: cleared.length === TRACTS.length, now: true, progress: { n: cleared.length, of: TRACTS.length } },
-    { id: 'map', title: 'Farm the whole map', why: 'Own or rent every field and tract on the map.', when: 'Any spring', long: true,
+    { id: 'map', title: '지도 전체 일구기', why: '지도의 모든 밭과 구역을 소유하거나 임차합니다.', when: '아무 봄이나', long: true,
       done: c.fields.every(f => f.tenure !== 'none'), now: true, progress: { n: c.fields.filter(f => f.tenure !== 'none').length, of: FIELD_COUNT } },
-    { id: 'crew', title: 'Hire a crew of ten', why: 'Have ten people on your payroll, with a bed for each of them.', when: 'Any year', long: true,
+    { id: 'crew', title: '열 명의 일꾼 고용', why: '열 명을 고용하고 각자 잘 자리를 마련합니다.', when: '아무 해나', long: true,
       done: c.crew.length >= 10, now: true, progress: { n: Math.min(10, c.crew.length), of: 10 } },
-    { id: 'every', title: 'Raise every kind of building', why: 'Build a potato house, shed, bunkhouse, packing shed, pond, stand, station and road.', when: 'Any year', long: true,
+    { id: 'every', title: '모든 종류의 건물 짓기', why: '감자 저장고, 창고, 숙소, 포장실, 연못, 직판장, 관측소, 길을 짓습니다.', when: '아무 해나', long: true,
       done: kindsBuilt.size === BUILDING_KINDS.length, now: true, progress: { n: kindsBuilt.size, of: BUILDING_KINDS.length } },
   ]
   return ladder.map(({ price: p, ...g }) => {
