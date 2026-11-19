@@ -29,10 +29,10 @@ export interface IncidentCard {
 
 // Who sends each kind of telegram.
 const FROM: Record<S.IncidentKind, [string, string]> = {
-  applicant: ['The hiring hall', 'hands and operators, by the season'],
-  poach: ['A neighboring farm', 'an offer for one of your people'],
-  breakdown: ['Grange Supply', 'equipment, parts and repairs'],
-  buyer: ['A produce buyer', 'cash for a whole lot, this week only'],
+  applicant: ['인력소', '시즌 단위 일꾼과 기사'],
+  poach: ['이웃 농장', '당신의 사람 중 하나에 대한 제안'],
+  breakdown: ['그레인지 상회', '기계, 부품과 수리'],
+  buyer: ['농산물 사자', '한 묶음 통째로 현금, 이번 주만'],
 }
 
 export function incidentCard(ctx: Ctx): IncidentCard {
@@ -49,16 +49,16 @@ export function incidentCard(ctx: Ctx): IncidentCard {
     if (!inc) return null
     const u = inc.unit !== undefined ? c.crew.find(x => x.id === inc.unit) : undefined
     switch (ch.id) {
-      case 'rush': return [red(F.money(S.RUSH_PART)), ' more than waiting']
-      case 'hire': return inc.applicant ? [red(F.money(inc.applicant.ask)), ' a month in wages'] : null
-      case 'match': return u && inc.wage ? [red(F.money(inc.wage - u.wage)), ' a month more'] : null
+      case 'rush': return [red(F.money(S.RUSH_PART)), ' 기다리는 것보다 더 듦']
+      case 'hire': return inc.applicant ? [red(F.money(inc.applicant.ask)), ' 월 품값'] : null
+      case 'match': return u && inc.wage ? [red(F.money(inc.wage - u.wage)), ' 월 더'] : null
       case 'take': {
         const lot = c.lots.find(l => l.id === inc.lot)
         const v = lot ? S.lotValue(app.world, c, lot) : 0
-        return v ? [h('span', { class: 'c-green num' }, F.money(v * S.BUYER_PREMIUM)), ' more than today\'s market price'] : null
+        return v ? [h('span', { class: 'c-green num' }, F.money(v * S.BUYER_PREMIUM)), ' 오늘 시장가보다 더'] : null
       }
-      case 'let': return u ? (u.mood < S.POACH_MOOD ? [h('span', { class: 'c-red' }, `${firstName(u.name)} leaves`)] : 'Costs nothing if they stay') : 'Costs nothing'
-      default: return 'Costs nothing'
+      case 'let': return u ? (u.mood < S.POACH_MOOD ? [h('span', { class: 'c-red' }, `${firstName(u.name)}은(는) 떠납니다`)] : '머물면 비용 없음') : '비용 없음'
+      default: return '비용 없음'
     }
   }
 
@@ -75,14 +75,14 @@ export function incidentCard(ctx: Ctx): IncidentCard {
     if (inc?.applicant) {
       const a = inc.applicant
       const best = [...S.SKILLS].sort((x, y) => a.skills[y] - a.skills[x])[0]
-      return [h('b', null, a.name), `, best at ${SKILL_NAME[best].toLowerCase()} (${a.skills[best]}), ${S.TRAITS[a.trait].name.toLowerCase()}.`]
+      return [h('b', null, a.name), `, 가장 잘함: ${SKILL_NAME[best]} (${a.skills[best]}), ${S.TRAITS[a.trait].name}.`]
     }
     // A breakdown says whose tractor and what it was at, as a telegram would.
     if (inc?.kind === 'breakdown' && inc.back !== undefined) {
       const u = c.crew.find(x => x.id === inc.unit)
       const j = u && c.season ? c.season.jobs.find(x => x.id === u.job) : undefined
-      return [u ? [h('b', null, u.kind === 'farmer' ? 'You' : firstName(u.name)), u.kind === 'farmer' ? ' were driving it' : ' was driving it', j ? `, ${jobText(j, c, j.building).replace(/^./, x => x.toLowerCase())}` : '', '. '] : '',
-        'If you wait for the part, it\'ll be running again on ', h('b', null, F.date(c.year, inc.back, true)), '.']
+      return [u ? [h('b', null, u.kind === 'farmer' ? '당신' : firstName(u.name)), '이(가) 몰고 있었습니다', j ? `, ${jobText(j, c, j.building)}` : '', '. '] : '',
+        '부품을 기다리면 ', h('b', null, F.date(c.year, inc.back, true)), '에 다시 돌아갑니다.']
     }
     return F.localize(info.text)
   }
@@ -102,7 +102,7 @@ export function incidentCard(ctx: Ctx): IncidentCard {
   function does(c: S.Campaign, inc: S.Incident | undefined, ch: S.IncidentChoice): string {
     if (ch.id === 'let' && inc) {
       const u = c.crew.find(x => x.id === inc.unit)
-      if (u) return u.mood < S.POACH_MOOD ? `${firstName(u.name)} isn't happy enough here and will leave.` : `${firstName(u.name)} is ${S.moodWord(u.mood)} here and will stay.`
+      if (u) return u.mood < S.POACH_MOOD ? `${firstName(u.name)}은(는) 여기가 충분히 좋지 않아 떠납니다.` : `${firstName(u.name)}은(는) 여기서 ${S.moodWord(u.mood)} 상태로 머뭅니다.`
     }
     return F.localize(ch.does)
   }
@@ -114,10 +114,10 @@ export function incidentCard(ctx: Ctx): IncidentCard {
     const keys = !ctx.touch()
     return [
       h('header', { class: 'tg-head' },
-        h('p', { class: 'tg-name', 'aria-hidden': 'true' }, 'Telegram'),
-        h('p', { class: 'tg-from' }, h('span', { class: 't-label' }, 'From'), ' ', h('b', null, from), ' ', h('span', { class: 't-caption' }, trade)),
-        h('p', { class: 'days', 'aria-label': info.daysLeft <= 1 ? 'Answer today' : `${info.daysLeft} days to answer` }, h('b', { class: 'num' }, String(Math.max(1, info.daysLeft))), h('span', { class: 't-label' }, info.daysLeft <= 1 ? 'today' : 'days')),
-        h('button', { class: 'close tg-later', type: 'button', testid: 'incident-later', 'aria-label': `Decide later${keys ? ' (Escape)' : ''}`, title: keys ? 'Decide later (Escape)' : undefined, onclick: () => putAway() }, icon('close', 'i'))),
+        h('p', { class: 'tg-name', 'aria-hidden': 'true' }, '전보'),
+        h('p', { class: 'tg-from' }, h('span', { class: 't-label' }, '보낸 이'), ' ', h('b', null, from), ' ', h('span', { class: 't-caption' }, trade)),
+        h('p', { class: 'days', 'aria-label': info.daysLeft <= 1 ? '오늘 답해야 함' : `답할 수 있는 날 ${info.daysLeft}일` }, h('b', { class: 'num' }, String(Math.max(1, info.daysLeft))), h('span', { class: 't-label' }, info.daysLeft <= 1 ? '오늘' : '일')),
+        h('button', { class: 'close tg-later', type: 'button', testid: 'incident-later', 'aria-label': `나중에 정하기${keys ? ' (Escape)' : ''}`, title: keys ? '나중에 정하기 (Escape)' : undefined, onclick: () => putAway() }, icon('close', 'i'))),
       h('div', { class: 'tg-body' },
         about(c, inc),
         h('div', null, h('h2', { id: 'incident-title' }, F.localize(info.title)), h('p', null, who(c, inc, info)))),
@@ -128,7 +128,7 @@ export function incidentCard(ctx: Ctx): IncidentCard {
         // (pressed all the same, it says why in red, as its number key does: a player pressed Hire and "nothing happened")
         : h('div', { class: 'reply off', testid: `answer-${ch.id}-off`, onclick: () => { err = F.localize(ch.why); ctx.dirty() } }, key(String(k + 1)), h('b', { class: 'c-title' }, ch.label), h('span', { class: 'c-does' }, F.localize(ch.why))))),
       err ? h('p', { class: 'tg-err c-red', role: 'status' }, err) : null,
-      fallback ? h('p', { class: 'lapse' }, stamp(`Expires ${F.date(c.year, info.until + 1, true)}`, { small: true, ink: 'violet' }), ` If you don't answer: ${fallback.label.toLowerCase()}.`) : null,
+      fallback ? h('p', { class: 'lapse' }, stamp(`기한 ${F.date(c.year, info.until + 1, true)}`, { small: true, ink: 'violet' }), ` 답하지 않으면: ${fallback.label}.`) : null,
     ]
   }
 
@@ -138,25 +138,25 @@ export function incidentCard(ctx: Ctx): IncidentCard {
     const now = sprayWay(c)
     return h('div', { testid: 'spray-ask' },
       h('header', { class: 'tg-head' },
-        h('p', { class: 'tg-name', 'aria-hidden': 'true' }, 'Telegram'),
-        h('p', { class: 'tg-from' }, h('span', { class: 't-label' }, 'From'), ' ', h('b', null, 'The county agent'), ' ', h('span', { class: 't-caption' }, 'blight weather is here')),
-        h('button', { class: 'close tg-later', type: 'button', testid: 'spray-ask-close', 'aria-label': `Decide later${keys ? ' (Escape)' : ''}`, title: keys ? 'Decide later (Escape)' : undefined, onclick: () => putAway() }, icon('close', 'i'))),
+        h('p', { class: 'tg-name', 'aria-hidden': 'true' }, '전보'),
+        h('p', { class: 'tg-from' }, h('span', { class: 't-label' }, '보낸 이'), ' ', h('b', null, '군 농업 상담관'), ' ', h('span', { class: 't-caption' }, '역병 날씨가 왔습니다')),
+        h('button', { class: 'close tg-later', type: 'button', testid: 'spray-ask-close', 'aria-label': `나중에 정하기${keys ? ' (Escape)' : ''}`, title: keys ? '나중에 정하기 (Escape)' : undefined, onclick: () => putAway() }, icon('close', 'i'))),
       h('div', { class: 'tg-body' },
         icon('spray', 'i tg-ic'),
-        h('div', null, h('h2', { id: 'incident-title' }, 'Spraying this season'), h('p', null, 'Blight can wipe out a field in one wet week, and a spray protects it for about a week.'))),
+        h('div', null, h('h2', { id: 'incident-title' }, '올해의 살포'), h('p', null, '역병은 비 오는 한 주에 밭 하나를 날리고, 살포는 약 일주일을 지켜줍니다.'))),
       h('div', { class: 'replies three' }, SPRAY_WAYS.map((w, k) => h('button', {
         class: `reply${w.id === 'auto' ? ' first' : ''}${now === w.id ? ' is-on' : ''}`, type: 'button', testid: `spray-way-${w.id}`, 'aria-keyshortcuts': keys ? String(k + 1) : null,
         'aria-pressed': now ? String(now === w.id) : null, onclick: () => answerSprayHere(c, w.id),
       }, key(String(k + 1)), h('b', { class: 'c-title' }, w.name, w.id === 'auto' ? fist() : null),
-      h('span', { class: 'c-does' }, w.id === 'auto' ? h('b', { class: 'usual', testid: 'spray-usual' }, 'The usual choice. ') : null, sprayShort(c, w.id))))))
+      h('span', { class: 'c-does' }, w.id === 'auto' ? h('b', { class: 'usual', testid: 'spray-usual' }, '보통의 선택. ') : null, sprayShort(c, w.id))))))
   }
 
   // The card's own few words for each way; the people's sheet has the long ones.
   function sprayShort(c: S.Campaign, way: 'auto' | 'ask' | 'none'): string {
-    if (way === 'ask') return 'A stamp shows up when a field needs spraying.'
-    if (way === 'none') return 'Nothing stops blight if it comes.'
+    if (way === 'ask') return '밭에 살포가 필요하면 도장이 뜹니다.'
+    if (way === 'none') return '역병이 오면 막을 것이 없습니다.'
     const o = S.sprayOutlook(app.world, c)
-    return o.dollars > 0 ? `Your crew handles it automatically, for about ${F.money(o.dollars)} this season.` : 'Your crew handles it automatically.'
+    return o.dollars > 0 ? `작업반이 알아서 합니다. 이번 시즌 약 ${F.money(o.dollars)}.` : '작업반이 알아서 합니다.'
   }
 
   function answerSprayHere(c: S.Campaign, way: 'auto' | 'ask' | 'none'): void {
@@ -178,8 +178,8 @@ export function incidentCard(ctx: Ctx): IncidentCard {
     if (shown >= 0 && !ids.has(shown)) shown = -1
     const info = all.find(x => x.id === shown)
     const spray = !info && c.phase === 'season' && sprayAsking()
-    const orClose = ctx.touch() ? 'Reply, or close it to keep playing.' : 'Reply, or press Escape to close it and keep playing.'
-    app.holding = info ? `This telegram needs an answer. ${orClose}` : spray ? `This question needs an answer. ${orClose}` : ''
+    const orClose = ctx.touch() ? '답하거나, 닫고 계속하세요.' : '답하거나, Escape로 닫고 계속하세요.'
+    app.holding = info ? `이 전보는 답이 필요합니다. ${orClose}` : spray ? `이 물음은 답이 필요합니다. ${orClose}` : ''
     if (spray && !ctx.papers.isOpen()) {
       const was = el.hidden || el.classList.contains('out')
       el.classList.remove('out')
@@ -187,7 +187,7 @@ export function incidentCard(ctx: Ctx): IncidentCard {
       patch(el, JSON.stringify(['spray', sprayWay(c), ctx.touch(), Math.round(S.sprayOutlook(app.world, c).dollars / 50)]), () => sprayBody(c))
       if (was) {
         if (!ctx.reduced()) { el.classList.remove('in'); void el.offsetWidth; el.classList.add('in') }
-        ctx.announce('Telegram. Spraying this season: keep the fields sprayed, ask me each time, or not this year.')
+        ctx.announce('전보. 올해의 살포: 밭에 계속 살포, 매번 물어보기, 또는 올해는 하지 않음.')
         requestAnimationFrame(() => el.querySelector<HTMLElement>('.reply.first')?.focus({ preventScroll: true }))
       }
       return
@@ -205,7 +205,7 @@ export function incidentCard(ctx: Ctx): IncidentCard {
     patch(el, JSON.stringify([info, err, ctx.touch(), c.crew.map(u => [u.id, u.wage, Math.round(u.mood * 20)])]), () => body(c, info))
     if (was) {
       if (!ctx.reduced()) { el.classList.remove('in'); void el.offsetWidth; el.classList.add('in') }
-      ctx.announce(`Telegram. ${F.localize(info.title)}. ${F.localize(info.text)}`)
+      ctx.announce(`전보. ${F.localize(info.title)}. ${F.localize(info.text)}`)
     }
   }
 
