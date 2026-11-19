@@ -13,15 +13,21 @@ import { expectedFrom, ticketPlace } from './ticket-words.ts'
 import { coupon, range } from './system/parts.ts'
 import { agentLine } from './tutorial.ts'
 
+// 원인의 화면 표시(한글)와 용어집 키(영어)를 함께 둔다.
 const CAUSE_LABEL: Record<S.Cause, string> = {
   green: 'Greened', scab: 'Scab', hollow: 'Hollow heart', knob: 'Knobs and cracks', skin: 'Thin skins',
   bruise: 'Bruised', blight: 'Tuber blight', frost: 'Frozen', rot: 'Soft rot', small: 'Too small', stone: 'Stone bruise',
 }
+const CAUSE_KO: Record<S.Cause, string> = {
+  green: '녹화', scab: '더부룩병', hollow: '속빔', knob: '혹·금', skin: '연피',
+  bruise: '멍', blight: '덩이 역병', frost: '동해', rot: '연부', small: '너무 작음', stone: '돌 멍',
+}
+const causeTerm = (k: S.Cause): Child => term(CAUSE_KO[k], CAUSE_LABEL[k].toLowerCase())
 const CULLED: S.Cause[] = ['green', 'blight', 'frost', 'rot', 'small']
 // Why the season asked for the vines to be killed (S.killTiming), as the ticket says it: a trade, never a fault.
 // A kill this many days or more before it was due is the player's loss; a day or two either way is the trade.
 const EARLY_DAYS = 3
-const KILL_ASKED: Record<string, string> = { blight: 'blight was winning', frost: 'frost was coming', made: 'the crop had finished growing', late: 'the season was running out' }
+const KILL_ASKED: Record<string, string> = { blight: '역병이 이기고 있었기 때문에', frost: '서리가 오고 있었기 때문에', made: '작물이 다 자랐기 때문에', late: '시즌이 끝나가고 있었기 때문에' }
 
 export function lotKey(c: S.Campaign, id: number): string {
   return `${c.seed}:${c.startYear}:${c.year}:${id}`
@@ -57,19 +63,19 @@ function barrelFrosts(c: S.Campaign, lot: S.Lot): number[] {
 }
 
 function stonesWord(stones: number): string {
-  return stones >= 0.6 ? 'very stony' : stones >= 0.35 ? 'stony' : 'a little stony'
+  return stones >= 0.6 ? '돌이 매우 많은 곳' : stones >= 0.35 ? '돌이 많은 곳' : '돌이 조금 있는 곳'
 }
 
 function digDatesText(c: S.Campaign, lot: S.Lot): string {
   const { start, end } = digDays(c, lot)
-  return end > start ? `dug ${F.date(lot.year, start)} to ${F.date(lot.year, end)}` : `dug ${F.date(lot.year, start)}`
+  return end > start ? `${F.date(lot.year, start)}부터 ${F.date(lot.year, end)}까지 캠` : `${F.date(lot.year, start)}에 캠`
 }
 
-// "Sep 16 to 18", "Sep 29 to Oct 2", "Sep 16".
+// "9월 16~18일", "9월 29일~10월 2일", "9월 16일".
 function daySpan(year: number, a: number, b: number): string {
   if (b <= a) return F.date(year, a, true)
   const same = S.monthDay(year, a).month === S.monthDay(year, b).month
-  return `${F.date(year, a, true)} to ${same ? S.monthDay(year, b).dom : F.date(year, b, true)}`
+  return `${F.date(year, a, true)}~${same ? `${S.monthDay(year, b).dom}일` : F.date(year, b, true)}`
 }
 
 // A weight without its unit, as a machine stamps it: "1,374".
@@ -106,7 +112,7 @@ interface Placed { w: number; mark: number; k: number; x: number; ground: number
 
 const LABEL_H = 36
 // What a mark is called under its tuber, in a word or two.
-const TRAY_MARK: Record<S.Cause, string> = { green: 'green', scab: 'scab', hollow: 'hollow', knob: 'knobby', skin: 'thin skin', bruise: 'bruised', blight: 'blight', frost: 'frozen', rot: 'rot', small: 'small', stone: 'stone bruise' }
+const TRAY_MARK: Record<S.Cause, string> = { green: '녹화', scab: '더부룩', hollow: '속빔', knob: '혹', skin: '연피', bruise: '멍', blight: '역병', frost: '동해', rot: '썩음', small: '작음', stone: '돌 멍' }
 
 // Tubers in weight order on one ground line, or two when one would make them too small to read.
 // close: a phone's tray, where the labels stand nearer each other so one row of tubers can do.
@@ -240,7 +246,7 @@ function tray(weights: number[], marks: number[], v: S.Variety, W: number, close
   const sound = marks.filter(m => m === 0).length
   return s('svg', {
     class: 'tray', width: W, height: H, viewBox: `0 0 ${W} ${H}`, role: 'img',
-    'aria-label': `${F.plural(weights.length, 'potato', 'potatoes')} on a tray, drawn to scale, ${sound} of them sound. Weights: ${weights.map(w => F.grams(w)).join(', ')}.`,
+    'aria-label': `쟁반 위 감자 ${weights.length}개, 실제 크기 비율, 그중 ${sound}개가 온전합니다. 무게: ${weights.map(w => F.grams(w)).join(', ')}.`,
   }, kids)
 }
 
@@ -253,7 +259,7 @@ function narrowing(before: S.Estimate | null, after: S.Estimate, hill: number, s
   const show = (n: number) => F.num(F.perAreaValue(n), digits)
   const from = before ?? after
   const now = range({ lo: after.lo, hi: after.hi, max, mark: hill > 0 ? Math.min(hill, max) : undefined, cls: 'now',
-    label: `Now: ${F.perAreaSpan(after.lo, after.hi)}. A whole field of hills like this one would yield ${F.perArea(hill)}.` })
+    label: `지금: ${F.perAreaSpan(after.lo, after.hi)}. 이 밭 전체가 이런 포기라면 ${F.perArea(hill)}을(를) 거둡니다.` })
   const lo = h('span', null, show(staged ? from.lo : after.lo)), hi = h('span', null, show(staged ? from.hi : after.hi))
   now.style.setProperty('--at', `${Math.max(0, delay - 300)}ms`)
   if (staged) {
@@ -275,14 +281,14 @@ function narrowing(before: S.Estimate | null, after: S.Estimate, hill: number, s
   }
   const rows = h('div', { class: 'narrowing' },
     before ? h('div', { class: 'nrow was' },
-      h('span', { class: 't-label' }, term('Before', 'estimate before')),
-      range({ lo: before.lo, hi: before.hi, max, label: `Before: ${F.perAreaSpan(before.lo, before.hi)}` }),
+      h('span', { class: 't-label' }, term('이전', 'estimate before')),
+      range({ lo: before.lo, hi: before.hi, max, label: `이전: ${F.perAreaSpan(before.lo, before.hi)}` }),
       h('span', { class: 'num' }, F.perAreaSpan(before.lo, before.hi).replace(` ${F.perAreaUnit()}`, ''))) : null,
     h('div', { class: 'nrow' },
-      h('span', { class: 't-label' }, 'Now'),
+      h('span', { class: 't-label' }, '지금'),
       now,
       h('b', { class: 'num' }, lo, '–', hi)))
-  const caption = h('p', { class: 't-caption tray-caption' }, `Yield in ${F.perAreaUnit()}, from ${F.plural(after.digs, 'test dig')}. The tick is this hill, and one hill isn't the whole field, so the range moves but never narrows to one number.${F.cwtNote()}`)
+  const caption = h('p', { class: 't-caption tray-caption' }, `수확량 ${F.perAreaUnit()} 기준, 시험 캐기 ${after.digs}회. 눈금은 이 포기이고 한 포기가 밭 전체는 아니라서 범위는 움직여도 하나의 수로 좁혀지지 않습니다.${F.cwtNote()}`)
   return { rows, caption }
 }
 
@@ -298,6 +304,8 @@ export function trayPaper(ctx: Ctx, e: S.GameEvent, before: S.Estimate | null, o
   marks.forEach((m, k) => {
     const w = weights[k] ?? 0
     const key = m > 0 ? CAUSE_LABEL[S.CAUSES[m - 1]].toLowerCase() : w < S.SIZE_A ? 'sound, B size' : w > S.SIZE_CHEF ? 'sound and large' : 'sound, No. 1 size'
+    // key는 영어(용어집 키)로 두고 표시만 한글로: 아래 TALLY_KO.
+
     tally.set(key, (tally.get(key) ?? 0) + 1)
   })
   const alone = grams * S.PLANTS_PER_ACRE / S.GRAMS_PER_CWT
@@ -306,20 +314,22 @@ export function trayPaper(ctx: Ctx, e: S.GameEvent, before: S.Estimate | null, o
   const staged = o.staged && !ctx.reduced()
   const arrive = Math.min(6, weights.length) * 90 + 420
   const est = after ? narrowing(before, after, alone, staged, arrive + 500) : null
-  const el = h('section', { class: `tray-paper sheet sys${staged ? ' staged' : ''}`, role: 'region', 'aria-label': `Test dig, ${S.FIELD_NAMES[e.field]}`, testid: 'sample-dialog', 'data-layout': ctx.layout() },
+  const TALLY_KO: Record<string, string> = { 'sound, B size': '온전, B 사이즈', 'sound and large': '온전, 대구', 'sound, No. 1 size': '온전, No. 1 크기' }
+  for (const k of Object.keys(CAUSE_KO)) TALLY_KO[CAUSE_LABEL[k as S.Cause].toLowerCase()] = CAUSE_KO[k as S.Cause]
+  const el = h('section', { class: `tray-paper sheet sys${staged ? ' staged' : ''}`, role: 'region', 'aria-label': `시험 캐기, ${S.FIELD_NAMES[e.field]}`, testid: 'sample-dialog', 'data-layout': ctx.layout() },
     h('header', { class: 'tray-head' },
       h('div', null,
-        h('p', { class: 't-label' }, icon('sample', 'i'), 'Test dig'),
+        h('p', { class: 't-label' }, icon('sample', 'i'), '시험 캐기'),
         h('h2', null, S.FIELD_NAMES[e.field])),
-      h('button', { class: 'close', type: 'button', 'aria-label': 'Close the tray', testid: 'sample-close', onclick: o.onClose }, icon('close', 'i'))),
+      h('button', { class: 'close', type: 'button', 'aria-label': '쟁반 닫기', testid: 'sample-close', onclick: o.onClose }, icon('close', 'i'))),
     // Where the window is too short for the whole tray, the tray, its tally and what the estimate means scroll
     // between the head and the estimate, which stay in view.
     h('div', { class: 'tray-scroll', testid: 'tray-scroll', tabindex: '-1' },
-      h('p', { class: 'tray-lede' }, `${F.date(c.year, e.day)}, one hill of ${v.name}. ${F.plural(weights.length, 'potato', 'potatoes')} weighing `, h('span', { class: 'stamped' }, F.hillMass(grams)), '.'),
+      h('p', { class: 'tray-lede' }, `${F.date(c.year, e.day)}, ${v.name} 한 포기. 감자 ${weights.length}개 무게 `, h('span', { class: 'stamped' }, F.hillMass(grams)), '.'),
       // On a phone the tubers keep to one row where they can, so the tray leaves the land its room.
       tray(weights, marks, v, W, narrow),
-      h('div', { class: 'tally sheet laid', role: 'list', 'aria-label': 'The tally' },
-        [...tally].map(([k, n]) => h('p', { class: 'lead', role: 'listitem' }, h('span', null, term(F.upper(k), k === 'sound, B size' ? 'B size' : k)), h('span', { class: 'dots' }), h('b', { class: 'num' }, n)))),
+      h('div', { class: 'tally sheet laid', role: 'list', 'aria-label': '집계' },
+        [...tally].map(([k, n]) => h('p', { class: 'lead', role: 'listitem' }, h('span', null, term(TALLY_KO[k] ?? F.upper(k), k === 'sound, B size' ? 'B size' : k)), h('span', { class: 'dots' }), h('b', { class: 'num' }, n)))),
       est?.caption ?? null),
     est?.rows ?? null)
   // A click anywhere on the tray skips the staging.
@@ -342,36 +352,36 @@ function phrase(ctx: Ctx, c: S.Campaign, lot: S.Lot, cause: S.Cause): string {
   const x = facts(c, lot)
   const inDay = weighDay(c, lot)
   switch (cause) {
-    case 'green': return x.f.hillPasses === 0 ? 'never hilled, so the potatoes saw daylight' : x.f.hillPasses === 1 ? 'hilled only once, so thin hills let light in'
-      : inDay - lot.dugDay > 2 ? `sat ${inDay - lot.dugDay} days in barrels in the sun` : 'rain washed soil off the hills'
-    case 'scab': return 'dry soil in the weeks after the potatoes formed'
-    case 'hollow': return 'growth stalled, then surged'
-    case 'knob': return 'a dry spell followed by rain'
+    case 'green': return x.f.hillPasses === 0 ? '북주기를 안 해 감자가 햇빛을 봤습니다' : x.f.hillPasses === 1 ? '북주기를 한 번만 해 얕은 북으로 빛이 들었습니다'
+      : inDay - lot.dugDay > 2 ? `광주리에서 ${inDay - lot.dugDay}일을 햇볕에 놓였습니다` : '비가 북의 흙을 씻어냈습니다'
+    case 'scab': return '감자가 맺힌 뒤 몇 주 동안 흙이 말랐습니다'
+    case 'hollow': return '생장이 멈췄다가 급격히 자랐습니다'
+    case 'knob': return '가뭄 뒤에 비가 왔습니다'
     case 'skin': {
       const dead = x.killed ?? x.died
-      return dead ? `dug ${F.plural(lot.dugDay - dead.day, 'day')} after the vines died, but skins need ${S.SKIN_DAYS}` : 'dug with the vines still green'
+      return dead ? `줄기가 죽은 지 ${lot.dugDay - dead.day}일 만에 캤지만 껍질은 ${S.SKIN_DAYS}일이 필요합니다` : '줄기가 파랄 때 캤습니다'
     }
     case 'bruise': {
       const t = ctx.memo.digSoilT[lotKey(c, lot.id)]
-      return t !== undefined ? `dug with the soil at ${F.temp(t)}` : 'dug from cold ground'
+      return t !== undefined ? `흙 온도 ${F.temp(t)}에서 캤습니다` : '차가운 흙에서 캤습니다'
     }
-    case 'blight': return 'spores washed down from blighted leaves'
+    case 'blight': return '병든 잎에서 포자가 씻겨 내려왔습니다'
     case 'frost': {
       const nights = barrelFrosts(c, lot)
-      return nights.length ? `froze in the barrels on ${F.list(nights.map(d => F.date(c.year, d, true)))}, before they were hauled in` : 'froze in the ground before the harvest'
+      return nights.length ? `${F.list(nights.map(d => F.date(c.year, d, true)))}에 날라오기 전 광주리에서 얼었습니다` : '수확 전 땅에서 얼었습니다'
     }
-    case 'rot': return 'sat in waterlogged soil'
+    case 'rot': return '물에 잠긴 흙에 놓여 있었습니다'
     case 'small':
       if (x.killed && (!x.died || x.killed.day <= x.died.day)) {
         // Whether the kill came before the coach asked for it (the player's early kill) or when asked (the trade it asked for).
         const kt = S.killTiming(c, lot.field)
         const on = F.date(c.year, x.killed.day, true)
-        if (kt.killed >= 0 && kt.early >= EARLY_DAYS) return `the vines were killed on ${on}, ${F.plural(kt.early, 'day')} early, before these finished growing`
-        return `the vines were killed on ${on}${KILL_ASKED[kt.why] ? `, on schedule because ${KILL_ASKED[kt.why]}` : ''}, trading some size for skins that toughened in time`
+        if (kt.killed >= 0 && kt.early >= EARLY_DAYS) return `${on}에 줄기를 ${kt.early}일 일찍 죽여 다 자라기 전이었습니다`
+        return `${on}에 줄기를 죽였습니다${KILL_ASKED[kt.why] ? `(${KILL_ASKED[kt.why]} 예정대로)` : ''}. 크기 일부를 제때 굳은 껍질과 맞바꿨습니다`
       }
-      if (x.died) return x.died.text.startsWith('Frost') ? 'frost killed the vines before these grew to size' : x.died.text.startsWith('Blight') ? 'blight killed the vines before these grew to size' : 'the vines died back before these grew to size'
-      return 'dug while the vines were green, before these grew to size'
-    case 'stone': return `${x.name} is ${stonesWord(x.f.stones)}, and the digger knocked potatoes against stones`
+      if (x.died) return x.died.text.includes('서리가 줄기') ? '서리가 줄기를 죽여 다 자라지 못했습니다' : x.died.text.includes('역병이 줄기') ? '역병이 줄기를 죽여 다 자라지 못했습니다' : '줄기가 먼저 말라 다 자라지 못했습니다'
+      return '줄기가 파랄 때 캐 다 자라지 못했습니다'
+    case 'stone': return `${x.name}은(는) ${stonesWord(x.f.stones)}이라 캐는 기계에 감자가 돌에 부딪혔습니다`
   }
 }
 
@@ -381,79 +391,79 @@ function why(ctx: Ctx, c: S.Campaign, lot: S.Lot, cause: S.Cause): string {
   const date = (d: number) => F.date(c.year, d)
   const first = (type: string) => fieldLog(c, lot.field, type)[0]
   const reel = c.upgrades.reel
-  const water = reel ? 'Watering in those weeks prevents it.' : 'Rain or irrigation in those weeks prevents it, but without an irrigation reel most growers here just wait for rain.'
+  const water = reel ? '그 몇 주에 물을 주면 막을 수 있습니다.' : '그 몇 주의 비나 관개가 막아주지만, 관개 릴이 없으면 여기 농가들은 대부분 비를 기다릴 뿐입니다.'
   switch (cause) {
     case 'green': {
       const p = f.hillPasses
       const storms: number[] = []
       if (planted) for (let d = planted.day; d < lot.dugDay && d < (c.season?.day ?? 0); d++) if (S.getDay(ctx.app.world, c.year, d).prcp >= S.STORM_MM) storms.push(d)
       const barrels = weighDay(c, lot) - lot.dugDay
-      return `Potatoes that grow up into the light turn green and bitter. ${name} was ${p === 0 ? 'never hilled, and hilling twice' : p === 1 ? 'hilled once, and a second hilling' : 'hilled twice'}${p < 2 ? ' before the rows close keeps them covered' : ''}.`
-        + (storms.length ? ` Heavy rain on ${F.list(storms.map(date))} washed soil off the hills.` : '')
-        + (barrels > 2 ? ` The crop sat ${barrels} days in barrels in the field, and every sunny day turns more of it green. One person can't dig and haul at once: a second driver with a truck or a second tractor hauls while you dig.` : '')
-        + (v.green >= 1.3 ? ` ${v.name} forms its potatoes high in the hill.` : '')
+      return `빛 속으로 자라 올라온 감자는 초록으로 변하고 씁니다. ${name}은(는) ${p === 0 ? '북주기를 한 번도 하지 않았고, 두 번의 북주기가' : p === 1 ? '북주기를 한 번만 했고, 한 번 더 하는 것이' : '북주기를 두 번 했습니다'}${p < 2 ? ' 줄이 닫히기 전에 감자를 덮어줍니다' : ''}.`
+        + (storms.length ? ` ${F.list(storms.map(date))}의 큰비가 북의 흙을 씻어냈습니다.` : '')
+        + (barrels > 2 ? ` 작물이 광주리에서 ${barrels}일을 밭에 놓였고, 해가 날 때마다 더 초록으로 변합니다. 한 사람은 캐면서 나를 수 없습니다. 트럭 기사나 트랙터가 하나 더 있으면 캐는 동안 날라옵니다.` : '')
+        + (v.green >= 1.3 ? ` ${v.name}은(는) 감자가 북의 높은 곳에 맺힙니다.` : '')
     }
     case 'scab': {
       const ti = first('ti')
       const watered = fieldLog(c, lot.field, 'watered').length
       const inWindow = !!dry && !!ti && dry.day >= ti.day - 7 && dry.day <= ti.day + 35
-      return `Common scab shows up when the soil is dry in the five weeks after the potatoes form${ti ? ` (in ${name}, ${date(ti.day)} to ${date(ti.day + 35)})` : ''}.`
-        + (inWindow ? ` ${name} was drying out by ${date(dry.day)}` : ` ${name} was dry for part of that time`)
-        + (watered ? ` and was watered ${F.times(watered)}.` : reel ? ' and wasn\'t watered.' : '.')
+      return `더부룩병은 감자가 맺힌 뒤 다섯 주 동안 흙이 마르면 생깁니다${ti ? `(${name}, ${date(ti.day)}부터 ${date(ti.day + 35)}까지)` : ''}.`
+        + (inWindow ? ` ${name}은(는) ${date(dry.day)}에 마르고 있었습니다` : ` ${name}은(는) 그 기간 일부가 말랐습니다`)
+        + (watered ? `, 물을 ${F.times(watered)} 줬습니다.` : reel ? ', 물을 주지 않았습니다.' : '.')
         + ` ${water}`
-        + ` ${v.name} ${v.scab >= 1.3 ? 'scabs easily' : v.scab < 0.7 ? 'rarely gets scab' : 'is about average for scab'}`
-        + (f.soil < 0.6 ? ', and growing potatoes year after year leaves scab in the soil.' : '.')
+        + ` ${v.name}은(는) ${v.scab >= 1.3 ? '더부룩병에 약합니다' : v.scab < 0.7 ? '더부룩병이 드뭅니다' : '더부룩병은 보통입니다'}`
+        + (f.soil < 0.6 ? ', 감자를 해마다 기르면 흙에 더부룩병이 남습니다.' : '.')
     }
     case 'hollow':
-      return `The big potatoes went hollow inside. That happens when growth stalls in a dry spell and then surges after rain, or when the soil is cold as the potatoes form.${dry ? ` ${name} was drying out by ${date(dry.day)}.` : ''} ${v.name} ${v.hollow >= 0.1 ? 'goes hollow easily' : 'rarely has this problem'}.`
+      return `큰 감자의 속이 비었습니다. 가뭄에 생장이 멈췄다가 비 뒤에 급격히 자라거나, 감자가 맺힐 때 흙이 차가우면 그렇게 됩니다.${dry ? ` ${name}은(는) ${date(dry.day)}에 마르고 있었습니다.` : ''} ${v.name}은(는) ${v.hollow >= 0.1 ? '속이 잘 빕니다' : '이런 일이 드뭅니다'}.`
     case 'knob':
-      return `A dry spell followed by rain makes potatoes grow in spurts and crack${dry ? `, and ${name} was drying out by ${date(dry.day)}` : ''}.${v.rough >= 1.2 ? ` ${v.name} gets rough easily.` : ''} Steady water while the potatoes are filling out, from rain or irrigation, prevents it.`
+      return `가뭄 뒤의 비는 감자를 들쑥날쑥 자라게 해 갈라지고 혹이 생깁니다${dry ? `. ${name}은(는) ${date(dry.day)}에 마르고 있었습니다` : ''}.${v.rough >= 1.2 ? ` ${v.name}은(는) 쉽게 거칠어집니다.` : ''} 감자가 굵어지는 동안 비나 관개로 물을 고르게 주면 막을 수 있습니다.`
     case 'skin': {
       const dead = killed ?? died
       const last = F.date(lot.year, S.dayIndex(lot.year, S.NEW_POTATO_LAST.month, S.NEW_POTATO_LAST.dom))
-      if (!dead) return `This field was dug with the vines still green, so the skins hadn't toughened. They need ${S.SKIN_DAYS} days after the vines die.`
+      if (!dead) return `줄기가 파랄 때 캐서 껍질이 굳지 못했습니다. 줄기가 죽은 뒤 ${S.SKIN_DAYS}일이 필요합니다.`
       const k = lot.dugDay - dead.day
-      return `The skins hadn't toughened yet, because this field was dug ${F.plural(k, 'day')} after the vines died and skins need ${S.SKIN_DAYS}. These sell as No. 2, or at the No. 1 price if you sell them straight off the field by ${last} and within six days of the harvest.`
+      return `껍질이 아직 굳지 않았습니다. 줄기가 죽은 지 ${k}일 만에 캤는데 껍질은 ${S.SKIN_DAYS}일이 필요합니다. No. 2로 팔리거나, ${last}까지 수확 후 6일 안에 밭에서 바로 팔면 No. 1 가격입니다.`
     }
     case 'bruise': {
       const t = ctx.memo.digSoilT[lotKey(c, lot.id)]
-      return `${t !== undefined ? `The soil was ${F.temp(t)} on harvest day, and c` : 'C'}old potatoes bruise in the digger below about ${F.temp(S.BRUISE_SOIL_T)}. Digging before the ground gets cold avoids it.`
+      return `${t !== undefined ? `수확일의 흙 온도가 ${F.temp(t)}였고, 차` : '차'}가운 감자는 약 ${F.temp(S.BRUISE_SOIL_T)} 아래에서 캐는 기계에 멍이 듭니다. 땅이 차가워지기 전에 캐면 피할 수 있습니다.`
     }
     case 'blight': {
       const seen = facts(c, lot).blight
       const sprays = fieldLog(c, lot.field, 'sprayed').length
-      return `Rain washed spores off blighted leaves down into the hill. ${seen ? `Blight was first found in ${name} on ${date(seen.day)}` : 'Blight was never found on the leaves here, so it got in unseen'}${sprays ? `, and the field was sprayed ${F.times(sprays)}` : ', and the field wasn\'t sprayed'}. A full hill and killing the vines early keep spores off the potatoes.`
+      return `비가 병든 잎의 포자를 북 속으로 씻어 내렸습니다. ${seen ? `${name}에서 ${date(seen.day)}에 역병을 처음 발견했고` : '여기 잎에서는 역병을 찾은 적이 없어 눈에 띄지 않게 들어왔고'}${sprays ? `, 밭에는 ${F.times(sprays)} 살포했습니다` : ', 밭에 살포하지 않았습니다'}. 북을 충분히 올리고 줄기를 일찍 죽이면 포자가 감자에 닿지 않습니다.`
     }
     case 'frost': {
       const nights = barrelFrosts(c, lot)
-      if (nights.length) return `A hard frost on ${F.list(nights.map(date))} caught the crop in barrels in ${name} before it was hauled in, and a fifth of what was sitting there froze. Another person hauling, a second tractor or the truck would bring it in as fast as it's dug.`
+      if (nights.length) return `${F.list(nights.map(date))}의 강한 서리가 ${name}에서 날라오기 전 광주리의 작물을 덮쳐 놓인 것의 5분의 1이 얼었습니다. 나르는 사람이 하나 더 있거나, 트랙터나 트럭이 하나 더 있으면 캐는 만큼 빨리 날라옵니다.`
       const frosts = fieldLog(c, lot.field, 'frost').map(e => e.day)
-      return `${frosts.length ? `Frost came on ${F.list(frosts.slice(-3).map(date))}` : 'A hard frost came before the harvest'}, and potatoes under a thin hill froze in the ground.${f.elev === 0 ? ' Cold air settles on bottom land.' : ''} Dig before the hard frosts arrive.`
+      return `${frosts.length ? `${F.list(frosts.slice(-3).map(date))}에 서리가 왔고` : '수확 전에 강한 서리가 와서'}, 얕은 북 아래 감자가 땅에서 얼었습니다.${f.elev === 0 ? ' 찬 공기는 골짜기에 고입니다.' : ''} 강한 서리가 오기 전에 캐세요.`
     }
     case 'rot': {
       const logged = first('logged')
-      return `${logged ? `Water stood in ${name} from ${date(logged.day)}, and potatoes sitting in waterlogged soil rot.` : 'Potatoes that sit in wet soil rot.'}${f.elev === 0 ? ' Bottom land holds water after rain.' : ''}`
+      return `${logged ? `${date(logged.day)}부터 ${name}에 물이 고였고, 물에 잠긴 흙의 감자는 썩습니다.` : '젖은 흙에 놓인 감자는 썹니다.'}${f.elev === 0 ? ' 골짜기는 비 뒤에 물을 머금습니다.' : ''}`
     }
     case 'small': {
       const blight = facts(c, lot).blight
-      let end = ` In ${name} they were dug on ${date(lot.dugDay)} while the vines were still green.`
+      let end = ` ${name}에서는 줄기가 파랄 때인 ${date(lot.dugDay)}에 캤습니다.`
       const kt = S.killTiming(c, lot.field)
       if (killed && (!died || killed.day <= died.day) && kt.killed >= 0 && kt.early >= EARLY_DAYS) {
-        end = ` In ${name} the vines were killed on ${date(killed.day)}, ${F.plural(kt.early, 'day')} earlier than needed, so the potatoes hadn't finished growing.${Number(killed.data?.lost ?? 0) > 0 ? ' The weight they never put on is under What never grew.' : ''}`
+        end = ` ${name}에서는 ${date(killed.day)}에 줄기를 죽였습니다. 필요보다 ${kt.early}일 빨라 감자가 다 자라지 못했습니다.${Number(killed.data?.lost ?? 0) > 0 ? ' 못 불린 무게는 자라지 못한 몫에 있습니다.' : ''}`
       } else if (killed && (!died || killed.day <= died.day) && kt.killed >= 0 && kt.asked >= 0) {
-        end = ` In ${name} the vines were killed on ${date(killed.day)}, right on schedule${KILL_ASKED[kt.why] ? ` because ${KILL_ASKED[kt.why]}` : ''}. Some small potatoes are the price of skins that toughen in time.`
+        end = ` ${name}에서는 ${date(killed.day)}에 예정대로 줄기를 죽였습니다${KILL_ASKED[kt.why] ? `(${KILL_ASKED[kt.why]})` : ''}. 작은 감자 일부는 제때 굳는 껍질의 대가입니다.`
       } else if (killed && (!died || killed.day <= died.day)) {
         end = blight && blight.day <= killed.day
-          ? ` In ${name} the vines were killed on ${date(killed.day)} with blight in the field, which gave up some size to save the potatoes from blight.`
-          : ` In ${name} the vines were killed on ${date(killed.day)}. Every extra week adds size, but it also risks blight and frost.`
+          ? ` ${name}에서는 밭에 역병이 도는 가운데 ${date(killed.day)}에 줄기를 죽여, 크기 일부를 포기하고 감자를 역병에서 지켰습니다.`
+          : ` ${name}에서는 ${date(killed.day)}에 줄기를 죽였습니다. 한 주를 더 기다리면 커지지만 역병과 서리의 위험도 커집니다.`
       } else if (died) {
-        end = died.text.startsWith('Frost') ? ` In ${name} frost killed the vines on ${date(died.day)}.`
-          : died.text.startsWith('Blight') ? ` In ${name} blight killed the vines on ${date(died.day)}.`
-            : ` In ${name} the vines died back on ${date(died.day)}.`
+        end = died.text.includes('서리가 줄기') ? ` ${name}에서는 ${date(died.day)}에 서리가 줄기를 죽였습니다.`
+          : died.text.includes('역병이 줄기') ? ` ${name}에서는 ${date(died.day)}에 역병이 줄기를 죽였습니다.`
+            : ` ${name}에서는 ${date(died.day)}에 줄기가 말랐습니다.`
       }
-      return `These were under ${F.metric() ? '4 cm' : '1½ inches'} across, too small to grade, so they go to the starch factory with the culls. Potatoes keep growing until the vines die.${end}${v.maturity === 'late' || v.maturity === 'very late' ? ` ${v.name} needs a long season.` : ''}`
+      return `지름 ${F.metric() ? '4cm' : '1½인치'} 미만이라 등급을 매길 수 없어 불량과 함께 전분 공장으로 갑니다. 감자는 줄기가 죽을 때까지 계속 자랍니다.${end}${v.maturity === 'late' || v.maturity === 'very late' ? ` ${v.name}은(는) 긴 시즌이 필요합니다.` : ''}`
     }
-    case 'stone': return `${name} is ${stonesWord(f.stones)}, and potatoes that hit stones as the digger lifted them dropped to No. 2. Frost pushes more stones up every winter. Picking rocks while no crop is in the field clears most of them, and a skilled digger operator bruises fewer.`
+    case 'stone': return `${name}은(는) ${stonesWord(f.stones)}이라, 캐는 기계가 들어 올릴 때 돌에 부딪힌 감자가 No. 2로 떨어졌습니다. 서리는 해마다 돌을 더 밀어 올립니다. 작물이 없을 때 돌을 골라내면 대부분 치울 수 있고, 솜씨 좋은 기계 기사는 멍을 덜 들게 합니다.`
   }
 }
 
@@ -461,6 +471,9 @@ function why(ctx: Ctx, c: S.Campaign, lot: S.Lot, cause: S.Cause): string {
 
 type GradeKey = S.Grade | 'skinned'
 const GRADE_LABEL: Record<GradeKey, string> = { no1: 'US No. 1', chef: 'Large', b: 'B size', no2: 'US No. 2', skinned: 'Thin-skinned', cull: 'Culls' }
+// 표시용 한국어 등급명. 용어집 키는 GRADE_LABEL의 영문 소문자 그대로.
+const GRADE_KO: Record<GradeKey, string> = { no1: 'US No. 1', chef: '대구', b: 'B size', no2: 'US No. 2', skinned: '연피', cull: '불량' }
+const gradeTerm = (key: GradeKey): Child => term(GRADE_KO[key], GRADE_LABEL[key].toLowerCase())
 const GRADE_ORDER: GradeKey[] = ['no1', 'chef', 'b', 'no2', 'skinned', 'cull']
 // The printer's tints (design/system.css .g1 to .g5); thin skins, a sixth grade no frame shows, take the hatch turned.
 const TINT: Record<GradeKey, string> = { no1: 'g1', chef: 'g2', b: 'g3', no2: 'g4', skinned: 'g6', cull: 'g5' }
@@ -468,12 +481,12 @@ const TINT: Record<GradeKey, string> = { no1: 'g1', chef: 'g2', b: 'g3', no2: 'g
 function gradeNote(ctx: Ctx, c: S.Campaign, lot: S.Lot, key: GradeKey): string {
   const last = S.dayIndex(lot.year, S.NEW_POTATO_LAST.month, S.NEW_POTATO_LAST.dom)
   switch (key) {
-    case 'no1': return 'the full price'
-    case 'chef': return `over ${F.grams(S.SIZE_CHEF)}, ${R.largeRule(ctx.app.world, c, lot.variety)}`
-    case 'b': return `under ${F.grams(S.SIZE_A)}, ${F.pct(S.GRADE_PRICE.b)} of the No. 1 price`
-    case 'no2': return `blemished, ${F.pct(S.GRADE_PRICE.no2)} of the No. 1 price`
-    case 'skinned': return `No. 2 price, or the No. 1 price if sold straight from the field by ${F.date(lot.year, last)} and within six days of the harvest`
-    case 'cull': return `to the starch factory at ${F.price(S.CULL_PRICE)}`
+    case 'no1': return '정가'
+    case 'chef': return `${F.grams(S.SIZE_CHEF)} 초과, ${R.largeRule(ctx.app.world, c, lot.variety)}`
+    case 'b': return `${F.grams(S.SIZE_A)} 미만, No. 1 가격의 ${F.pct(S.GRADE_PRICE.b)}`
+    case 'no2': return `흠집 있음, No. 1 가격의 ${F.pct(S.GRADE_PRICE.no2)}`
+    case 'skinned': return `No. 2 가격. ${F.date(lot.year, last)}까지, 수확 후 6일 안에 밭에서 바로 팔면 No. 1 가격`
+    case 'cull': return `전분 공장행, ${F.price(S.CULL_PRICE)}`
   }
 }
 
@@ -497,7 +510,7 @@ function atDig(ctx: Ctx, c: S.Campaign, lot: S.Lot): AtDig {
 }
 
 function gradebar(d: AtDig, parts: string[]): HTMLElement {
-  return h('div', { class: 'gradebar', role: 'img', 'aria-label': `By grade: ${d.rows.map((r, k) => `${GRADE_LABEL[r.key]} ${parts[k]}`).join(', ')}` },
+  return h('div', { class: 'gradebar', role: 'img', 'aria-label': `등급별: ${d.rows.map((r, k) => `${GRADE_KO[r.key]} ${parts[k]}`).join(', ')}` },
     d.rows.map(r => h('i', { class: TINT[r.key], style: `width:${(d.total > 0 ? r.cwt / d.total * 100 : 0).toFixed(1)}%` })))
 }
 
@@ -505,7 +518,7 @@ function gradebar(d: AtDig, parts: string[]): HTMLElement {
 function topGrade(d: AtDig): Child[] {
   const no1 = d.rows.find(r => r.key === 'no1')?.cwt ?? 0
   const share = d.total > 0 ? no1 / d.total : 0
-  return [h('i', { class: `sw ${TINT.no1}` }), `${F.pct(share)} made `, term('US No. 1'), ', the full price.']
+  return [h('i', { class: `sw ${TINT.no1}` }), `${F.pct(share)}가 `, term('US No. 1'), ' 등급을 받았습니다. 정가입니다.']
 }
 
 // What a grower weighs before keeping a crop, in full.
@@ -514,10 +527,10 @@ function sellOrKeep(ctx: Ctx, c: S.Campaign, lot: S.Lot): HTMLElement[] {
   const v = S.variety(lot.variety)
   const m = R.sproutMonth(lot.year, lot.dugDay, lot.variety, c.upgrades.vent)
   return [
-    h('p', null, `Today's price for ${v.name} is ${F.price(S.basePrice(world, c, lot.variety))} for US No. 1. Selling this crop today pays `, h('strong', { class: 'num' }, F.money(S.lotValue(world, c, lot))), `. ${F.upper(storeCall(S.storeOutlook(world, c, lot)).phrase)}.`),
+    h('p', null, `오늘 ${v.name}의 US No. 1 시세는 ${F.price(S.basePrice(world, c, lot.variety))}입니다. 이 작물을 오늘 팔면 `, h('strong', { class: 'num' }, F.money(S.lotValue(world, c, lot))), `을(를) 받습니다. ${F.upper(storeCall(S.storeOutlook(world, c, lot)).phrase)}.`),
     ...(v.contract ? [h('p', null, R.contractText(v))] : [h('p', null, R.outlookText(c)), h('p', null, R.moodText(world, c))]),
     h('p', null, R.storageText(c, S.lotCwt(lot))),
-    h('p', null, `This ${v.name} was dug on ${F.date(lot.year, lot.dugDay)} and ${R.sproutText(m)}${m < S.CELLAR_MONTHS.length ? '. Sprouted potatoes sell for 15% less and shrink faster' : ''}.`),
+    h('p', null, `이 ${v.name}은(는) ${F.date(lot.year, lot.dugDay)}에 캤고 ${R.sproutText(m)}${m < S.CELLAR_MONTHS.length ? ' 싹난 감자는 15% 낮게 팔리고 더 빨리 줍니다' : ''}`),
   ]
 }
 
@@ -525,8 +538,8 @@ function sellOrKeep(ctx: Ctx, c: S.Campaign, lot: S.Lot): HTMLElement[] {
 export function storageLine(c: S.Campaign): string {
   const st = S.storageInfo(c)
   const over = st.stored - st.capacity
-  const houses = st.houses.length === 1 ? `The potato house holds ${F.mass(st.capacity)}` : `Your potato houses hold ${F.mass(st.capacity)} in all (${F.list(st.houses.map(x => `${x.name.replace(/ potato house$/, '').replace(/^(Home|Second)$/, w => w.toLowerCase())} ${F.mass(x.cwt)}`))})`
-  return `${houses}. If you store this crop you'll have ${F.mass(st.stored)} in storage${over > 0.5 ? `, and the ${F.mass(over)} that won't fit gets sold off the field when the season ends` : `, with room for ${F.mass(st.free)} more`}.`
+  const houses = st.houses.length === 1 ? `감자 저장고에는 ${F.mass(st.capacity)}이(가) 들어갑니다` : `감자 저장고들에 모두 ${F.mass(st.capacity)}이(가) 들어갑니다(${F.list(st.houses.map(x => `${x.name.replace(/ 감자 저장고$/, '')} ${F.mass(x.cwt)}`))})`
+  return `${houses}. 이 작물을 저장하면 저장량이 ${F.mass(st.stored)}이(가) 됩니다${over > 0.5 ? `. 들어가지 못하는 ${F.mass(over)}은(는) 시즌이 끝날 때 밭에서 바로 팔립니다` : `. ${F.mass(st.free)} 더 들어갑니다`}.`
 }
 
 function ticketNo(c: S.Campaign, lot: S.Lot): string {
@@ -552,8 +565,8 @@ function reckoning(ctx: Ctx, lotId: number): PaperSpec {
   if (stunted >= 0.05) {
     const share = (1 - S.VIRUS_VIGOR) * stunted
     never.push({
-      head: 'Virus', cwt: d.total * share / (1 - share),
-      text: `${F.pct(stunted)} of the plants in ${name} were stunted by virus, and a stunted plant yields about ${F.pct(1 - S.VIRUS_VIGOR)} less. The virus came in with the seed${c.plans[lot.field]?.seed === 'saved' ? ', and saved seed carries more every year you keep it' : ''}.`,
+      head: '바이러스', cwt: d.total * share / (1 - share),
+      text: `${name} 포기의 ${F.pct(stunted)}가 바이러스로 위축됐고, 위축된 포기는 약 ${F.pct(1 - S.VIRUS_VIGOR)} 덜 맺습니다. 바이러스는 씨감자와 함께 들어왔습니다${c.plans[lot.field]?.seed === 'saved' ? '. 아껴 둔 종자는 두는 해마다 더 많이 옮깁니다' : ''}.`,
     })
   }
   const stand = seen?.stand ?? S.fieldInfo(c, lot.field).stand
@@ -562,8 +575,8 @@ function reckoning(ctx: Ctx, lotId: number): PaperSpec {
   if (stand > 0 && (stand < 0.92 || !!R.coldSeed(c, lot, stand, d.total))) {
     const planted = fieldLog(c, lot.field, 'planted')[0]
     never.push({
-      head: 'Thin stand', cwt: d.total * (1 - stand) / stand,
-      text: `${F.pct(1 - stand)} of the seed pieces rotted before they came up${planted ? `, after planting on ${F.date(c.year, planted.day)}` : ''}. Seed rots in cold ground, so wait for soil near ${F.temp(10)}.`,
+      head: '성긴 포기', cwt: d.total * (1 - stand) / stand,
+      text: `씨감자 조각의 ${F.pct(1 - stand)}가 싹이 나기 전에 썩었습니다${planted ? `(${F.date(c.year, planted.day)}에 심은 뒤)` : ''}. 씨감자는 차가운 땅에서 썩으니 흙이 ${F.temp(10)} 가까워지기를 기다리세요.`,
     })
   }
   // The growth an early kill gave up never reached any grade: the kill's own record says how much.
@@ -572,53 +585,53 @@ function reckoning(ctx: Ctx, lotId: number): PaperSpec {
   if (killed && gaveUp > 0) {
     const early = Number(killed.data?.early ?? 0)
     never.push({
-      head: 'Killed early', cwt: gaveUp * S.FIELD_ACRES,
-      text: `The vines in ${name} were killed on ${F.date(c.year, killed.day)}${early > 0 ? `, about ${F.plural(early, 'day')} before they were due` : ''}. Potatoes stop growing the day the vines die, so the crop missed what it would have put on by then. That's an estimate, since the weather in those days can't be rerun.`,
+      head: '일찍 죽인 줄기', cwt: gaveUp * S.FIELD_ACRES,
+      text: `${name}의 줄기를 ${F.date(c.year, killed.day)}에 죽였습니다${early > 0 ? `. 제때보다 약 ${early}일 빨랐습니다` : ''}. 감자는 줄기가 죽는 날 자라기를 멈추니, 그때까지 불렸을 분량을 놓쳤습니다. 그 나날의 날씨는 다시 돌릴 수 없어 추정치입니다.`,
     })
   }
   const st = S.storageInfo(c)
   const head = (text: string) => h('h3', { class: 'reck-h t-label' }, text)
   return {
-    title: `The full breakdown, ${name}`,
-    kicker: `Behind weigh ticket No. ${ticketNo(c, lot)}`,
+    title: `전체 내역, ${name}`,
+    kicker: `계근 전표 No. ${ticketNo(c, lot)}의 상세`,
     testid: 'reckoning',
     size: 'wide',
     cls: 'reckoning-paper',
     body: () => h('div', { class: 'reck' },
-      h('p', { class: 'reck-lede' }, `${F.upper(digDatesText(c, lot))}. ${S.variety(lot.variety).name} from ${F.area(S.FIELD_ACRES)} gave `,
-        h('span', { class: 'stamped' }, F.mass(d.market)), ' to sell and ', h('span', { class: 'stamped' }, F.mass(d.cull)), ` culled.${F.cwtNote()}`),
+      h('p', { class: 'reck-lede' }, `${F.upper(digDatesText(c, lot))}. ${F.area(S.FIELD_ACRES)}에서 나온 ${S.variety(lot.variety).name}, 팔 수 있는 것 `,
+        h('span', { class: 'stamped' }, F.mass(d.market)), ', 불량 ', h('span', { class: 'stamped' }, F.mass(d.cull)), `입니다.${F.cwtNote()}`),
       h('section', { class: 'reck-part' },
-        head('Grade by grade'),
+        head('등급별로'),
         d.known ? [
           gradebar(d, shown.parts),
           h('table', { class: 'losses reck-grades' },
-            h('thead', { class: 'sr' }, h('tr', null, h('th', { scope: 'col' }, 'Grade'), h('th', { scope: 'col' }, 'What it sells for'), h('th', { scope: 'col' }, 'Weight'), h('th', { scope: 'col' }, 'Share'))),
+            h('thead', { class: 'sr' }, h('tr', null, h('th', { scope: 'col' }, '등급'), h('th', { scope: 'col' }, '판매 가격'), h('th', { scope: 'col' }, '무게'), h('th', { scope: 'col' }, '비율'))),
             h('tbody', null, d.rows.map((r, k) => h('tr', null,
-              h('th', { scope: 'row' }, h('i', { class: `sw ${TINT[r.key]}` }), term(GRADE_LABEL[r.key])),
+              h('th', { scope: 'row' }, h('i', { class: `sw ${TINT[r.key]}` }), gradeTerm(r.key)),
               h('td', { class: 'reck-note' }, gradeNote(ctx, c, lot, r.key)),
               h('td', { class: 'num' }, shown.parts[k]),
               h('td', { class: 'num share' }, d.total > 0 ? (r.cwt / d.total < 0.005 ? 'under 1%' : F.pct(r.cwt / d.total)) : ''))))),
-        ] : h('p', { class: 't-caption' }, 'The grade sheet for this crop went with the sale.')),
+        ] : h('p', { class: 't-caption' }, '이 작물의 등급표는 판매와 함께 넘어갔습니다.')),
       h('section', { class: 'reck-part' },
-        head(losses.length ? `Downgraded and culled: ${F.mass(lost)}` : 'Nothing downgraded or culled'),
+        head(losses.length ? `강등·불량 처리: ${F.mass(lost)}` : '강등되거나 불량 처리된 것 없음'),
         losses.length ? h('table', { class: 'losses reck-causes' },
           h('tbody', null, losses.map(x => h('tr', null,
-            h('th', { scope: 'row' }, term(CAUSE_LABEL[x.k])),
+            h('th', { scope: 'row' }, causeTerm(x.k)),
             h('td', { class: 'num' }, `−${F.mass(x.cwt)}`),
-            h('td', null, h('span', { class: 't-label' }, x.k === 'skin' ? 'Downgraded' : CULLED.includes(x.k) ? 'Culled' : 'Down to No. 2'), h('p', null, why(ctx, c, lot, x.k))))))) : h('p', null, 'Every potato kept its grade. A clean harvest.')),
+            h('td', null, h('span', { class: 't-label' }, x.k === 'skin' ? '강등' : CULLED.includes(x.k) ? '불량 처리' : 'No. 2로'), h('p', null, why(ctx, c, lot, x.k))))))) : h('p', null, '모든 감자가 등급을 지켰습니다. 깨끗한 수확입니다.')),
       never.length ? h('section', { class: 'reck-part' },
-        head('What never grew'),
+        head('자라지 못한 몫'),
         h('table', { class: 'losses reck-causes' },
           h('tbody', null, never.map(x => h('tr', null,
             h('th', { scope: 'row' }, x.head),
-            h('td', { class: 'num' }, `about ${F.mass(x.cwt)}`),
-            h('td', null, h('span', { class: 't-label' }, 'Not in the crop'), h('p', null, x.text))))))) : null,
+            h('td', { class: 'num' }, `약 ${F.mass(x.cwt)}`),
+            h('td', null, h('span', { class: 't-label' }, '수확에 들지 않음'), h('p', null, x.text))))))) : null,
       lot.open ? h('section', { class: 'reck-part reck-keep' },
-        head('Sell now or store it?'),
+        head('지금 팔까요, 저장할까요?'),
         sellOrKeep(ctx, c, lot),
         h('p', { class: st.stored > st.capacity ? 'c-ochre' : 'quiet' }, storageLine(c)),
-        S.hasBuilt(c, 'packing') ? h('p', { testid: 'store-packing' }, `If you pack it over the winter, its No. 1 sells for ${F.pct(S.PACK_NO1)} more and its B size for ${F.pct(S.PACK_B)} of the No. 1 price, minus ${F.money(S.PACK_CHARGE)} a hundredweight for packing.`) : null) : null),
-    foot: close => h('button', { class: 'btn', type: 'button', testid: 'reckoning-close', autofocus: true, onclick: close }, icon('back', 'i'), 'Back to the ticket'),
+        S.hasBuilt(c, 'packing') ? h('p', { testid: 'store-packing' }, `겨울 동안 포장하면 No. 1은 ${F.pct(S.PACK_NO1)} 더 비싸게, B size는 No. 1 가격의 ${F.pct(S.PACK_B)}에 팔립니다. 포장비는 cwt당 ${F.money(S.PACK_CHARGE)}입니다.`) : null) : null),
+    foot: close => h('button', { class: 'btn', type: 'button', testid: 'reckoning-close', autofocus: true, onclick: close }, icon('back', 'i'), '전표로 돌아가기'),
   }
 }
 
@@ -688,7 +701,7 @@ function dial(rows: { key: GradeKey; cwt: number }[], gross: number, inked: bool
     const pat = pattern[r.key]
     const fill = pat ? s('path', { class: 'd-ink', d: mid(v0, v1, 188), fill: 'none', stroke: `url(#${pat.getAttribute('id')})`, 'stroke-width': 24, pathLength: 1, 'stroke-dasharray': '1 1', 'stroke-dashoffset': inked ? 0 : 1 }) : null
     const sweep = (v1 - v0) / max * (A1 - A0) * Math.PI / 180 * 208
-    const label = GRADE_LABEL[r.key].toUpperCase()
+    const label = GRADE_KO[r.key].toUpperCase()
     const [lx, ly] = pt((v0 + v1) / 2, 208)
     const named = sweep >= label.length * 8.6 + 10
       ? s('text', { x: f(lx), y: f(ly), 'text-anchor': 'middle', 'font-family': 'Gothic', 'font-size': 14, 'letter-spacing': 1.5, fill: INK, transform: `rotate(${f(deg((v0 + v1) / 2) + 90)} ${f(lx)} ${f(ly)})` }, label)
@@ -712,15 +725,15 @@ function dial(rows: { key: GradeKey; cwt: number }[], gross: number, inked: bool
   }
   kids.push(
     s('text', { 'font-family': 'Gothic', 'font-size': 15, 'letter-spacing': 3, fill: INK2 }, s('textPath', { href: `#${id}-top`, startOffset: '50%', 'text-anchor': 'middle' }, 'FARMERS’ PLATFORM SCALE')),
-    s('text', { x: C, y: C + 62, 'text-anchor': 'middle', 'font-family': 'Gothic', 'font-size': 18, 'letter-spacing': 3, fill: INK2 }, F.metric() ? 'TONNES' : 'CWT × 100'),
+    s('text', { x: C, y: C + 62, 'text-anchor': 'middle', 'font-family': 'Gothic', 'font-size': 18, 'letter-spacing': 3, fill: INK2 }, F.metric() ? '톤' : 'CWT × 100'),
     s('text', { x: C, y: C + 86, 'text-anchor': 'middle', 'font-family': 'Caslon', 'font-style': 'italic', 'font-size': 15, fill: INK2 }, `capacity ${F.metric() ? `${max} t` : F.mass(max * 100)}`))
   // The needle, drawn pointing straight up and turned; two faint places it has just swept through follow it round.
   const ghost = (op: number) => s('line', { class: 'd-ghost', x1: C, y1: C, x2: C, y2: C - 168, stroke: RED, 'stroke-width': 5, 'stroke-linecap': 'round', opacity: op })
   const ghosts = [ghost(0.12), ghost(0.22)]
   const needle = s('line', { x1: C, y1: C + 30, x2: C, y2: C - 170, stroke: RED, 'stroke-width': 5, 'stroke-linecap': 'round' })
   kids.push(ghosts, needle, s('circle', { cx: C, cy: C, r: 15, fill: INK }), s('circle', { cx: C, cy: C, r: 5, fill: RED }))
-  const names = rows.map(r => GRADE_LABEL[r.key].replace('Large', 'large').replace('Culls', 'culls'))
-  const el = s('svg', { viewBox: '0 0 470 470', role: 'img', 'aria-label': `The scale's needle swings round to ${F.mass(gross)}, past ${F.list(names)}` }, kids)
+  const names = rows.map(r => GRADE_KO[r.key])
+  const el = s('svg', { viewBox: '0 0 470 470', role: 'img', 'aria-label': `저울 바늘이 ${F.list(names)}를 지나 ${F.mass(gross)}까지 돌아갑니다` }, kids)
   const turn = (x: SVGElement, val: number) => x.setAttribute('transform', `rotate(${f(deg(val) + 90)} ${C} ${C})`)
   const set = (val: number, trail: [number, number] | null = null) => {
     turn(needle, val)
@@ -743,11 +756,11 @@ function scaleFace(c: S.Campaign, lot: S.Lot, d: AtDig): Face {
   const g = dial(d.rows, d.total, false)
   const gross = dialUnits(d.total)
   const figure = h('span', { class: 'stamped' }, bare(0))
-  const slip = h('div', { class: 'slip' }, h('span', null, 'Weigh ticket'), h('span', { class: 'stamped' }, `No. ${ticketNo(c, lot)}`))
-  const el = h('section', { class: 'scale-face sheet', role: 'status', 'aria-label': `Weighing ${name}, ${F.mass(d.total)} off the field` },
-    h('p', { class: 't-label' }, `${name} · ${S.variety(lot.variety).name} · on the scale`),
+  const slip = h('div', { class: 'slip' }, h('span', null, '계근 전표'), h('span', { class: 'stamped' }, `No. ${ticketNo(c, lot)}`))
+  const el = h('section', { class: 'scale-face sheet', role: 'status', 'aria-label': `${name} 계량 중, 밭에서 나온 ${F.mass(d.total)}` },
+    h('p', { class: 't-label' }, `${name} · ${S.variety(lot.variety).name} · 저울 위`),
     h('div', { class: 'dial' }, g.el),
-    h('p', { class: 'readout', 'aria-hidden': 'true' }, figure, h('span', { class: 't-label' }, `${F.massUnit()} off the field`)),
+    h('p', { class: 'readout', 'aria-hidden': 'true' }, figure, h('span', { class: 't-label' }, `밭에서 나온 양(${F.massUnit()})`)),
     h('div', { class: 'printing', 'aria-hidden': 'true' }, slip))
   return {
     el, slip,
@@ -868,7 +881,7 @@ export function ticket(ctx: Ctx, lotId: number, o: { fresh: boolean; staged?: bo
   }
 
   return {
-    title: `Weigh ticket, ${name}`,
+    title: `계근 전표, ${name}`,
     testid: 'weighin',
     size: 'medium',
     plain: true,
@@ -876,12 +889,12 @@ export function ticket(ctx: Ctx, lotId: number, o: { fresh: boolean; staged?: bo
     sticky: fresh && lot.open,
     // A dig-day ticket still waiting when its crop has already been sold or delivered has nothing to ask.
     stale: () => (fresh && !lot.open) || app.campaign !== c || !c.lots.includes(lot),
-    closeLabel: lot.open ? 'Store it and close' : 'Close',
+    closeLabel: lot.open ? '저장하고 닫기' : '닫기',
     onClose: () => {
       off()
       shade()?.classList.remove('deep')
       if (!fresh || app.campaign !== c || c.phase !== 'season') return
-      if (lot.open && !answered) ctx.say(`${F.mass(S.lotCwt(lot))} from ${name} went into the cellar.`, 'info')
+      if (lot.open && !answered) ctx.say(`${name}에서 나온 ${F.mass(S.lotCwt(lot))}을(를) 저장고에 넣었습니다.`, 'info')
       // The decision is made: the days run again.
       if (!ctx.papers.pending()) app.resumeAfterCard()
     },
@@ -897,47 +910,47 @@ export function ticket(ctx: Ctx, lotId: number, o: { fresh: boolean; staged?: bo
       const box = h('div', { class: 'choice' })
 
       const tk = h('article', { class: `ticket sheet s-buff${reveal ? ' is-waiting' : ''}`, 'aria-labelledby': `tk-${lotId}` },
-        h('div', { class: 'stub', role: 'img', 'aria-label': `Ticket number ${no}, ${name}` }, h('span', null, `No. ${no} `, h('b', null, name))),
+        h('div', { class: 'stub', role: 'img', 'aria-label': `전표 번호 ${no}, ${name}` }, h('span', null, `No. ${no} `, h('b', null, name))),
         h('div', { class: 'tk' },
           h('header', { class: 'tk-head' },
             h('div', null,
-              h('p', { class: 't-label' }, icon('scale', 'i'), 'Home potato house'),
-              h('h2', { id: `tk-${lotId}` }, 'Weigh ticket')),
+              h('p', { class: 't-label' }, icon('scale', 'i'), '집 감자 저장고'),
+              h('h2', { id: `tk-${lotId}` }, '계근 전표')),
             stamp,
-            fresh ? null : h('button', { class: 'close', type: 'button', 'aria-label': lot.open ? 'Close the ticket' : 'Close', onclick: close }, icon('close', 'i'))),
+            fresh ? null : h('button', { class: 'close', type: 'button', 'aria-label': lot.open ? '전표 닫기' : '닫기', onclick: close }, icon('close', 'i'))),
           fresh && lot.open ? agentLine('ticket', `${c.seed}:${lot.year}:${lotId}`) : null,
           h('p', { class: 'tk-line' },
-            h('span', null, h('span', { class: 't-label' }, 'Variety'), ' ', h('b', null, v.name)),
-            h('span', null, h('span', { class: 't-label' }, 'Dug'), ' ', h('b', { class: 'num' }, daySpan(lot.year, dug.start, dug.end))),
-            inDay > dug.end ? h('span', null, h('span', { class: 't-label' }, 'Hauled in'), ' ', h('b', { class: 'num' }, F.date(lot.year, inDay, true))) : null),
+            h('span', null, h('span', { class: 't-label' }, '품종'), ' ', h('b', null, v.name)),
+            h('span', null, h('span', { class: 't-label' }, '캔 날짜'), ' ', h('b', { class: 'num' }, daySpan(lot.year, dug.start, dug.end))),
+            inDay > dug.end ? h('span', null, h('span', { class: 't-label' }, '날라온 날짜'), ' ', h('b', { class: 'num' }, F.date(lot.year, inDay, true))) : null),
           h('div', { class: 'tk-net' },
             h('div', { class: 'net-main' },
-              h('p', { class: 'net' }, net, h('span', { class: 'unit' }, F.massUnit(), h('br'), sold ? 'sold' : 'to sell')),
+              h('p', { class: 'net' }, net, h('span', { class: 'unit' }, F.massUnit(), h('br'), sold ? '판매함' : '판매 가능')),
               F.cwtNote() ? h('p', { class: 'cwt-note', testid: 'ticket-cwt' }, F.cwtNote().trim()) : null),
             h('div', { class: 'net-side' },
-              h('p', null, h('span', { class: 't-label' }, sold ? 'Sold for' : 'Sell today for')),
+              h('p', null, h('span', { class: 't-label' }, sold ? '판매액' : '오늘 팔면')),
               h('p', null, worth),
-              h('p', { class: 'quiet num' }, est ? '' : `${F.perArea(d.market / S.FIELD_ACRES)} · `, `${F.mass(d.cull)} `, term('culled', 'culls')),
+              h('p', { class: 'quiet num' }, est ? '' : `${F.perArea(d.market / S.FIELD_ACRES)} · `, `${F.mass(d.cull)} `, term('불량 처리', 'culls')),
               est ? [
-                range({ lo: est.lo, hi: est.hi, max, mark: perAcre, label: `${expectedFrom(est.digs)} ${F.perAreaSpan(est.lo, est.hi)} and the field gave ${F.perArea(perAcre)}` }),
-                h('p', { class: 'carried', testid: 'carried' }, `${expectedFrom(est.digs)} `, h('span', { class: 'num' }, F.perAreaSpan(est.lo, est.hi)), '. The field gave ',
-                  h('b', { class: 'num' }, F.perArea(perAcre).replace(` ${F.perAreaUnit()}`, '')), `, ${inside ? 'inside that range' : perAcre < est.lo ? 'under it' : 'over it'}.`),
+                range({ lo: est.lo, hi: est.hi, max, mark: perAcre, label: `${expectedFrom(est.digs)} ${F.perAreaSpan(est.lo, est.hi)}, 밭에서는 ${F.perArea(perAcre)}이(가) 나왔습니다` }),
+                h('p', { class: 'carried', testid: 'carried' }, `${expectedFrom(est.digs)} `, h('span', { class: 'num' }, F.perAreaSpan(est.lo, est.hi)), '. 밭에서는 ',
+                  h('b', { class: 'num' }, F.perArea(perAcre).replace(` ${F.perAreaUnit()}`, '')), `이(가) 나왔습니다. ${inside ? '예상 범위 안입니다' : perAcre < est.lo ? '예상보다 적습니다' : '예상보다 많습니다'}.`),
               ] : null)),
           // The first reading: the grades as a strip and what most of it made, the one biggest loss. Every grade
           // and every loss in full is one press away, on the full breakdown.
           d.known ? h('div', { class: 'grades' },
             gradebar(d, parts.parts),
-            h('p', { class: 'tk-top' }, topGrade(d))) : h('p', { class: 'grades t-caption' }, 'The grade sheet for this crop went with the sale.'),
+            h('p', { class: 'tk-top' }, topGrade(d))) : h('p', { class: 'grades t-caption' }, '이 작물의 등급표는 판매와 함께 넘어갔습니다.'),
           h('div', { class: 'tk-loss' },
             h('table', { class: 'losses' },
-              h('caption', { class: 't-label' }, losses.length || coldFirst ? 'Biggest loss' : 'Losses'),
+              h('caption', { class: 't-label' }, losses.length || coldFirst ? '가장 큰 손실' : '손실'),
               h('tbody', null, coldFirst ? h('tr', { testid: 'ticket-cold' },
-                h('th', { scope: 'row' }, 'Rotted seed'), h('td', { class: 'num' }, `−${F.mass(cold!.cwt)}`), h('td', null, cold!.phrase))
+                h('th', { scope: 'row' }, '썩은 씨감자'), h('td', { class: 'num' }, `−${F.mass(cold!.cwt)}`), h('td', null, cold!.phrase))
                 : losses.length ? losses.slice(0, 1).map(x => h('tr', null,
-                  h('th', { scope: 'row' }, term(CAUSE_LABEL[x.k])), h('td', { class: 'num' }, `−${F.mass(x.cwt)}`), h('td', null, phrase(ctx, c, lot, x.k))))
-                  : h('tr', null, h('td', { colspan: 3 }, 'Every potato kept its grade. A clean harvest.')))),
+                  h('th', { scope: 'row' }, causeTerm(x.k)), h('td', { class: 'num' }, `−${F.mass(x.cwt)}`), h('td', null, phrase(ctx, c, lot, x.k))))
+                  : h('tr', null, h('td', { colspan: 3 }, '모든 감자가 등급을 지켰습니다. 깨끗한 수확입니다.')))),
             h('button', { class: 'btn quiet', type: 'button', testid: 'reckoning-open', onclick: () => ctx.papers.open(reckoning(ctx, lotId)) },
-              losses.length > 1 ? 'See every grade and loss' : 'See every grade')),
+              losses.length > 1 ? '모든 등급과 손실 보기' : '모든 등급 보기')),
           box))
 
       let delivered = false
@@ -947,7 +960,7 @@ export function ticket(ctx: Ctx, lotId: number, o: { fresh: boolean; staged?: bo
         if (!lot.open && !sold) { answered = true; close(); return }
         if (sold) {
           ways = []
-          box.replaceChildren(h('p', { class: 'tk-more' }, h('button', { class: 'btn', type: 'button', testid: `lot-keep-${lot.id}`, autofocus: true, onclick: close }, 'Close')))
+          box.replaceChildren(h('p', { class: 'tk-more' }, h('button', { class: 'btn', type: 'button', testid: `lot-keep-${lot.id}`, autofocus: true, onclick: close }, '닫기')))
           return
         }
         const deal = deals(app.world, c, lot)[0]
@@ -960,46 +973,46 @@ export function ticket(ctx: Ctx, lotId: number, o: { fresh: boolean; staged?: bo
         const s0 = c.season
         const newest = s0 ? S.standLot(c, s0) : undefined
         const stand = S.hasBuilt(c, 'stand') && newest?.id === lot.id
-          ? `Your farm stand sells about ${F.mass(S.STAND_CWT)} a day of this crop at twice the market price${s0 && s0.day < S.dayIndex(c.year, S.STAND_FROM.month, S.STAND_FROM.dom) ? ', starting August 1' : ''}, for as long as it's your newest crop.`
+          ? `직판장에서 이 작물을 하루 약 ${F.mass(S.STAND_CWT)}씩 시세의 두 배에 팝니다${s0 && s0.day < S.dayIndex(c.year, S.STAND_FROM.month, S.STAND_FROM.dom) ? '(8월 1일부터)' : ''}. 가장 최근 작물인 동안 계속됩니다.`
           : ''
         const outlook = S.storeOutlook(app.world, c, lot)
         const call = storeCall(outlook)
         const best = deal && deal.pays >= deal.market - 0.5 ? 'deliver' : advice || !call.store ? 'sell' : 'store'
         // One rule (storeCall) sets the tab and its words; advice to sell (new potatoes, blight in the pile) makes selling the surer way.
-        const tab = best === 'deliver' ? 'Pays most' : advice && call.store ? 'Surer' : call.tab
+        const tab = best === 'deliver' ? '가장 이득' : advice && call.store ? '더 확실' : call.tab
         let n = 0
         const k = () => String(++n)
         const list: Way[] = []
         const add = (el: HTMLElement) => { list.push({ el, key: el.getAttribute('aria-keyshortcuts') ?? '' }); return el }
         const deliverWay = deal ? add(coupon({
-          icon: 'deliver', label: `Deliver to ${deal.k.buyer.replace(/^The /, 'the ')}`, amount: F.money(deal.pays), take: 'Deliver', key: k(), best: best === 'deliver',
-          does: `${F.mass(deal.take)} at ${F.price(deal.k.price)}, ${versusMarket(deal)}.${deal.take < deal.k.needed - 0.5 ? ` You'll still owe ${F.mass(deal.k.needed - deal.take)}.` : ' That fills the contract.'}`,
+          icon: 'deliver', label: `${deal.k.buyer.replace(/^The /, 'the ')}에 납품`, amount: F.money(deal.pays), take: '납품', key: k(), best: best === 'deliver',
+          does: `${F.mass(deal.take)}을(를) ${F.price(deal.k.price)}에, ${versusMarket(deal)}.${deal.take < deal.k.needed - 0.5 ? ` 계약량이 ${F.mass(deal.k.needed - deal.take)} 남습니다.` : ' 계약을 채웁니다.'}`,
           testid: `lot-deliver-${lot.id}`,
           onclick: e => { if (busy || !deliver(ctx, lot, deal)) return; delivered = true; tear(e.currentTarget as HTMLElement, draw) },
         })) : null
         const sellWay = add(coupon({
-          icon: 'sell', label: delivered ? 'Sell the rest' : 'Sell now', amount: F.money(now), take: 'Sell', key: k(), best: best === 'sell', bestLabel: tab,
-          does: advice && !delivered ? h('span', { class: 'choice-advice' }, F.localize(advice.why)) : `${F.price(S.basePrice(app.world, c, lot.variety))} today for US No. 1.`,
+          icon: 'sell', label: delivered ? '나머지 판매' : '지금 판매', amount: F.money(now), take: '판매', key: k(), best: best === 'sell', bestLabel: tab,
+          does: advice && !delivered ? h('span', { class: 'choice-advice' }, F.localize(advice.why)) : `오늘 US No. 1에 ${F.price(S.basePrice(app.world, c, lot.variety))}.`,
           testid: `lot-sell-${lot.id}`,
           onclick: e => { if (busy) return; answered = true; if (ctx.run({ t: 'sell', lot: lot.id, frac: 1 }).ok) tear(e.currentTarget as HTMLElement, close) },
         }))
         const storeWay = add(coupon({
-          icon: 'store', label: delivered ? 'Store the rest' : fresh ? 'Store it' : 'Keep it stored', take: 'Store', key: k(), best: best === 'store', bestLabel: tab,
-          amount: [h('span', { 'aria-hidden': 'true' }, `−${F.money(month).replace('−', '')}`, h('small', null, '/mo')), h('span', { class: 'sr' }, `Storing costs ${F.money(month)} a month.`)],
-          does: advice ? `${call.short.replace(/\.$/, '')}. But ${F.localize(advice.why).replace(/^./, x => x.toLowerCase())}` : call.short,
+          icon: 'store', label: delivered ? '나머지 저장' : fresh ? '저장하기' : '계속 저장', take: '저장', key: k(), best: best === 'store', bestLabel: tab,
+          amount: [h('span', { 'aria-hidden': 'true' }, `−${F.money(month).replace('−', '')}`, h('small', null, '/월')), h('span', { class: 'sr' }, `저장 비용은 한 달에 ${F.money(month)}입니다.`)],
+          does: advice ? `${call.short.replace(/\.$/, '')}. 다만 ${F.localize(advice.why)}` : call.short,
           testid: `lot-keep-${lot.id}`,
-          onclick: e => { if (busy) return; answered = true; if (fresh) ctx.say(`${F.mass(S.lotCwt(lot))} from ${name} went into the cellar.`, 'info'); tear(e.currentTarget as HTMLElement, close) },
+          onclick: e => { if (busy) return; answered = true; if (fresh) ctx.say(`${name}에서 나온 ${F.mass(S.lotCwt(lot))}을(를) 저장고에 넣었습니다.`, 'info'); tear(e.currentTarget as HTMLElement, close) },
         }))
         ways = list
         // After a delivery, what is left and what becomes of it if the ticket is simply closed: it goes into store.
         const left = delivered ? h('p', { class: 'tk-left', testid: 'ticket-left', role: 'status' },
-          icon('deliver', 'i'), `Delivered. ${F.mass(S.lotCwt(lot))} is left to sell or store. Closing the ticket (Escape) stores it.`) : null
+          icon('deliver', 'i'), `납품했습니다. ${F.mass(S.lotCwt(lot))}이(가) 남았습니다. 팔거나 저장하세요. 전표를 닫으면(Escape) 저장됩니다.`) : null
         box.replaceChildren(...(left ? [left] : []),
-          h('div', { class: `ways${deal ? '' : ' two'}`, role: 'group', 'aria-label': 'What to do with the crop' }, deliverWay, sellWay, storeWay),
+          h('div', { class: `ways${deal ? '' : ' two'}`, role: 'group', 'aria-label': '작물 처리 방법' }, deliverWay, sellWay, storeWay),
           // Below the ways only what changes the choice: whether the potato house has room, the farm stand.
           h('div', { class: 'tk-more' },
             h('div', { class: 'tk-notes' },
-              h('p', { class: over ? 'c-ochre' : '', testid: 'store-houses' }, over ? storageLine(c) : `The potato house has room, with ${F.mass(st.free)} to spare.`),
+              h('p', { class: over ? 'c-ochre' : '', testid: 'store-houses' }, over ? storageLine(c) : `저장고에 자리가 있습니다. ${F.mass(st.free)}만큼 여유가 있습니다.`),
               stand ? h('p', { class: 'choice-stand', testid: 'ticket-stand' }, icon('stand', 'i'), stand) : null)))
       }
       draw()

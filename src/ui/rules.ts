@@ -288,7 +288,7 @@ export function sproutMonth(year: number, dugDay: number, id: S.VarietyId, vent:
 }
 
 export function sproutText(m: number): string {
-  return m < S.CELLAR_MONTHS.length ? `${S.CELLAR_MONTHS[m]} 초에 싹이 나기 시작` : '5월에 저장고를 비우기 전에는 싹이 나지 않음'
+  return m < S.CELLAR_MONTHS.length ? `${S.CELLAR_MONTHS[m]} 초에 싹이 나기 시작합니다` : '5월에 저장고를 비우기 전에는 싹이 나지 않습니다'
 }
 
 // For a crop dug at the usual time, around September 25.
