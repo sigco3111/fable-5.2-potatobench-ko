@@ -15,6 +15,6 @@ describe('a first spring\'s field record', () => {
         expect(others.some(x => x.maturity === 'early'), `${year}, ${v.id}: an early one`).toBe(true)
       }
     }
-    expect(firstSight(S.availableVarieties(1990), ['katahdin']).map(v => v.name)).toEqual(['Dark Red Norland', 'Katahdin', 'Kennebec'])
+    expect(firstSight(S.availableVarieties(1990), ['katahdin']).map(v => v.name)).toEqual(['다크 레드 놀랜드', '카타딘', '케너벡'])
   })
 })

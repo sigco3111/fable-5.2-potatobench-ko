@@ -37,7 +37,7 @@ describe('the weigh ticket names cold planting', () => {
       if (stand < 0.99) {
         // What the rotted share of the seed would have grown, as the full breakdown counts it.
         expect(loss!.cwt).toBeCloseTo(total * (1 - stand) / stand, 6)
-        expect(loss!.phrase).toBe(`${Math.round((1 - stand) * 100)}% after a cold planting on April ${on.dom}`)
+        expect(loss!.phrase).toBe(`${Math.round((1 - stand) * 100)}%, 4월 ${on.dom}일의 이른 파종`)
         named++
       } else expect(loss).toBeNull()
       console.log(`seed ${seed}: ${loss ? `${Math.round(loss.cwt)} cwt, ${loss.phrase}` : 'nothing rotted'}`)

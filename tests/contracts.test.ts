@@ -62,8 +62,8 @@ describe('a contract\'s forecast', () => {
     const o = c.offers.find(x => c.plans.every(p => p.crop !== 'potato' || p.variety !== x.variety))!
     ok(base, c, { t: 'accept', offer: o.id })
     const why = shortWhy(c, S.contractInfo(c)[0])
-    expect(why).toMatch(/give it a field/)
-    expect(why).not.toMatch(/\$|penalty|short/i)
+    expect(why).toMatch(/밭을 정해주세요/)
+    expect(why).not.toMatch(/\$|위약금/)
   })
 
   it('a shortfall is said only when even the top of the range falls short, and says why', () => {
@@ -72,10 +72,10 @@ describe('a contract\'s forecast', () => {
     ok(base, c, { t: 'plan', field: 2, plan: { crop: 'rest', variety: k.variety, seed: 'certified' } })
     const big = { ...k, cwt: Math.ceil(S.contractOutlook(c, k.variety, 0).hi + 100), needed: Math.ceil(S.contractOutlook(c, k.variety, 0).hi + 100) }
     expect(S.contractOutlook(c, k.variety, big.cwt).short).toBe('acres')
-    expect(shortWhy(c, big)).toMatch(/^Too few acres of .+ are planned/)
+    expect(shortWhy(c, big)).toMatch(/^좋은 해에도 이 계약을 채우기에 .+의 면적이 너무 적습니다/)
     expect(shortWhy(c, big)).not.toMatch(/\$/)
     ok(base, c, { t: 'begin' })
-    expect(shortWhy(c, big)).toMatch(/^Too few acres of .+ are planted to fill this even in a good year, so expect a penalty of at least \$[\d,]+\.$/)
+    expect(shortWhy(c, big)).toMatch(/^좋은 해에도 이 계약을 채우기에 .+의 면적이 너무 적어 최소 \$[\d,]+의 위약금이 예상됩니다\.$/)
     // Within reach of the top of the range: nothing said.
     const near = { ...k, cwt: Math.floor(S.contractOutlook(c, k.variety, 0).hi - 1) }
     expect(shortWhy(c, { ...near, needed: near.cwt })).toBe('')

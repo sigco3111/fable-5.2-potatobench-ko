@@ -38,8 +38,8 @@ describe('what a usual year does to the balance', () => {
   }, 60_000)
 
   it('a year end says better, worse or usual against that range', () => {
-    expect(againstUsual(2000)).toMatch(/^Better/)
-    expect(againstUsual(-30000)).toMatch(/^Worse/)
-    expect(againstUsual(-12000)).toMatch(/^A usual year/)
+    expect(againstUsual(2000)).toMatch(/^보통보다 좋습니다/)
+    expect(againstUsual(-30000)).toMatch(/^보통보다 나쁩니다/)
+    expect(againstUsual(-12000)).toMatch(/^보통의 해입니다/)
   })
 })

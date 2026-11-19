@@ -51,8 +51,8 @@ describe('work for people with nothing to do', () => {
       }
       // The low fields' hedgerows, lowest first, then the brush tract.
       expect(said.slice(0, 2).every(x => x.startsWith('brush@'))).toBe(true)
-      expect(said[0]).toMatch(/Brook Field|Bottom Field/)
-      expect(said[said.length - 1]).toBe('fell@Alder Swale')
+      expect(said[0]).toMatch(/개울밭|낮은밭/)
+      expect(said[said.length - 1]).toBe('fell@오리나무 습지')
       // Felling is helped: with three people free, more than one is at it.
       day(app, c)
       const fell = s.jobs.find(j => j.kind === 'fell')

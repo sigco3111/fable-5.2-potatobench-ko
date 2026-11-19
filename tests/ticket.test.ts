@@ -28,9 +28,9 @@ describe('the weigh ticket and what it charges', () => {
   })
 
   it('says the test digs pointed to a range, not that you expected it: the crew digs them on its own', () => {
-    expect(expectedFrom(2)).toBe('2 test digs pointed to')
-    expect(expectedFrom(1)).toBe('1 test dig pointed to')
-    expect(expectedFrom(0)).toBe('By eye it looked like')
+    expect(expectedFrom(2)).toBe('시험 캐기 2회로 보면')
+    expect(expectedFrom(1)).toBe('시험 캐기 1회로 보면')
+    expect(expectedFrom(0)).toBe('눈으로 보면')
     for (const n of [0, 1, 2, 3]) expect(expectedFrom(n)).not.toMatch(/\byou\b/i)
   })
 })

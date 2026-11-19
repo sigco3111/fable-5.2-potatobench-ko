@@ -31,7 +31,7 @@ describe('haul it in now', () => {
     expect(r.ok, r.err).toBe(true)
     expect(s.jobs[0]).toMatchObject({ kind: 'haul', field, unit: 0 })
     expect(S.workday(c, s)).toBe(true)
-    expect(r.events[0].text).toMatch(/^You're hauling .+ now\. It's a day off, so it tires you as a working day does\. One tractor brings in about [\d,]+ cwt by dark(, so about [\d,]+ cwt will stay out|, which is all of it)\.$/)
+    expect(r.events[0].text).toMatch(/^당신은 지금 .+을\(를\) 운반 중입니다\. 쉬는 날이라 당신도 일하는 날만큼 지칩니다\. 트랙터 한 대가 어둑해질 때까지 약 [\d,]+ cwt를 들여옵니다\.( 약 [\d,]+ cwt는 밖에 남습니다\.| 전부 들어옵니다\.)$/)
     const by = S.haulByDark(c, field)!
     expect(S.apply(world, c, { t: 'day' }).ok).toBe(true)
     expect(s.worked.some(w => w.kind === 'haul' && w.field === field && w.unit === 0)).toBe(true)
@@ -46,7 +46,7 @@ describe('haul it in now', () => {
     expect(S.apply(world, c, { t: 'priority', unit: 0, work: 'machine', level: 0 }).ok).toBe(true)
     const r = S.apply(world, c, { t: 'haulNow', field })
     expect(r.ok, r.err).toBe(true)
-    expect(r.events[0].text).toBe(`You're set never to drive. The barrels in ${S.FIELD_NAMES[field]} stay out tonight. Set someone's priority for machine work to haul them in.`)
+    expect(r.events[0].text).toBe(`당신은 운전 안 하기로 설정됨. 오늘 밤 ${S.FIELD_NAMES[field]}의 통은 밖에 남습니다. 기계 일 우선순위를 정해 운반하게 하세요.`)
     expect(S.workday(c, c.season!)).toBe(false)
   })
 
@@ -56,10 +56,10 @@ describe('haul it in now', () => {
     c.crew[0].out = s.day + 4
     const r = S.apply(world, c, { t: 'haulNow', field })
     expect(r.ok, r.err).toBe(true)
-    expect(r.events[0].text).toMatch(new RegExp(`^You're hurt until [^.]+\\. The barrels in ${S.FIELD_NAMES[field]} stay out tonight\\.$`))
+    expect(r.events[0].text).toMatch(new RegExp(`^당신은 .+까지 부상\\. 오늘 밤 ${S.FIELD_NAMES[field]}의 통은 밖에 남습니다\\.$`))
     c.crew[0].out = 0
     c.crew[0].rest = 'now'
-    expect(S.apply(world, c, { t: 'haulNow', field }).events[0].text).toBe(`You're resting, worn out. The barrels in ${S.FIELD_NAMES[field]} stay out tonight.`)
+    expect(S.apply(world, c, { t: 'haulNow', field }).events[0].text).toBe(`당신은 지쳐서 쉬는 중. 오늘 밤 ${S.FIELD_NAMES[field]}의 통은 밖에 남습니다.`)
   })
 
   it('with the only tractor out digging, the digger stops to haul and the answer says so', () => {
@@ -78,8 +78,8 @@ describe('haul it in now', () => {
     const { field, dig } = found!
     const r = S.apply(world, c, { t: 'haulNow', field })
     expect(r.ok, r.err).toBe(true)
-    const where = dig.field === field ? 'there' : S.FIELD_NAMES[dig.field]
-    expect(r.events[0].text).toMatch(new RegExp(`^You're hauling ${S.FIELD_NAMES[field]} now\\. You stop digging ${where} for it\\.( It's a day off, so it tires you as a working day does\\.)? One tractor brings in about [\\d,]+ cwt by dark`))
+    const where = dig.field === field ? '거기서' : `${S.FIELD_NAMES[dig.field]}에서`
+    expect(r.events[0].text).toMatch(new RegExp(`^당신은 지금 ${S.FIELD_NAMES[field]}을\\(를\\) 운반 중입니다\\. 당신은 그것 때문에 ${where} 캐기을\\(를\\) 멈춥니다\\.( 쉬는 날이라 당신도 일하는 날만큼 지칩니다\\.)? 트랙터 한 대가 어둑해질 때까지 약 [\\d,]+ cwt를 들여옵니다`))
     expect(c.season!.jobs[0]).toMatchObject({ kind: 'haul', field, unit: 0 })
     expect(S.apply(world, c, { t: 'day' }).ok).toBe(true)
     expect(c.season!.worked.some(w => w.kind === 'haul' && w.field === field && w.unit === 0)).toBe(true)

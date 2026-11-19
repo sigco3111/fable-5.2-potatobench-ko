@@ -77,7 +77,7 @@ describe('figures that agree', () => {
     const f = S.createCampaign(S.climateWorld(world, 9), { seed: 9, startYear: S.FARM_YEAR0 + 1 })
     f.phase = 'cellar'
     f.month = 3
-    expect(S.yearNowLabel(f)).toBe('Year 2')
+    expect(S.yearNowLabel(f)).toBe('2년차')
   })
 
   it('a contract falling due takes what it is owed from the potato house before any penalty', () => {

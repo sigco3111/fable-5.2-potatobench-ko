@@ -81,15 +81,15 @@ describe('keeping a crop is said with how sure it is', () => {
         // The rule: store only when the usual gain is bigger than prices can swing by then.
         expect(call.store, `seed ${seed} lot ${l.id}`).toBe(!!b && d > spread)
         // Selling is the way: the store line says it could bring less, never that it brings more.
-        if (!call.store) expect(call.phrase).not.toMatch(/\$[\d,]+ more than/)
-        if (call.store) expect(call.phrase).toMatch(/more than selling today/)
+        if (!call.store) expect(call.phrase).not.toMatch(/오늘( 파는 것보다|보다) .*(많고|더 받)/)
+        if (call.store) expect(call.phrase).toMatch(/오늘 파는 것보다 .+ 많고/)
         // The tab's words: "Pays most" only when that way brings the most even with the swing.
-        expect(call.tab).toBe(!call.store && b && d >= 0.5 ? 'Surer' : 'Pays most')
-        if (call.tab === 'Surer') { surer++; expect(call.phrase).toMatch(/could as easily bring less/) }
+        expect(call.tab).toBe(!call.store && b && d >= 0.5 ? '더 확실' : '가장 이득')
+        if (call.tab === '더 확실') { surer++; expect(call.phrase).toMatch(/적을 수도 있습니다/) }
         // The coupon's one sentence makes the same call.
-        if (!call.store) expect(call.short).not.toMatch(/\$[\d,]+ more than/)
-        if (call.store) expect(call.short).toMatch(/more than today/)
-        if (call.tab === 'Surer') expect(call.short).toMatch(/could as easily bring less/)
+        if (!call.store) expect(call.short).not.toMatch(/오늘( 파는 것보다|보다) .*(많고|더 받)/)
+        if (call.store) expect(call.short).toMatch(/오늘보다 .+ 더 받습니다/)
+        if (call.tab === '더 확실') expect(call.short).toMatch(/적을 수도/)
         expect(call.short.split(/\s+/).length, call.short).toBeLessThanOrEqual(18)
       }
     }

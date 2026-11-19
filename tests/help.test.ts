@@ -85,7 +85,7 @@ describe('many hands', () => {
     const info = S.peopleInfo(c).find(p => p.id === hands(c)[0].id)!
     expect(info.job).toBeNull()
     expect(info.helping).toEqual({ kind: 'plant', field: held.field })
-    expect(info.doing).toMatch(/^Helping with planting in /)
+    expect(info.doing).toMatch(/에서 파종 돕는 중$/)
     expect(S.crewInfo(c).find(p => p.id === hands(c)[0].id)!.helping).toEqual({ kind: 'plant', field: held.field })
     expect(S.peopleInfo(c)[0].helping).toBeUndefined()
 

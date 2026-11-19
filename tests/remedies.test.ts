@@ -54,7 +54,7 @@ describe('what would get a waiting job done', () => {
     const { c, field } = sprayMorning(true)
     c.crew[0].tired = 0.97
     const hand = c.crew.find(u => u.kind === 'hand')!
-    expect(S.heldUpBy(c, 'spray')).toBe(`You're resting, worn out and ${hand.name.split(' ')[0]} is set never to drive.`)
+    expect(S.heldUpBy(c, 'spray')).toBe(`당신은 지쳐서 쉬는 중, ${S.eunneun(hand.name.split(' ')[0])} 운전 안 하기로 설정됨.`)
     check(c, field, ['push 0', `let ${hand.id}`, 'hire', 'wait'])
   })
 
@@ -72,9 +72,9 @@ describe('what would get a waiting job done', () => {
 
   it('someone able to do it on a working day: it waits only for the tractor, and nothing else is offered', () => {
     const { c, field } = sprayMorning(true)
-    expect(S.remedies(c, 'spray', field).map(m => m.label)).toEqual(['Wait for the tractor'])
+    expect(S.remedies(c, 'spray', field).map(m => m.label)).toEqual(['트랙터 기다리기'])
     // a tractor broken down: it waits for the repair
     c.broken = [c.season!.day + 3]
-    expect(S.remedies(c, 'spray', field).map(m => [m.label, m.cost])).toEqual([['Wait for the tractor', `back on ${S.formatDay(c.season!.year, c.season!.day + 3, true)}`]])
+    expect(S.remedies(c, 'spray', field).map(m => [m.label, m.cost])).toEqual([['트랙터 기다리기', `${S.formatDay(c.season!.year, c.season!.day + 3, true)}에 돌아옴`]])
   })
 })

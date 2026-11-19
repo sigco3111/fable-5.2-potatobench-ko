@@ -64,8 +64,8 @@ describe('the tracts', () => {
   it('are four more parcels beside their blocks: the woodlot and the swale the farm\'s, Burnt Hill for sale, the back lot with Dufour land', () => {
     expect(S.FIELD_COUNT).toBe(18)
     expect(S.TRACTS.map(i => [S.PARCELS[i].name, S.PARCELS[i].block, c.fields[i].cover, c.fields[i].tenure])).toEqual([
-      ['Home Woodlot', 'home', 'woods', 'owned'], ['Alder Swale', 'home', 'brush', 'owned'],
-      ['Burnt Hill', 'ridge', 'woods', 'none'], ['Dufour Back Lot', 'dufour', 'woods', 'none'],
+      ['집 뒤 수림', 'home', 'woods', 'owned'], ['오리나무 습지', 'home', 'brush', 'owned'],
+      ['불탄 언덕', 'ridge', 'woods', 'none'], ['뒤푸르 뒷땅', 'dufour', 'woods', 'none'],
     ])
     for (const i of S.TRACTS) {
       const f = S.fieldInfo(c, i)
@@ -75,7 +75,7 @@ describe('the tracts', () => {
       refused(c, { t: 'rent', field: i })
     }
     expect(S.planCosts(c)).toEqual(S.planCosts(S.createCampaign(world, { seed: 1, startYear: 1990 })))
-    refused(c, { t: 'buyLand', field: BACKLOT }, /Dufour/)
+    refused(c, { t: 'buyLand', field: BACKLOT }, /뒤푸르/)
     const x = structuredClone(c)
     ok(x, { t: 'buyLand', field: BURNT })
     ok(x, { t: 'rent', field: 10 })
@@ -89,12 +89,12 @@ describe('the tracts', () => {
   it('take no crop orders, but take felling', () => {
     const x = structuredClone(c)
     ok(x, { t: 'begin' })
-    refused(x, { t: 'job', kind: 'plant', field: WOODLOT }, /woods/)
-    refused(x, { t: 'job', kind: 'rocks', field: WOODLOT }, /stumps/)
-    refused(x, { t: 'job', kind: 'fell', field: BURNT }, /isn't yours/)
+    refused(x, { t: 'job', kind: 'plant', field: WOODLOT }, /수림/)
+    refused(x, { t: 'job', kind: 'rocks', field: WOODLOT }, /그루터기/)
+    refused(x, { t: 'job', kind: 'fell', field: BURNT }, /당신의 (밭|땅)이 아닙니다/)
     ok(x, { t: 'job', kind: 'fell', field: WOODLOT })
     expect(order(x, 'fell', WOODLOT)!.need).toBe(S.FELL_DAYS.woods)
-    refused(x, { t: 'job', kind: 'fell', field: 0 }, /nothing to fell/)
+    refused(x, { t: 'job', kind: 'fell', field: 0 }, /벨 나무가 없습니다/)
   })
 })
 
@@ -110,7 +110,7 @@ describe('clearing the woodlot', () => {
   ok(c, { t: 'endSeason' })
   const sheltered = S.fieldEnv(c, NORTH_RIDGE)
   ok(c, { t: 'winter', unit: hand.id, work: 'woods', field: WOODLOT })
-  refused(c, { t: 'winter', unit: hand.id, work: 'woods', field: WOODLOT }, /already/)
+  refused(c, { t: 'winter', unit: hand.id, work: 'woods', field: WOODLOT }, /이미/)
   const wages = c.yearWages, logs0 = c.logs
   const woods0 = { level: hand.skills.woods, xp: hand.xp.woods }
   const winter = winterThenSpring(c)
@@ -147,11 +147,11 @@ describe('clearing the woodlot', () => {
 
   it('then a contractor pulls the stumps: a fee, ten season days, and the tract is a rested field of stony new ground', () => {
     const x = structuredClone(c)
-    refused(x, { t: 'stump', field: SWALE }, /Fell it first/)
-    refused(x, { t: 'stump', field: 0 }, /no stumps/)
+    refused(x, { t: 'stump', field: SWALE }, /먼저 벌목하세요/)
+    refused(x, { t: 'stump', field: 0 }, /그루터기가 없습니다/)
     const cash = x.cash
     ok(x, { t: 'stump', field: WOODLOT })
-    refused(x, { t: 'stump', field: WOODLOT }, /already/)
+    refused(x, { t: 'stump', field: WOODLOT }, /업자가 이미 그곳에/)
     expect([cash - x.cash, x.yearWorks]).toEqual([S.STUMP_FEE, S.STUMP_FEE])
     ok(x, { t: 'begin' })
     const events = days(x, S.STUMP_DAYS)
@@ -159,8 +159,8 @@ describe('clearing the woodlot', () => {
     const fp = x.fields[WOODLOT]
     expect([fp.cover, fp.raw, fp.soil, fp.streak, fp.vert, fp.stones]).toEqual(['open', true, 1, 0, S.NEW_GROUND_VERT, S.PARCELS[WOODLOT].stones])
     // A field from next spring; this season it waits, though its rocks can be picked now.
-    expect(S.fieldInfo(x, WOODLOT).stage).toMatch(/next spring/)
-    refused(x, { t: 'job', kind: 'plant', field: WOODLOT }, /next spring/)
+    expect(S.fieldInfo(x, WOODLOT).stage).toMatch(/다음 봄부터/)
+    refused(x, { t: 'job', kind: 'plant', field: WOODLOT }, /다음 봄에 심을 수 있습니다/)
     ok(x, { t: 'job', kind: 'rocks', field: WOODLOT })
     const stone = x.stone
     for (let k = 0; k < 20 && order(x, 'rocks', WOODLOT); k++) days(x, 1)
@@ -224,7 +224,7 @@ describe('shelter', () => {
     const d = { ...S.getDay(world, 2001, c.season!.day), tmin: 1, wind: 1, cloud: 0 }
     expect(S.envTmin(d, S.fieldEnv(c, NORTH_RIDGE))).toBeCloseTo(S.envTmin(d, S.fieldEnv(open, NORTH_RIDGE)) - S.SHELTER_FROST, 12)
     expect(S.fieldEnv(c, NORTH_RIDGE).humid).toBe(S.fieldEnv(open, NORTH_RIDGE).humid + 1)
-    expect(S.fieldInfo(c, NORTH_RIDGE).shelteredBy).toBe('Home Woodlot')
+    expect(S.fieldInfo(c, NORTH_RIDGE).shelteredBy).toBe('집 뒤 수림')
     expect(S.tractInfo(c)[0].shelters).toEqual([NORTH_RIDGE])
     // The swale shelters Bottom Field the same way.
     expect(S.fieldEnv(c, BOTTOM).shelter).toBe(SWALE)
@@ -286,8 +286,8 @@ describe('stones', () => {
     expect(c.fields[1].stones).toBeCloseTo(Math.max(0, before[1] + S.HEAVE - S.ROCKS_TAKE), 12)
     expect(c.stone).toBeCloseTo(S.ROCKS_LOADS * Math.min(S.ROCKS_TAKE, before[1] + S.HEAVE), 9)
     tend(c, x => S.fieldInfo(x, 0).status === 'growing')
-    refused(c, { t: 'job', kind: 'rocks', field: 0 }, /no crop/)
-    refused(c, { t: 'job', kind: 'rocks', field: 1 }, /hardly any|no crop/)
+    refused(c, { t: 'job', kind: 'rocks', field: 0 }, /작물이 없을 때만/)
+    refused(c, { t: 'job', kind: 'rocks', field: 1 }, /작물이 없을 때만/)
   })
 
   it('reference practice picks the rocks off a very stony field in spring, and leaves the home farm\'s alone', () => {
@@ -306,7 +306,7 @@ describe('hedgerows', () => {
     // Without the swale's shelter, to see the hedgerows alone.
     c.fields[SWALE].cover = 'stumps'
     ok(c, { t: 'begin' })
-    refused(c, { t: 'job', kind: 'brush', field: 0 }, /ridge/)
+    refused(c, { t: 'job', kind: 'brush', field: 0 }, /산울타리가 없습니다/)
     const before = S.fieldEnv(c, BOTTOM)
     ok(c, { t: 'job', kind: 'brush', field: BOTTOM })
     for (let k = 0; k < 20 && order(c, 'brush', BOTTOM); k++) days(c, 1)
@@ -314,7 +314,7 @@ describe('hedgerows', () => {
     expect([before.humid, after.humid]).toEqual([S.HUMID_BONUS[0], 0])
     expect(after.frost).toBeCloseTo(before.frost / 2, 12)
     expect(after.et / before.et).toBeCloseTo(S.BRUSH_WATER, 12)
-    refused(c, { t: 'job', kind: 'brush', field: BOTTOM }, /already/)
+    refused(c, { t: 'job', kind: 'brush', field: BOTTOM }, /이미 잘라 냈습니다/)
     let events: S.GameEvent[] = []
     for (let y = 0; y < S.BRUSH_YEARS; y++) {
       expect(S.fieldInfo(c, BOTTOM).brushed).toBe(S.BRUSH_YEARS - y)
@@ -328,12 +328,12 @@ describe('hedgerows', () => {
 describe('tile drainage', () => {
   it('bottom land drains like the mid slope, at a fee and eight season days; it holds less water in a drought', () => {
     const c = S.createCampaign(world, { seed: 1, startYear: 1990 })
-    refused(c, { t: 'tile', field: 2 }, /bottom land/)
-    refused(c, { t: 'tile', field: 6 }, /own land/)
+    refused(c, { t: 'tile', field: 2 }, /골짜기 땅만/)
+    refused(c, { t: 'tile', field: 6 }, /소유한 땅 아래에만/)
     ok(c, { t: 'tile', field: BOTTOM })
     expect(c.yearWorks).toBe(S.TILE_FEE)
     ok(c, { t: 'begin' })
-    refused(c, { t: 'job', kind: 'plant', field: BOTTOM }, /contractor/)
+    refused(c, { t: 'job', kind: 'plant', field: BOTTOM }, /업자가 .*에서 작업 중입니다/)
     const events = days(c, S.TILE_DAYS)
     expect(events.some(e => e.type === 'tiled' && e.field === BOTTOM)).toBe(true)
     const env = S.fieldEnv(c, BOTTOM)
@@ -346,7 +346,7 @@ describe('tile drainage', () => {
     c.season!.fields[BOTTOM].dr = 40
     plain.season!.fields[BOTTOM].dr = 40
     expect(S.fieldInfo(c, BOTTOM).moisture).toBeLessThan(S.fieldInfo(plain, BOTTOM).moisture)
-    refused(c, { t: 'tile', field: BOTTOM }, /already/)
+    refused(c, { t: 'tile', field: BOTTOM }, /이미 배수관이 있습니다/)
   })
 })
 
@@ -372,23 +372,23 @@ describe('the land mortgage', () => {
     expect(c.cash).toBeCloseTo(h.cashStart + 50000 + h.revenue - h.costs - h.note - h.living - h.interest, 6)
     // Net worth counts what is still owed against the land.
     expect(S.netWorth(c)).toBe(Math.round(c.cash + price - S.mortgageOwed(c)))
-    refused(c, { t: 'payMortgage', amount: loan }, /Only/)
+    refused(c, { t: 'payMortgage', amount: loan }, /남은 빚은/)
     ok(c, { t: 'payMortgage', amount: 1000 })
     expect(S.mortgageOwed(c)).toBeCloseTo(loan * (1 - S.MORTGAGE_PRINCIPAL) - 1000, 9)
     ok(c, { t: 'payMortgage', amount: S.mortgageOwed(c) })
     expect(c.mortgages).toEqual([])
-    refused(c, { t: 'payMortgage', amount: 1 }, /Nothing/)
+    refused(c, { t: 'payMortgage', amount: 1 }, /빚이 없습니다/)
   })
 })
 
 describe('logs', () => {
   it('sell to the mill by the load', () => {
     const c = S.createCampaign(world, { seed: 1, startYear: 1990 })
-    refused(c, { t: 'sellLogs', loads: 1 }, /only 0 loads/)
+    refused(c, { t: 'sellLogs', loads: 1 }, /0트럭뿐입니다/)
     const ledger = structuredClone(c)
     ledger.phase = 'ledger'
     ledger.logs = 10
-    refused(ledger, { t: 'sellLogs', loads: 1 }, /spring, during the season, or in winter/)
+    refused(ledger, { t: 'sellLogs', loads: 1 }, /봄, 시즌 중, 또는 겨울에/)
     c.logs = 10
     ok(c, { t: 'sellLogs', loads: 4 })
     expect([c.logs, c.yearLogs, c.yearRevenue]).toEqual([6, 4 * S.LOG_PRICE, 4 * S.LOG_PRICE])
@@ -415,8 +415,8 @@ describe('the winter woods', () => {
       if (ev.some(e => e.type === 'felled' && e.field === WOODLOT)) {
         felled = true
         expect(ev.filter(e => e.type === 'winterIdle').map(e => e.text)).toEqual([
-          expect.stringMatching(/^You're done working for the rest of the winter\. There's nothing left to fell on/),
-          expect.stringMatching(new RegExp(`^${hand.name} is laid off for the rest of the winter\\. There's nothing left to fell on`)),
+          expect.stringMatching(/^당신이 남은 겨울 동안 해고됐습니다\. .*에는 더 벨 것이 없습니다/),
+          expect.stringMatching(new RegExp(`^${S.iga(hand.name)} 남은 겨울 동안 해고됐습니다\\. .*에는 더 벨 것이 없습니다`)),
         ])
       }
       for (const p of S.winterInfo(c).people) if (p.work === 'woods') expect(S.fellLeft(c, p.field)).toBeGreaterThan(0)

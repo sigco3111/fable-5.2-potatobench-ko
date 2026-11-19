@@ -38,7 +38,7 @@ describe('the year-end figure', () => {
           moves++
           const at = `seed ${seed} ${c.season ? S.formatDay(c.year, c.season.day) : ''} ${c.phase} ${what}: ${Math.round(moved)}`
           if (!why || why.share < 0.5 || !why.text) unexplained.push(`${at} ${why ? `${why.part} ${why.share.toFixed(2)}` : 'none'}`)
-          else { named[why.text] = (named[why.text] ?? 0) + 1; if (causeLine(why).split(/\s+/).length > 7) unexplained.push(`${at}: "${causeLine(why)}" is more than 7 words`) }
+          else { named[why.text] = (named[why.text] ?? 0) + 1; if (causeLine(why).split(/\s+/).length > 10) unexplained.push(`${at}: "${causeLine(why)}" is more than 10 words`) }
         }
         was = now
       }
@@ -76,7 +76,7 @@ describe('the year-end figure', () => {
     const name = c.crew[c.crew.length - 1].name.split(' ')[0]
     expect(why.part).toBe('wages')
     expect(why.share).toBeGreaterThanOrEqual(0.5)
-    expect(causeLine(why)).toMatch(new RegExp(`^${name}'s wages to year end: −\\$[\\d,]+$`))
+    expect(causeLine(why)).toMatch(new RegExp(`^${name}의 연말까지 품값: −\\$[\\d,]+$`))
     // A spray order is a move of $110: under the step, so no line.
     const now = S.moneyLook(w, c)
     ok(w, c, { t: 'job', kind: 'spray', field: c.plans.findIndex(p => p.crop === 'potato') })
@@ -114,8 +114,8 @@ describe('the spring plan\'s money', () => {
         expect(due.parts.reduce((a, x) => a + x, 0)).toBe(due.total)
         expect(due.total).toBe(Math.round(S.NOTE_PAYMENT + S.LIVING) + Math.round(m.loan) + Math.round(m.due.mortgage))
         expect(Math.abs(due.total - m.due.total)).toBeLessThan(1.5)
-        expect(due.text).toContain(`$${(S.NOTE_PAYMENT + S.LIVING).toLocaleString('en-US')} you owe the bank and your family every year`)
-        if (m.loan >= 0.5) expect(due.text).toContain(`$${Math.round(m.loan).toLocaleString('en-US')} loan`)
+        expect(due.text).toContain(`매년 은행과 가족에게 내는 $${(S.NOTE_PAYMENT + S.LIVING).toLocaleString('en-US')}입니다`)
+        if (m.loan >= 0.5) expect(due.text).toContain(`이번 봄 대출 $${Math.round(m.loan).toLocaleString('en-US')}`)
       }
     }
   })
@@ -126,7 +126,7 @@ describe('the spring plan\'s money', () => {
     const month = S.monthCost(c)
     const potato = c.plans.filter((p, i) => S.held(c, i) && p.crop === 'potato').length
     expect(month).toBe(c.crew.filter(u => u.kind !== 'farmer').reduce((a, u) => a + u.wage, 0) + potato * S.FIELD_WORK_MONTH)
-    expect(lowCashSays(c, 8)).toMatch(/^That's less than a month of wages and field work \(about \$[\d,]+\), so the season starts on the loan\. Resting .+ would save about \$[\d,]+\.$/)
+    expect(lowCashSays(c, 8)).toMatch(/^한 달치 품값과 밭일 비용\(약 \$[\d,]+\)보다 적어 시즌이 대출로 시작됩니다\. .+을\(를\) 하지 않으면 약 \$[\d,]+을\(를\) 아낍니다\.$/)
     expect(lowCashSays(c, month - 1)).not.toBe('')
     expect(lowCashSays(c, month)).toBe('')
     expect(lowCashSays(c, month * 3)).toBe('')
@@ -137,8 +137,8 @@ describe('the spring plan\'s money', () => {
   })
 
   it('a purchase says how it is paid: the cash first, the rest on the loan, or the plain price when all of it is', () => {
-    expect(loanSays(6000, 5992)).toBe('$8 from cash, +$5,992 on the loan')
-    expect(loanSays(12000, 12000)).toBe('+$12,000 on the loan')
+    expect(loanSays(6000, 5992)).toBe('현금에서 $8, 대출로 +$5,992')
+    expect(loanSays(12000, 12000)).toBe('대출로 +$12,000')
     expect(loanSays(6000, 0)).toBe('')
   })
 })
@@ -214,7 +214,7 @@ describe('round seven', () => {
         const why = r.cause
         if (why) {
           lines++
-          expect(why.text.length).toBeGreaterThan(3)
+          expect(why.text.length).toBeGreaterThan(1)
           if (why.amount <= -S.MONEY_STEP && (why.part.startsWith('crop:') || why.part === 'crops')) {
             falls++
             if (why.why) {
@@ -264,7 +264,7 @@ describe('round seven', () => {
         const was = S.moneyPlan(base, c).after
         const d = S.moneyEffect(base, c, cmd)
         if (d === null) continue
-        expect(effectSays(d)).toMatch(/^year end [+−]\$[\d,]+$/)
+        expect(effectSays(d)).toMatch(/^연말 [+−]\$[\d,]+$/)
         ok(base, c, cmd)
         expect(S.moneyPlan(base, c).after - was, `${seed} ${JSON.stringify(cmd)}`).toBeCloseTo(d, 6)
         if (cmd.t === 'buy') expect(d).toBeLessThan(0)
@@ -298,11 +298,11 @@ describe('round seven', () => {
       const y = c.history[0]
       if (!y || c.outcome === 'lost') continue
       const said = verdictSays(y, 4, false)
-      if (y.cashEnd < 0) { down++; expect(said, `seed ${seed}`).toMatch(/^You ended \$[\d,]+ in debt, inside what the bank allows/); expect(said).not.toMatch(/happy/) }
-      else { up++; expect(said, `seed ${seed}`).toMatch(/^You ended the year with \$[\d,]+ left, and the bank is satisfied\./) }
+      if (y.cashEnd < 0) { down++; expect(said, `seed ${seed}`).toMatch(/^\$[\d,]+의 빚으로 끝냈지만 은행이 허락하는 안쪽/); expect(said).not.toMatch(/만족/) }
+      else { up++; expect(said, `seed ${seed}`).toMatch(/^\$[\d,]+을\(를\) 남기고 해를 마쳐 은행이 만족합니다\./) }
       expect(y.cashEnd).toBeGreaterThanOrEqual(S.CREDIT_LIMIT)
       expect(Math.round(y.cashStart + y.revenue - y.costs - y.note - y.living - y.interest)).toBe(Math.round(y.cashEnd))
-      expect(yearWalk(y)).toMatch(/^You sold \$[\d,]+, spent \$[\d,]+ on the farm and \$[\d,]+ on the bank and your family, and ended with -?.?\$[\d,]+/)
+      expect(yearWalk(y)).toMatch(/^\$[\d,]+을\(를\) 팔고 농장에 \$[\d,]+, 은행과 가족에 \$[\d,]+을\(를\) 써 -?.?\$[\d,]+\(으\)로 끝냈습니다/)
     }
     expect(down + up).toBeGreaterThanOrEqual(20)
     expect(down).toBeGreaterThan(0)
@@ -320,15 +320,15 @@ describe('round eight', () => {
     const lots = S.openLots(c).filter(l => c.season!.fields[l.field].weighed)
     ok(w, c, { t: 'sell', lot: lots[0].id, frac: 1 })
     const r = S.moneyWatch(watch, S.moneyLook(w, c))
-    expect(r.cause?.text).toBe('Sold what was already counted')
-    expect(causeLine(r.cause!)).toBe('Sold what was already counted')
+    expect(r.cause?.text).toBe('이미 계산한 것을 판매함')
+    expect(causeLine(r.cause!)).toBe('이미 계산한 것을 판매함')
     watch = r.watch
     // Said once a year: the next sale that moves nothing says nothing.
     for (let g = 0; g < 60 && c.phase === 'season' && !S.openLots(c).some(l => c.season!.fields[l.field].weighed); g++) ok(w, c, { t: 'day' })
     const next = S.openLots(c).find(l => c.season!.fields[l.field].weighed)
     if (next) {
       ok(w, c, { t: 'sell', lot: next.id, frac: 1 })
-      expect(S.moneyWatch(watch, S.moneyLook(w, c)).cause?.text ?? '').not.toBe('Sold what was already counted')
+      expect(S.moneyWatch(watch, S.moneyLook(w, c)).cause?.text ?? '').not.toBe('이미 계산한 것을 판매함')
     }
     // The crop's rise and the field work that takes it back: the second is not said, and the first line goes.
     const a = S.moneyLook(w, c)
@@ -354,7 +354,7 @@ describe('round eight', () => {
     expect(c.cash).toBeLessThan(0)
     const said = ok(w, c, { t: 'sell', lot: lot.id, frac: 1 }).events[0].text
     const money = (n: number) => `\\$${Math.round(n).toLocaleString('en-US')}`
-    expect(said).toMatch(c.cash < 0 ? new RegExp(`\\. The loan is down to ${money(-c.cash)}\\.$`) : new RegExp(`\\. That pays off the loan, and you have ${money(c.cash)} in cash\\.$`))
+    expect(said).toMatch(c.cash < 0 ? new RegExp(` 대출은 ${money(-c.cash)}로 줄었습니다\\.$`) : new RegExp(` 대출을 다 갚았고 현금 ${money(c.cash)}가 있습니다\\.$`))
   })
 
   it('9: the breakdown names only the costs there were, and opens on the cash the ledger said, to the dollar', () => {
@@ -364,8 +364,8 @@ describe('round eight', () => {
     for (let g = 0; g < 60; g++) ok(w, c, { t: 'day' })
     const m = S.moneyNow(w, c)
     const spent = m.parts.find(p => p.id === 'spent')!
-    expect(spent.of!.map(p => p.label)).not.toContain('equipment')
-    expect(spent.of!.map(p => p.label)).toContain('seed and field work')
+    expect(spent.of!.map(p => p.label)).not.toContain('장비')
+    expect(spent.of!.map(p => p.label)).toContain('종자와 밭 작업')
     const figure = Math.round(m.after / 100) * 100
     const lines = sumLines(m.parts, figure)
     expect(lines.reduce((a, p) => a + p.amount, 0)).toBe(figure)
@@ -374,7 +374,7 @@ describe('round eight', () => {
     const d = S.createCampaign(w, { seed: 2, startYear: S.FARM_YEAR0 + 1 })
     ok(w, d, { t: 'buy', upgrade: 'boom' })
     ok(w, d, { t: 'begin' })
-    expect(S.moneyNow(w, d).parts.find(p => p.id === 'spent')!.of!.find(p => p.label === 'equipment')!.amount).toBe(S.UPGRADES.boom.cost)
-    expect(rangeSays({ lo: -10100, hi: 27500 })).toBe('Most years like this end between −$10,100 and +$27,500.')
+    expect(S.moneyNow(w, d).parts.find(p => p.id === 'spent')!.of!.find(p => p.label === '장비')!.amount).toBe(S.UPGRADES.boom.cost)
+    expect(rangeSays({ lo: -10100, hi: 27500 })).toBe('이런 해는 대부분 −$10,100에서 +$27,500 사이로 끝납니다.')
   })
 })

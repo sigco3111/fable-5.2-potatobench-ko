@@ -75,14 +75,14 @@ describe('the land', () => {
       }
     }
     expect(S.landInfo(c).map(l => l.field)).toEqual([6, 7, 8, 9, 10, 11, 12, 13, 16, 17])
-    refused(c, { t: 'plan', field: 9, plan: { crop: 'potato', variety: 'katahdin', seed: 'certified' } }, /isn't yours/)
+    refused(c, { t: 'plan', field: 9, plan: { crop: 'potato', variety: 'katahdin', seed: 'certified' } }, /당신의 (밭|땅)이 아닙니다/)
   })
 
   it('rents by the year: the rent is part of the plan, paid when the season begins, and carried into the next spring until released', () => {
     const c = S.createCampaign(world, { seed: 4, startYear: 1992 })
     const before = S.planCosts(c)
     ok(c, { t: 'rent', field: 7 })
-    refused(c, { t: 'rent', field: 7 }, /already rented/)
+    refused(c, { t: 'rent', field: 7 }, /이미 올해 .* 임차했습니다/)
     expect(S.fieldInfo(c, 7).tenure).toBe('rented')
     expect(c.plans[7]).toEqual({ crop: 'potato', variety: 'katahdin', seed: 'certified' })
     const pc = S.planCosts(c)
@@ -105,7 +105,7 @@ describe('the land', () => {
     expect(S.planCosts(c).rent).toBe(S.PARCELS[7].rent)
     // Given up, it is not the farm's: no plan, no rent.
     ok(c, { t: 'release', field: 7 })
-    refused(c, { t: 'release', field: 7 }, /isn't yours/)
+    refused(c, { t: 'release', field: 7 }, /당신의 (밭|땅)이 아닙니다/)
     expect(c.fields[7].tenure).toBe('none')
     expect(c.plans[7].crop).toBe('rest')
     expect(S.planCosts(c).rent).toBe(0)
@@ -117,7 +117,7 @@ describe('the land', () => {
     ok(c, { t: 'plan', field: 8, plan: { crop: 'rest', variety: 'katahdin', seed: 'certified' } })
     const record = structuredClone(c.fields.slice(9))
     ok(c, { t: 'begin' })
-    for (const kind of S.JOBS) refused(c, { t: 'job', kind, field: 9 }, /isn't yours/)
+    for (const kind of S.JOBS) refused(c, { t: 'job', kind, field: 9 }, /당신의 (밭|땅)이 아닙니다/)
     expect(S.fieldActions(world, c, 9).every(a => !a.ok)).toBe(true)
     expect(S.fieldInfo(c, 9).status).toBe('off')
     expect(c.season!.fields[9].hState).toEqual([])
@@ -147,15 +147,15 @@ describe('the land', () => {
     expect(S.netWorth(c)).toBe(worth)
     // Bought land pays no rent and is not given back.
     expect(S.planCosts(c).rent).toBe(0)
-    refused(c, { t: 'release', field: 9 }, /You own/)
-    refused(c, { t: 'buyLand', field: 9 }, /already own/)
+    refused(c, { t: 'release', field: 9 }, /소유하고 있고/)
+    refused(c, { t: 'buyLand', field: 9 }, /이미 .* 소유하고 있습니다/)
     // Short of cash for the quarter down: refused, whatever the bank would lend for the spring.
     const x = structuredClone(c)
     x.cash = S.PARCELS[6].price * S.MORTGAGE_DOWN - 1
-    refused(x, { t: 'buyLand', field: 6 }, /can't afford the down payment/)
+    refused(x, { t: 'buyLand', field: 6 }, /아직 계약금을 감당할 수 없습니다/)
     ok(c, { t: 'begin' })
-    refused(c, { t: 'buyLand', field: 6 }, /spring/)
-    refused(c, { t: 'rent', field: 6 }, /spring/)
+    refused(c, { t: 'buyLand', field: 6 }, /봄에만/)
+    refused(c, { t: 'rent', field: 6 }, /봄에만/)
   })
 })
 
@@ -167,7 +167,7 @@ describe('potato houses', () => {
     expect(S.landInfo(c).find(l => l.field === 10)!.house).toBe(S.YARDS[1].cellar)
     ok(c, { t: 'rent', field: 10 })
     expect(cap()).toBe(S.CELLAR_CWT + S.YARDS[1].cellar)
-    expect(S.storageInfo(c).houses.map(h => [h.name, h.at])).toEqual([['Home potato house', -1], ['Dufour potato house', -2]])
+    expect(S.storageInfo(c).houses.map(h => [h.name, h.at])).toEqual([['집 감자 저장고', -1], ['뒤푸르 감자 저장고', -2]])
     expect(S.landInfo(c).find(l => l.field === 11)!.house).toBe(0)
     ok(c, { t: 'rent', field: 11 })
     ok(c, { t: 'release', field: 10 })
@@ -263,9 +263,9 @@ describe('travel', () => {
     const x = structuredClone(c)
     ok(x, { t: 'hire', kind: 'hand' })
     const hand = x.crew[1].id
-    refused(x, { t: 'job', kind: 'plant', field: 2, unit: hand }, /field hand/)
+    refused(x, { t: 'job', kind: 'plant', field: 2, unit: hand }, /밭일꾼이라/)
     ok(x, { t: 'job', kind: 'plant', field: 2 })
-    refused(x, { t: 'assign', id: order(x, 'plant', 2)!.id, unit: hand }, /field hand/)
+    refused(x, { t: 'assign', id: order(x, 'plant', 2)!.id, unit: hand }, /밭일꾼이라/)
     days(x, 1)
     expect(x.season!.worked.filter(w => !w.help)).toMatchObject([{ kind: 'plant', field: 2, unit: 0 }])
     // the hand, with nothing of its own, walks over and helps at the farmer's planting, holding no order
@@ -366,14 +366,14 @@ describe('crews in midsummer', () => {
   it('a hand does only the walking jobs and an operator only the machine jobs', () => {
     const { c, hand } = fresh()
     // A job the field would take is refused for the crew; one the field would not take is refused either way.
-    for (const kind of ['plant', 'hill', 'spray', 'water', 'kill', 'dig'] as const) refused(c, { t: 'job', kind, field: 0, unit: hand }, S.jobBlock(c, kind, 0) ? undefined : /field hand/)
+    for (const kind of ['plant', 'hill', 'spray', 'water', 'kill', 'dig'] as const) refused(c, { t: 'job', kind, field: 0, unit: hand }, S.jobBlock(c, kind, 0) ? undefined : /밭일꾼이라/)
     ok(c, { t: 'job', kind: 'spray', field: 2 })
-    refused(c, { t: 'assign', id: order(c, 'spray', 2)!.id, unit: hand }, /field hand/)
+    refused(c, { t: 'assign', id: order(c, 'spray', 2)!.id, unit: hand }, /밭일꾼이라/)
     ok(c, { t: 'hire', kind: 'operator' })
     const op = c.crew.find(u => u.kind === 'operator')!.id
-    for (const kind of ['scout', 'rogue', 'sample'] as const) refused(c, { t: 'job', kind, field: 0, unit: op }, S.jobBlock(c, kind, 0) ? undefined : /second tractor/)
+    for (const kind of ['scout', 'rogue', 'sample'] as const) refused(c, { t: 'job', kind, field: 0, unit: op }, S.jobBlock(c, kind, 0) ? undefined : /두 번째 트랙터 운전자라/)
     ok(c, { t: 'job', kind: 'scout', field: 3 })
-    refused(c, { t: 'assign', id: order(c, 'scout', 3)!.id, unit: op }, /second tractor/)
+    refused(c, { t: 'assign', id: order(c, 'scout', 3)!.id, unit: op }, /두 번째 트랙터 운전자라/)
     ok(c, { t: 'cancel', id: order(c, 'scout', 3)!.id })
     // Unpinned, a machine job goes to a crew that can do it, never to the hand.
     days(c, 1)
@@ -387,9 +387,9 @@ describe('crews in midsummer', () => {
     refused(c, { t: 'hire', kind: 'farmer' })
     const { c: d } = fresh(S.HOUSED_OUT)
     expect(d.crew.filter(u => u.kind === 'hand').map(u => u.name)).toEqual(S.HAND_NAMES.slice(0, S.HOUSED_OUT))
-    refused(d, { t: 'hire', kind: 'hand' }, /bunkhouse/)
-    refused(d, { t: 'hire', kind: 'operator' }, /bunkhouse/)
-    refused(d, { t: 'dismiss', unit: 0 }, /farmer/)
+    refused(d, { t: 'hire', kind: 'hand' }, /숙소 침대/)
+    refused(d, { t: 'hire', kind: 'operator' }, /숙소 침대/)
+    refused(d, { t: 'dismiss', unit: 0 }, /농장주라 남습니다/)
   })
 
   it('keeps a pinned order for its crew, and a reassigned one goes to the new crew', () => {
@@ -555,7 +555,7 @@ describe('contracts', () => {
   const want = offers[0].variety
   expect(offers.map(o => [o.variety, o.due])).toEqual([['atlantic', 'winter'], ['atlantic', 'harvest'], ['kennebec', 'winter']])
   for (const o of offers) ok(c, { t: 'accept', offer: o.id })
-  refused(c, { t: 'accept', offer: offers[0].id }, /No such offer/)
+  refused(c, { t: 'accept', offer: offers[0].id }, /그런 제안이 없습니다/)
   for (const i of [0, 2]) ok(c, { t: 'plan', field: i, plan: { crop: 'potato', variety: want, seed: 'certified' } })
   ok(c, { t: 'begin' })
   const dugLot = () => S.openLots(c).find(l => l.variety === want && c.season!.fields[l.field].status === 'dug' && c.season!.fields[l.field].weighed)
@@ -645,10 +645,10 @@ describe('views', () => {
       [1, 'hand', S.HAND_NAMES[0], -1, S.HAND_WAGE, null, false],
     ])
     expect(Object.keys(info[0]).sort()).toEqual(['at', 'id', 'job', 'kind', 'name', 'road', 'to', 'travelling', 'wage'])
-    expect(S.storageInfo(c)).toEqual({ houses: [{ name: 'Home potato house', at: -1, cwt: S.CELLAR_CWT }], capacity: S.CELLAR_CWT, stored: 0, free: S.CELLAR_CWT })
+    expect(S.storageInfo(c)).toEqual({ houses: [{ name: '집 감자 저장고', at: -1, cwt: S.CELLAR_CWT }], capacity: S.CELLAR_CWT, stored: 0, free: S.CELLAR_CWT })
     const land = S.landInfo(c).find(l => l.field === 12)!
-    expect(land).toMatchObject({ name: 'Dufour Middle', block: 'dufour', rent: S.PARCELS[12].rent, price: S.PARCELS[12].price, tenure: 'none', house: S.YARDS[1].cellar, haul: 0 })
-    expect(land.brings).toMatch(/Dufour potato house/)
+    expect(land).toMatchObject({ name: '뒤푸르 가운데밭', block: 'dufour', rent: S.PARCELS[12].rent, price: S.PARCELS[12].price, tenure: 'none', house: S.YARDS[1].cellar, haul: 0 })
+    expect(land.brings).toMatch(/뒤푸르 감자 저장고가 딸려/)
     expect(land.travel).toBeCloseTo(S.travelDays(-1, 12), 12)
   })
 })

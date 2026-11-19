@@ -89,9 +89,9 @@ describe('someone asking for work', () => {
     const inc = until(c, 'applicant')
     // Two hired already (topped up if a neighbour took one), no bunkhouse: no room.
     while (S.hiredCount(c) < S.HOUSED_OUT) ok(c, { t: 'hire', kind: 'hand' })
-    refused(c, { t: 'answer', incident: inc.id, choice: 'hire' }, /bunkhouse/)
+    refused(c, { t: 'answer', incident: inc.id, choice: 'hire' }, /숙소 침대/)
     expect(S.incidentInfo(c).find(x => x.id === inc.id)!.choices[0].ok).toBe(false)
-    refused(c, { t: 'answer', incident: inc.id, choice: 'golf' }, /choices/)
+    refused(c, { t: 'answer', incident: inc.id, choice: 'golf' }, /선택지는 다음과 같습니다/)
     ok(c, { t: 'dismiss', unit: c.crew[1].id })
     const wages = c.yearWages
     ok(c, { t: 'answer', incident: inc.id, choice: 'hire' })
@@ -99,7 +99,7 @@ describe('someone asking for work', () => {
     expect([u.name, u.skills, u.trait, u.wage]).toEqual([inc.applicant!.name, inc.applicant!.skills, inc.applicant!.trait, inc.applicant!.ask])
     expect(c.yearWages - wages).toBe(inc.applicant!.ask)
     expect(c.incidents.find(i => i.id === inc.id)).toBeUndefined()
-    refused(c, { t: 'answer', incident: inc.id, choice: 'hire' }, /no longer waiting/)
+    refused(c, { t: 'answer', incident: inc.id, choice: 'hire' }, /더는 답을 기다리지 않습니다/)
   })
 })
 
@@ -262,7 +262,7 @@ describe('someone hurt', () => {
     const out = c.crew[0].out - day - 1
     expect(out).toBeGreaterThanOrEqual(S.HURT_DAYS[0])
     expect(out).toBeLessThanOrEqual(S.HURT_DAYS[1])
-    expect(S.peopleInfo(c)[0].doing).toMatch(/Hurt/)
+    expect(S.peopleInfo(c)[0].doing).toMatch(/^부상:/)
     ok(c, { t: 'job', kind: 'scout', field: 2 })
     ok(c, { t: 'day' })
     expect(c.season!.worked).toEqual([])
@@ -318,6 +318,6 @@ describe('a buyer', () => {
     ok(d, { t: 'sell', lot: inc.lot!, frac: 1 })
     // Sold meanwhile, the offer goes with the lot: nothing is left to answer.
     expect(d.incidents.some(x => x.id === inc.id)).toBe(false)
-    refused(d, { t: 'answer', incident: inc.id, choice: 'take' }, /no longer waiting/)
+    refused(d, { t: 'answer', incident: inc.id, choice: 'take' }, /더는 답을 기다리지 않습니다/)
   })
 })

@@ -70,16 +70,16 @@ describe('what the game says agrees with what the farm holds', () => {
         if (!w) return
         said.add(w.title.replace(/\d+/g, 'N'))
         const at = `seed ${seed}, day ${s.day}: "${w.title} / ${w.when}"`
-        if (/until blight weather/.test(w.title)) expect(s.fields.some(f => f.lastSpray >= 0), at).toBe(false)
-        if (/^Next up: kill the vines/.test(w.title)) {
+        if (/역병 날씨가 올 때/.test(w.when)) expect(s.fields.some(f => f.lastSpray >= 0), at).toBe(false)
+        if (/^다음: 수확을 위한 줄기 죽이기/.test(w.title)) {
           expect(s.jobs.some(j => j.kind === 'kill'), at).toBe(false)
-          expect(w.when, at).not.toMatch(/due since/)
+          expect(w.when, at).not.toMatch(/지났/)
         }
-        if (/^Killing the vines/.test(w.title)) expect(s.jobs.some(j => j.kind === 'kill'), at).toBe(true)
-        if (/^Planting:/.test(w.title)) expect(S.plantWordGiven(s), at).toBe(true)
+        if (/^줄기 죽이기:/.test(w.title)) expect(s.jobs.some(j => j.kind === 'kill'), at).toBe(true)
+        if (/^파종:/.test(w.title)) expect(S.plantWordGiven(s), at).toBe(true)
       })
     }
-    expect([...said].some(t => /^Next up: a spray/.test(t))).toBe(true)
+    expect([...said].some(t => /^다음: 살포/.test(t))).toBe(true)
   })
 
   it('the year-end figure\'s reason names a vine kill, a test dig or tubers setting only on the day it happened', () => {
@@ -99,9 +99,9 @@ describe('what the game says agrees with what the farm holds', () => {
         if (i < 0) return
         const now = facts.get(i)!, before = was.get(i)
         const at = `seed ${seed}, day ${s.day}: "${text}"`
-        if (/^Vines killed in /.test(text)) { named++; expect(now.killed && !before?.killed, at).toBe(true) }
-        if (/test dig came/.test(text)) { named++; expect(now.samples > (before?.samples ?? 0), at).toBe(true) }
-        if (/^Tubers set in /.test(text)) { named++; expect(now.set && !before?.set, at).toBe(true) }
+        if (/ 줄기 죽임$/.test(text)) { named++; expect(now.killed && !before?.killed, at).toBe(true) }
+        if (/ 시험 캐기 (많음|적음)$/.test(text)) { named++; expect(now.samples > (before?.samples ?? 0), at).toBe(true) }
+        if (/에 감자 맺힘$/.test(text)) { named++; expect(now.set && !before?.set, at).toBe(true) }
       })
     }
     expect(named).toBeGreaterThan(3)
@@ -133,18 +133,18 @@ describe('what the game says agrees with what the farm holds', () => {
     // The player sprays for themselves: nothing is added, they know when they sprayed.
     expect(blightWhy(c, i)).toBe('')
     expect(S.apply(world, c, { t: 'sprayWay', way: 'auto' }).ok).toBe(true)
-    expect(blightWhy(c, i)).toBe('Got in before the first spray')
+    expect(blightWhy(c, i)).toBe('첫 살포 전에 들어옴')
     s.fields[i].lastSpray = s.day - 9; s.fields[i].residue = 0.1
-    expect(blightWhy(c, i)).toBe('Sprayed 9 days ago, worn off')
+    expect(blightWhy(c, i)).toBe('9일 전 살포, 약효가 사라짐')
     s.fields[i].lastSpray = s.day - 2
-    expect(blightWhy(c, i)).toBe('Rain washed the spray off')
+    expect(blightWhy(c, i)).toBe('비에 약이 씻겼음')
     s.fields[i].residue = 0.8
-    expect(blightWhy(c, i)).toBe('Spray slows blight, it can\'t stop it all')
+    expect(blightWhy(c, i)).toBe('살포는 역병을 늦출 뿐 다 막지 못함')
   })
 
   it('a year that ends owing says "in debt", and keeps "down" for cash against the year\'s start', () => {
     const y = { cashEnd: -4650, cashStart: 16444 } as S.YearSummary
-    expect(verdictSays(y, 3, false)).toBe('You ended $4,650 in debt, inside what the bank allows, so it carries you another year. 3 years to go.')
-    expect(verdictSays(y, 0, true)).not.toMatch(/ down/)
+    expect(verdictSays(y, 3, false)).toBe('$4,650의 빚으로 끝냈지만 은행이 허락하는 안쪽이라 또 한 해를 봐줍니다. 3년 남았습니다.')
+    expect(verdictSays(y, 0, true)).not.toMatch(/적습니다/)
   })
 })

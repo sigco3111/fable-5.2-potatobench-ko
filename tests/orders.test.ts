@@ -49,7 +49,7 @@ describe('a right-click with someone picked', () => {
   it('sends them to the work the routine sees to, when there is no order to suggest', () => {
     const app = summer(6, 30, false)
     const c = app.campaign!
-    const field = app.needs().findIndex(n => !n.need && !!n.hold && /don't need to order/.test(n.hold.why))
+    const field = app.needs().findIndex(n => !n.need && !!n.hold && /지시할 필요가 없습니다|지시하지 않아도/.test(n.hold.why))
     expect(field).toBeGreaterThanOrEqual(0)
     const hand = crew(app, 'hand')
     app.selectUnit(hand.id, 'land')
@@ -69,7 +69,7 @@ describe('a right-click with someone picked', () => {
     app.selectUnit(hand.id, 'land')
     const r = app.orderAt(field)
     expect(r.ok).toBe(false)
-    expect(r.err).toMatch(/machine work/)
+    expect(r.err).toMatch(/기계 작업/)
     expect(c.season!.jobs.length).toBe(before)
   })
 
@@ -80,12 +80,12 @@ describe('a right-click with someone picked', () => {
     const field = app.needs().findIndex(n => n.need?.act === 'spray')
     const [a, b] = c.crew.filter(u => u.kind === 'operator')
     app.selectUnit(a.id, 'land')
-    expect(app.orderAt(resting)).toEqual({ field: resting, ok: false, err: 'Nothing needs doing here right now.' })
+    expect(app.orderAt(resting)).toEqual({ field: resting, ok: false, err: '지금 여기서 할 일이 없습니다.' })
     while (app.orderAt(field).ok) { /* everything there is theirs */ }
     app.selectUnit(b.id, 'land')
     const r = app.orderAt(field)
     expect(r.ok).toBe(false)
-    expect(r.err).toBe(`${a.name.split(' ')[0]} already has this field's work on the work list.`)
+    expect(r.err).toBe(`${a.name.split(' ')[0]}이(가) 이미 이 밭의 일을 작업 목록에 올렸습니다.`)
   })
 })
 
@@ -96,7 +96,7 @@ describe('a right-click with nobody picked', () => {
     const resting = c.season!.fields.findIndex(f => f.status === 'rest')
     const field = app.needs().findIndex(n => n.need?.act === 'spray')
     expect(app.unit).toBe(-1)
-    expect(app.orderAt(resting)).toEqual({ field: resting, ok: false, err: 'Nothing needs doing here right now. To send someone here, select them first.' })
+    expect(app.orderAt(resting)).toEqual({ field: resting, ok: false, err: '지금 여기서 할 일이 없습니다. 여기에 사람을 내려면 먼저 선택하세요.' })
     expect(app.orderAt(field).ok).toBe(true)
     expect(c.season!.jobs.some(j => j.field === field && j.kind === 'spray')).toBe(true)
   })

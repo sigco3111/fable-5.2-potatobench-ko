@@ -34,7 +34,7 @@ describe('idle with work on the list', () => {
     for (const j of s.jobs) {
       const o = outlook.find(x => x.id === j.id)!
       expect(o.when, `${j.kind} ${j.field}`).toBe('waiting')
-      expect(o.why).toMatch(/^Waiting (because|for)/)
+      expect(o.why).toMatch(/기다립니다\./)
       expect(waits[j.id]).not.toBe('')
     }
     // The hand never does machine work, so the dig and the haul are the farmer's alone.

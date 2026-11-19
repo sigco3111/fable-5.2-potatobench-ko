@@ -67,7 +67,7 @@ describe('the day of the week', () => {
         expect(S.weekday(y, d), `${y} day ${d}`).toBe((new Date(Date.UTC(y, 0, 1 + d)).getUTCDay() + 6) % 7)
       }
     }
-    expect(S.WEEKDAYS[S.weekday(2024, S.dayIndex(2024, 0, 1))]).toBe('Monday')
+    expect(S.WEEKDAYS[S.weekday(2024, S.dayIndex(2024, 0, 1))]).toBe('월요일')
   })
 })
 
@@ -83,7 +83,7 @@ describe('Sundays off', () => {
     expect(c.season!.worked.length).toBeGreaterThan(0)
     const list = structuredClone(c.season!.jobs)
     expect(S.labourInfo(c).restDay).toBe(true)
-    expect(S.peopleInfo(c)[0].doing).toBe('Sunday: resting')
+    expect(S.peopleInfo(c)[0].doing).toBe('일요일: 휴식')
     days(c, 1)
     expect(c.season!.worked).toEqual([])
     expect(c.season!.jobs).toEqual(list)
@@ -101,7 +101,7 @@ describe('Sundays off', () => {
     expect(rest.crew[0].tired).toBeCloseTo(Math.max(0, before[0] - S.REST_PER_DAY), 12)
     expect(work.season!.worked.length).toBeGreaterThan(0)
     expect(work.crew[0].tired).toBeGreaterThan(rest.crew[0].tired)
-    refused(work, { t: 'sundays', off: false }, /already works Sundays/)
+    refused(work, { t: 'sundays', off: false }, /이미 일요일에도 일합니다/)
   })
 })
 
@@ -248,7 +248,7 @@ describe('traits', () => {
     const c = structuredClone(mid)
     ok(c, { t: 'hire', kind: 'hand' })
     c.crew[1].trait = 'homebody'
-    expect(S.winterBlock(c, c.crew[1], 'woods')).toMatch(/homebody/)
+    expect(S.winterBlock(c, c.crew[1], 'woods')).toMatch(/집을 좋아해/)
     expect(S.winterBlock(c, c.crew[1], 'off')).toBe('')
   })
 })
@@ -296,9 +296,9 @@ describe('mood, wages and quitting', () => {
     const hand = c.crew[1]
     hand.trait = ''
     ok(c, { t: 'raise', unit: hand.id, wage: 150 })
-    refused(c, { t: 'raise', unit: hand.id, wage: 150 }, /already/)
-    refused(c, { t: 'raise', unit: 0, wage: 500 }, /farmer/)
-    refused(c, { t: 'raise', unit: hand.id, wage: 50 }, /between/)
+    refused(c, { t: 'raise', unit: hand.id, wage: 150 }, /이미 월 \$150를 받습니다/)
+    refused(c, { t: 'raise', unit: 0, wage: 500 }, /농장주/)
+    refused(c, { t: 'raise', unit: hand.id, wage: 50 }, /사이여야 합니다/)
     // The next month's pay is the new wage (here a raise, so that nobody quits first).
     const pay = structuredClone(c)
     ok(pay, { t: 'raise', unit: hand.id, wage: 520 })
@@ -357,14 +357,14 @@ describe('applicants', () => {
     const c = S.createCampaign(world, { seed: 9, startYear: 1999 })
     const a = c.applicants[1]
     ok(c, { t: 'hire', applicant: a.id })
-    refused(c, { t: 'hire', applicant: a.id }, /No such applicant/)
+    refused(c, { t: 'hire', applicant: a.id }, /그런 지원자가 없습니다/)
     const u = c.crew[1]
     expect([u.name, u.skills, u.trait, u.wage, u.ask]).toEqual([a.name, a.skills, a.trait, a.ask, a.ask])
     expect(u.prio).toEqual(S.defaultPrio(a.skills))
     expect(S.planCosts(c).wages).toBe(a.ask)
     ok(c, { t: 'begin' })
     expect(c.applicants).toEqual([])
-    refused(c, { t: 'hire', applicant: c.crew[1].id }, /other work/)
+    refused(c, { t: 'hire', applicant: c.crew[1].id }, /다른 일자리를 찾았습니다/)
   })
 
   it('default priorities: the best skill first, others above 2 second, the rest third', () => {
@@ -399,8 +399,8 @@ describe('priorities and the morning', () => {
     ok(c, { t: 'job', kind: 'scout', field: 2, unit: hand.id })
     ok(c, { t: 'priority', unit: hand.id, work: 'field', level: 0 })
     expect(order(c, 'scout', 2)!.unit).toBe(-1)
-    refused(c, { t: 'job', kind: 'scout', field: 3, unit: hand.id }, /never/)
-    refused(c, { t: 'priority', unit: hand.id, work: 'field', level: 5 }, /priority/)
+    refused(c, { t: 'job', kind: 'scout', field: 3, unit: hand.id }, /하지 않기로 되어 있습니다/)
+    refused(c, { t: 'priority', unit: hand.id, work: 'field', level: 5 }, /우선순위는/)
     for (let k = 0; k < 3; k++) days(c, 1)
     expect(c.season!.worked.every(w => w.unit === 0)).toBe(true)
   })
@@ -428,15 +428,15 @@ describe('the foreman', () => {
     ok(c, { t: 'sundays', off: false })
     ok(c, { t: 'hire', kind: 'hand' })
     const hand = c.crew[1]
-    refused(c, { t: 'foreman', unit: 0, block: 'home' }, /farmer/)
-    refused(c, { t: 'foreman', unit: hand.id, block: 'dufour' }, /no land/)
-    refused(c, { t: 'foreman', unit: hand.id, block: null }, /isn't a foreman/)
+    refused(c, { t: 'foreman', unit: 0, block: 'home' }, /농장주/)
+    refused(c, { t: 'foreman', unit: hand.id, block: 'dufour' }, /가진 땅이 없습니다/)
+    refused(c, { t: 'foreman', unit: hand.id, block: null }, /작업반장이 아닙니다/)
     expect(S.payOf(hand)).toBe(S.HAND_WAGE)
     ok(c, { t: 'foreman', unit: hand.id, block: 'home' })
     expect(S.payOf(hand)).toBe(Math.round(S.HAND_WAGE * S.FOREMAN_PAY))
-    refused(c, { t: 'job', kind: 'scout', field: 0, unit: hand.id }, /foreman/)
+    refused(c, { t: 'job', kind: 'scout', field: 0, unit: hand.id }, /작업반장이라/)
     ok(c, { t: 'hire', kind: 'hand' })
-    refused(c, { t: 'foreman', unit: c.crew[2].id, block: 'home' }, /already/)
+    refused(c, { t: 'foreman', unit: c.crew[2].id, block: 'home' }, /이미 그곳의 작업반장/)
     expect(c.season!.jobs).toEqual([])
     const wanted = S.advise(world, c).filter(a => a.field >= 0 && a.act !== 'wait' && a.act !== 'sell' && a.act !== 'close')
     expect(wanted.length).toBeGreaterThan(0)
@@ -444,7 +444,7 @@ describe('the foreman', () => {
     // What reference practice wanted that morning was ordered, and the foreman walked none of it.
     for (const a of wanted) expect(c.season!.jobs.some(j => j.kind === a.act && j.field === a.field) || c.season!.worked.some(w => w.kind === a.act && w.field === a.field)).toBe(true)
     expect(c.season!.worked.every(w => w.unit !== hand.id)).toBe(true)
-    expect(S.peopleInfo(c)[1].doing).toMatch(/Foreman/)
+    expect(S.peopleInfo(c)[1].doing).toMatch(/작업반장/)
     // Without a foreman nothing is put on the list.
     const d = structuredClone(mid)
     ok(d, { t: 'sundays', off: false })
@@ -466,10 +466,10 @@ describe('harvest-break pickers', () => {
 
   it('are hired only in the harvest break, September 20 to October 10, and go back to school after it', () => {
     const early = structuredClone(mid)
-    refused(early, { t: 'pickers', on: true }, /September 20 to October 10/)
+    refused(early, { t: 'pickers', on: true }, /9월 20일~10월 10일/)
     const x = structuredClone(c)
     ok(x, { t: 'pickers', on: true })
-    refused(x, { t: 'pickers', on: true }, /already/)
+    refused(x, { t: 'pickers', on: true }, /이미 와 있습니다/)
     let events: S.GameEvent[] = []
     for (let k = 0; k < 40 && x.season!.pickers && !x.season!.frozen; k++) events.push(...days(x, 1))
     expect(x.season!.pickers).toBe(false)
@@ -509,14 +509,14 @@ describe('winter', () => {
 
   it('refuses work there is nothing to do, with the reason', () => {
     const c = structuredClone(mid)
-    refused(c, { t: 'winter', unit: 0, work: 'pack' }, /packing shed/)
-    refused(c, { t: 'winter', unit: 0, work: 'build' }, /Nothing is being built/)
-    refused(c, { t: 'winter', unit: 0, work: 'off' }, /already/)
-    refused(c, { t: 'winter', unit: 77, work: 'off' }, /No such person/)
+    refused(c, { t: 'winter', unit: 0, work: 'pack' }, /포장실이 필요합니다/)
+    refused(c, { t: 'winter', unit: 0, work: 'build' }, /짓고 있는 것이 없습니다/)
+    refused(c, { t: 'winter', unit: 0, work: 'off' }, /이미 그렇게 겨울을 보내기로 했습니다/)
+    refused(c, { t: 'winter', unit: 77, work: 'off' }, /그런 사람이 없습니다/)
     const w = S.winterInfo(c)
     expect(w.months).toBe(S.WINTER_MONTHS)
     expect(w.people[0].choices.find(x => x.work === 'off')!.ok).toBe(true)
-    expect(w.people[0].choices.find(x => x.work === 'pack')!.why).toMatch(/packing shed/)
+    expect(w.people[0].choices.find(x => x.work === 'pack')!.why).toMatch(/포장실이 필요합니다/)
   })
 })
 

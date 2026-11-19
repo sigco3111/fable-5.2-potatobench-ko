@@ -83,7 +83,7 @@ describe('made-up years', () => {
     const seed = 2024
     const w = S.climateWorld(record, seed)
     const c = S.createCampaign(w, { seed, startYear: year1 })
-    expect(S.yearLabel(c.year)).toBe('Year 1')
+    expect(S.yearLabel(c.year)).toBe('1년차')
     for (let guard = 0; guard < 4000 && c.phase !== 'over' && c.history.length < 5; guard++) {
       if (c.phase === 'plan') {
         const nb = neighborYear(w, seed, c.year)

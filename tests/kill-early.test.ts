@@ -32,16 +32,16 @@ describe('the Kill vines warning', () => {
       const cost = S.killCostToday(at.w, at.c, at.field)!
       const k = killEarly(at.w, at.c, [at.field])!
       expect(k.cost).toEqual(cost)
-      expect(k.short).toBe('7 days early')
-      expect(k.why).toContain(`killing the vines 7 days early gives up about ${cost.cwtPerAcre} cwt/acre.`)
-      expect(k.why).toMatch(/(Your crew will do it|It's due) on [A-Z][a-z]+ \d+\.$/)
-      expect(k.did).toBe(`You're killing the vines 7 days early, which gives up about ${cost.cwtPerAcre} cwt/acre.`)
+      expect(k.short).toBe('7일 일찍')
+      expect(k.why).toContain('줄기를 7일 일찍 죽이면')
+      expect(k.why).toMatch(/(일꾼들이 \d+월 \d+일에 합니다|예정일은 \d+월 \d+일입니다)\.$/)
+      expect(k.did).toMatch(/^줄기를 7일 일찍 죽이는 중이며, 약 .+을\(를\) 잃습니다\.$/)
       console.log(`seed ${seed}: ${k.why}`)
       // Several fields: the worst one is named.
       const all = [...Array(S.FIELD_COUNT).keys()]
       const worst = killEarly(at.w, at.c, all)!
       expect(worst.cost.cwtPerAcre).toBe(Math.max(...all.map(i => S.killCostToday(at.w, at.c, i)?.cwtPerAcre ?? 0)))
-      expect(worst.why).toContain(`in ${S.FIELD_NAMES[worst.field]} `)
+      expect(worst.why).toContain(`${S.FIELD_NAMES[worst.field]}에서 `)
     }
     expect(seen, 'a field a week short of its kill').toBeGreaterThan(0)
   })

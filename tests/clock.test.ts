@@ -413,7 +413,7 @@ describe('a notice that asks nothing', () => {
   it('and pauses the game for a player who asked to be paused on alerts', () => {
     const { reasons, warned } = harvest(true)
     expect(warned).toBeGreaterThan(0)
-    expect(reasons.some(r => /^Frost is forecast/.test(r))).toBe(true)
+    expect(reasons.some(r => /서리가 예보됐습니다/.test(r))).toBe(true)
   })
 })
 
@@ -468,7 +468,7 @@ describe('a decision that waits for the player pauses the game', () => {
       run(app, 600, () => waitsForWord(app))
       expect(waitsForWord(app), what).toBe(true)
       expect(app.pauseReason, what).toBe(PLANT_PAUSE)
-      expect(PLANT_PAUSE).toBe('the soil is ready. Click Plant on a field and your crew goes to work. (Left alone, they start in 3 days.)')
+      expect(PLANT_PAUSE).toBe('흙이 준비됐습니다. 밭에서 파종을 누르면 일꾼들이 일을 시작합니다. (가만히 두면 3일 후에 알아서 시작합니다.)')
       const s = c.season!
       expect(s.plantAsk, `${what}: paused on the day the crew asks`).toBe(s.day)
       expect(s.jobs.filter(j => j.kind === 'plant'), what).toEqual([])
@@ -517,7 +517,7 @@ describe('a decision that waits for the player pauses the game', () => {
 
   it('lists every cause that can pause the game by itself, and a whole year at 8x pauses for those alone', () => {
     expect(Object.keys(SELF_PAUSES).sort()).toEqual(['alerts', 'incident', 'killCall', 'over', 'plantAsk', 'spray', 'weighed'])
-    for (const why of Object.values(SELF_PAUSES)) expect(why.length).toBeGreaterThan(20)
+    for (const why of Object.values(SELF_PAUSES)) expect(why.length).toBeGreaterThan(8)
     const app = farm()
     const c = c0(app)
     app.do({ t: 'sprayWay', way: 'auto' })
@@ -575,7 +575,7 @@ describe('a decision that waits for the player pauses the game', () => {
     const called = s.fields.map((f, i) => (f.killCall === s.day ? i : -1)).filter(i => i >= 0)
     expect(called.length).toBeGreaterThan(0)
     for (const i of called) expect(S.advise(app.world, c).some(a => a.act === 'kill' && a.field === i), S.FIELD_NAMES[i]).toBe(true)
-    expect(app.pauseReason).toMatch(/^the vines in .+ are due to be killed, and that's your decision\. Click Kill vines on a field, or resume and they stay up\.$/)
+    expect(app.pauseReason).toMatch(/^.+의 줄기를 죽일 때가 됐고, 그 결정은 당신의 몫입니다\. 밭에서 줄기 죽이기를 누르거나, 계속 진행하면 줄기가 그대로 있습니다\.$/)
     expect(app.pauseReason).toContain(S.FIELD_NAMES[called[0]])
     // Ordered, the pause is answered and the game goes on. Each field is called once.
     app.order('kill', { fields: called })
@@ -594,8 +594,8 @@ describe('a decision that waits for the player pauses the game', () => {
     const latest = S.dayIndex(s.year, S.DIG_GREEN.month, S.DIG_GREEN.dom) - S.SKIN_DAYS
     expect(s.day).toBe(latest - S.KILL_CALL_DAYS)
     expect(s.fields[keep].killCall).toBe(s.day)
-    expect(app.pauseReason).toBe(`you're keeping the vines up in ${S.FIELD_NAMES[keep]}. Click Kill vines on a field, or resume and they stay up.`)
-    expect(s.log.find(e => e.type === 'killCall')!.text).toBe(`You're keeping the vines up in ${S.FIELD_NAMES[keep]}. Kill them by ${S.formatDay(s.year, latest)} so the skins toughen before the harvest, or the field gets dug green.`)
+    expect(app.pauseReason).toBe(`${S.FIELD_NAMES[keep]}의 줄기를 살려 두고 있습니다. 밭에서 줄기 죽이기를 누르거나, 계속 진행하면 줄기가 그대로 있습니다.`)
+    expect(s.log.find(e => e.type === 'killCall')!.text).toBe(`${S.FIELD_NAMES[keep]}의 줄기를 살려 두고 있습니다. 수확 전에 껍질이 굳으려면 ${S.formatDay(s.year, latest)}까지 죽이세요. 아니면 푸른 채로 캐게 됩니다.`)
     // The other fields, which the crew killed on its own date, were never called.
     expect(s.fields.filter(f => f.killCall !== undefined).length).toBe(1)
     keep = -1

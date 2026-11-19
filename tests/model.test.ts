@@ -81,9 +81,9 @@ describe('calendar', () => {
     expect(S.dayIndex(2024, 1, 29)).toBe(59)
     expect(S.dayIndex(2024, 2, 1)).toBe(60)
     expect(S.dayIndex(2023, 2, 1)).toBe(59)
-    expect(S.formatDay(2024, 59)).toBe('February 29')
-    expect(S.formatDay(2023, 59)).toBe('March 1')
-    expect(S.formatDay(2023, 0, true)).toBe('Jan 1')
+    expect(S.formatDay(2024, 59)).toBe('2월 29일')
+    expect(S.formatDay(2023, 59)).toBe('3월 1일')
+    expect(S.formatDay(2023, 0, true)).toBe('1월 1일')
   })
 })
 

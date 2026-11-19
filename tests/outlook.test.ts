@@ -50,9 +50,9 @@ describe('each order\'s fate', () => {
     const o = S.jobOutlook(world, c).find(x => c.season!.jobs.find(j => j.id === x.id)!.kind === 'spray')!
     expect(o.unit).toBe(-1)
     expect(o.when).toBe('waiting')
-    expect(o.why).toMatch(/Nobody on the farm will do machine work/)
+    expect(o.why).toMatch(/농장에 기계 작업을\(를\) 할 사람이 없습니다/)
     const p = S.pressing(world, c).find(x => x.kind === 'spray' && x.field === f)!
-    expect(p.why).toMatch(/blight/)
+    expect(p.why).toMatch(/역병/)
     expect(p.fix).toEqual({ t: 'priority', unit: 0, work: 'machine', level: 1 })
   })
 
@@ -100,7 +100,7 @@ describe('orders that no longer make sense', () => {
     seen.push(...ok(c, { t: 'day' }).events)
     const drop = seen.find(e => e.type === 'dropped' && e.data?.job === scout.id)!
     expect(drop).toBeDefined()
-    expect(String(drop.data!.why)).toMatch(/dead/)
+    expect(String(drop.data!.why)).toMatch(/죽었습니다/)
     expect(c.season!.jobs.some(j => j.id === scout.id)).toBe(false)
   })
 })
@@ -113,7 +113,7 @@ describe('rest', () => {
     for (const i of [0, 1, 2, 3, 4, 5]) S.apply(world, c, { t: 'job', kind: 'scout', field: i })
     const seen: GameEvent[] = []
     for (let k = 0; k < 8; k++) seen.push(...ok(c, { t: 'day' }).events)
-    expect(seen.some(e => e.type === 'wornOut' && /rest/.test(e.text))).toBe(true)
+    expect(seen.some(e => e.type === 'wornOut' && /쉽니다/.test(e.text))).toBe(true)
     expect(seen.some(e => e.type === 'hurt')).toBe(false)
     expect(u.tired).toBeLessThan(S.HURT_TIRED + S.TIRE_PER_DAY)
     ok(c, { t: 'rest', unit: 0 })
@@ -133,11 +133,11 @@ describe('what goals cost, the money and the year', () => {
     const stump = costs.find(x => x.id === 'stump')!
     expect(stump.cost).toBe(S.STUMP_FEE)
     expect(stump.can).toBe(false)
-    expect(stump.why).toMatch(/felled/)
+    expect(stump.why).toMatch(/벌목한 구역이 없습니다/)
     const shed = costs.find(x => x.id === 'build:shed')!
     expect(shed.cost).toBe(S.buildCost(c, 'shed').total)
     expect(shed.can).toBe(c.cash >= shed.cost)
-    expect(costs.find(x => x.id === 'foreman')!.why).toMatch(/hire someone first/)
+    expect(costs.find(x => x.id === 'foreman')!.why).toMatch(/먼저 사람을 고용하세요/)
     c.cash = 100
     expect(costs.length).toBe(S.goalCosts(c).length)
     expect(S.goalCosts(c).find(x => x.id === 'build:shed')!.can).toBe(false)

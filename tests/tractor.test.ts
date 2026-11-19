@@ -62,7 +62,7 @@ describe('a machine\'s day', () => {
       const waits = S.jobWaits(world, c)
       for (const u of c.crew) {
         const n = personNow(c, u.id, waits)
-        if (n.word !== 'Waiting' || n.rest !== 'for the tractor') continue
+        if (n.word !== '기다림' || (n.rest !== '트랙터' && n.rest !== '그 트랙터')) continue
         // nothing they would do is held up by anything but the tractor, and someone else holds it
         expect(c.crew.some(o => o !== u && o.rig === 'tractor')).toBe(true)
         seen = true

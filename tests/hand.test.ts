@@ -13,7 +13,7 @@ describe('a hired field hand', () => {
       const c = S.createCampaign(world, { seed, startYear: S.FARM_YEAR0 + 1 })
       const hired = S.apply(world, c, { t: 'hire', kind: 'hand' })
       const hand = c.crew[1]
-      expect(hired.events[0].text).toMatch(new RegExp(`${hand.name.split(' ')[0]} will scout, pull blighted plants and do test digs, so you can stay on the tractor\\.$`))
+      expect(hired.events[0].text).toContain(`${hand.name.split(' ')[0]}이(가) 순찰, 병든 포기 뽑기, 시험 캐기를 맡습니다. 트랙터에만 집중하세요.`)
       S.apply(world, c, { t: 'begin' })
       let days = 0, worked = 0
       for (let g = 0; g < 400 && c.phase === 'season' && !S.seasonDone(c); g++) {
@@ -53,7 +53,7 @@ describe('a hired field hand', () => {
       if (s.day > (s.watchDay >= 0 ? s.watchDay + 30 : Infinity)) break
     }
     expect(said).toHaveLength(1)
-    expect(said[0].text).toBe(`${hand.name.split(' ')[0]} has had nothing to do for 3 days. Let ${hand.name.split(' ')[0]} drive?`)
+    expect(said[0].text).toBe(`${hand.name.split(' ')[0]}이(가) 3일째 할 일이 없습니다. ${hand.name.split(' ')[0]}에게 트랙터 운전을(를) 맡길까요?`)
     expect(said[0].data).toMatchObject({ unit: hand.id, work: 'machine' })
   })
 })

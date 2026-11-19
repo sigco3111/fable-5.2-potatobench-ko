@@ -190,8 +190,8 @@ describe('the ladder of goals', () => {
     expect(onLadder()).toBe(false)
     c.fields[6].tenure = 'rented'
     expect(goal(c, 'foreman').now).toBe(true)
-    expect(goal(c, 'foreman').why).toMatch(/fields away from home/)
-    expect(goal(c, 'foreman').why).toMatch(/40% more and stop doing field work/)
+    expect(goal(c, 'foreman').why).toMatch(/외지 밭/)
+    expect(goal(c, 'foreman').why).toMatch(/40% 오르고 밭일은 그만둡니다/)
     expect(`${goal(c, 'foreman').title} ${goal(c, 'foreman').why} ${goal(c, 'foreman').when}`).not.toMatch(/block/i)
     expect(S.apply(w, c, { t: 'foreman', unit: c.crew[1].id, block: 'home' }).ok).toBe(true)
     expect(goal(c, 'foreman').done).toBe(true)
@@ -238,7 +238,7 @@ describe('the ladder of goals', () => {
     const c = farm()
     pastYear(c)
     c.cash = 6515
-    expect(goal(c, 'tool').block).toMatch(/would leave \$515/)
+    expect(goal(c, 'tool').block).toMatch(/그러면 \$515가 남아/)
     expect(nextGoal(c)?.id).not.toBe('tool')
     c.cash = 24000
     expect(goal(c, 'tool').block).toBe('')
@@ -294,10 +294,10 @@ describe('what the player is waiting for', () => {
     const first = S.fieldNeeds(w, c).findIndex(x => x.need?.act === 'plant')
     expect(S.apply(w, c, { t: 'job', kind: 'plant', field: first }).ok).toBe(true)
     // The word given: how far along the planting is, counting up, and never the soil again.
-    expect(waitingFor(c)).toEqual({ title: 'Planting: 0 of 4 fields', when: 'your crew plants the rest on its own' })
+    expect(waitingFor(c)).toEqual({ title: '파종: 4개 밭 중 0개', when: '일꾼들이 나머지를 알아서 심습니다' })
     const seen = new Set<string>()
     for (let n = 0; n < 60 && c.season!.fields.filter(f => f.plantDay >= 0).length < 4; n++) { day(c); seen.add(waitingFor(c)?.title ?? '') }
-    expect([...seen].filter(t => /^Planting: [1-3] of 4 fields$/.test(t)).length).toBeGreaterThan(0)
+    expect([...seen].filter(t => /^파종: 4개 밭 중 [1-3]개$/.test(t)).length).toBeGreaterThan(0)
     // Planted: nothing is the player's until blight weather, whatever the crew is walking or hilling.
     const said = new Set<string>()
     for (let n = 0; n < 200 && c.season!.watchDay < 0; n++) {
@@ -307,18 +307,18 @@ describe('what the player is waiting for', () => {
       day(c)
     }
     // (until 14 November: "Nothing to do until blight weather". A slip never says there is nothing to do.)
-    expect([...said]).toEqual(['The crop is growing / your crew tends it; your next decision is a spray, when blight weather comes'])
+    expect([...said]).toEqual(['작물이 자라는 중 / 일꾼들이 돌봅니다. 다음 결정은 살포, 역병 날씨가 올 때'])
     // Spraying decided: the next decision is the vine kill, with its date.
     expect(S.apply(w, c, { t: 'sprayWay', way: 'auto' }).ok).toBe(true)
     const kill = waitingFor(c)!
-    expect(kill.title).toBe('Next up: kill the vines for harvest')
-    expect(kill.when).toMatch(/^due (around|since) [A-Z][a-z]+ \d+, to toughen the skins for digging$/)
+    expect(kill.title).toBe('다음: 수확을 위한 줄기 죽이기')
+    expect(kill.when).toMatch(/^수확할 수 있게 껍질을 굳히려고 \d+월 \d+일쯤 예정$/)
     // No title the slip can show names a job of the crew's as the player's goal.
-    for (const t of [kill.title, ...said, ...seen]) expect(t).not.toMatch(/Walk a field|Hill the rows|Do a test dig|Dig a field|Bring the crop in/)
+    for (const t of [kill.title, ...said, ...seen]) expect(t).not.toMatch(/^(순찰|북주기|시험 캐기|캐기|운반)/)
     // The vines dead: nothing until the weigh ticket.
     for (let n = 0; n < 200 && c.season!.fields.some(f => f.status === 'growing' && f.deadDay < 0) && !S.seasonDone(c); n++) day(c)
     const end = waitingFor(c)
-    if (end) expect(end).toEqual({ title: 'The harvest is coming in', when: 'your crew digs and hauls; then you sell or store it' })
+    if (end) expect(end).toEqual({ title: '수확이 들어오는 중', when: '일꾼들이 캐고 운반합니다. 그다음 팔거나 저장하세요' })
   })
 
   it('says nothing in the place of a step the player took from the crew', () => {

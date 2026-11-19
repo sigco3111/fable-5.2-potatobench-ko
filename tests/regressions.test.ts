@@ -58,7 +58,7 @@ describe('a dig ordered while a vine kill is part done', () => {
     const before = S.hashCampaign(c)
     const again = S.apply(world, c, { t: 'job', kind: 'dig', field: 0 })
     expect(again.ok).toBe(false)
-    expect(again.err).toBe('This field is already dug.')
+    expect(again.err).toBe('이 밭은 이미 수확했습니다.')
     expect(S.hashCampaign(c)).toBe(before)
     return events
   }
@@ -129,7 +129,7 @@ describe('seed held back from a pile that rot has run through', () => {
     const before = S.hashCampaign(c)
     const r = S.apply(world, c, { t: 'seed', lot: lot.id, fields: 1 })
     expect(r.ok).toBe(false)
-    expect(r.err).toMatch(/rot/i)
+    expect(r.err).toMatch(/부패/)
     expect(S.hashCampaign(c)).toBe(before)
     expect(lot.seedHeld).toBe(0)
   })
@@ -193,7 +193,7 @@ describe('watering', () => {
     const before = S.hashCampaign(c)
     const r = S.apply(world, c, { t: 'job', kind: 'water', field: i })
     expect(r.ok).toBe(false)
-    expect(r.err).toBe('The ground is already wet.')
+    expect(r.err).toBe('땅이 이미 젖어 있습니다.')
     expect(S.hashCampaign(c)).toBe(before)
     expect(S.fieldActions(world, c, i).find(a => a.kind === 'water')!.ok).toBe(false)
   })

@@ -69,15 +69,15 @@ describe('building', () => {
     const cash = c.cash
     ok(c, { t: 'build', kind: 'house', yard: HOME })
     expect([cash - c.cash, c.yearBuilding, c.logs, c.stone]).toEqual([cost.total, cost.total, 0, 5])
-    refused(c, { t: 'build', kind: 'house', yard: HOME }, /going up/)
-    refused(c, { t: 'build', kind: 'pond', yard: DUFOUR }, /home yard/)
-    refused(c, { t: 'build', kind: 'bunk', yard: DUFOUR }, /Dufour land/)
+    refused(c, { t: 'build', kind: 'house', yard: HOME }, /올라가고 있습니다/)
+    refused(c, { t: 'build', kind: 'pond', yard: DUFOUR }, /본가 마당에만/)
+    refused(c, { t: 'build', kind: 'bunk', yard: DUFOUR }, /뒤푸르 땅을 보유하는 동안만/)
     const info = S.buildingInfo(c).find(b => b.kind === 'house' && b.yard === HOME)!
     expect([info.state, info.progress]).toEqual(['building', 0])
     ok(c, { t: 'begin' })
     const job = c.season!.jobs.find(j => j.kind === 'build')!
     expect([job.field, job.building, job.need]).toEqual([HOME, c.buildings[0].id, S.BUILDINGS.house.days])
-    refused(c, { t: 'cancel', id: job.id }, /paid for/)
+    refused(c, { t: 'cancel', id: job.id }, /건축비는 이미 냈으니/)
     const events: S.GameEvent[] = []
     for (let k = 0; k < 80 && !S.hasBuilt(c, 'house'); k++) events.push(...days(c, 1))
     expect(events.some(e => e.type === 'built')).toBe(true)
@@ -89,8 +89,8 @@ describe('building', () => {
   it('cannot be paid for on credit in spring', () => {
     const c = S.createCampaign(world, { seed: 1, startYear: 1990 })
     c.cash = 1000
-    refused(c, { t: 'build', kind: 'shed', yard: HOME }, /can't afford it yet/)
-    expect(S.buildingInfo(c).find(b => b.kind === 'shed')!.why).toMatch(/can't afford it yet/)
+    refused(c, { t: 'build', kind: 'shed', yard: HOME }, /아직 감당할 수 없습니다/)
+    expect(S.buildingInfo(c).find(b => b.kind === 'shed')!.why).toMatch(/아직 감당할 수 없습니다/)
     expect(S.spendable(c)).toBe(1000)
   })
 
@@ -110,12 +110,12 @@ describe('building', () => {
     // A machine, bought in the season: it is the farm's from that day, and is not taken back.
     ok(c, { t: 'buy', upgrade: 'boom' })
     expect(c.upgrades.boom).toBe(true)
-    refused(c, { t: 'unbuy', upgrade: 'boom' }, /only be undone in spring/)
-    refused(c, { t: 'buy', upgrade: 'boom' }, /already own/)
+    refused(c, { t: 'unbuy', upgrade: 'boom' }, /구입 취소는 시즌 시작 전 봄에만/)
+    refused(c, { t: 'buy', upgrade: 'boom' }, /이미 갖고 있습니다/)
     // At the end of what the bank lends, the next thing is refused, and the reason says where the farm stands.
     c.cash = -S.BUILD_CREDIT + 500
-    refused(c, { t: 'build', kind: 'station', yard: HOME }, /the bank lends until you owe \$30,000 \(you owe \$29,500\)/)
-    refused(c, { t: 'buy', upgrade: 'truck' }, /can't afford it yet/)
+    refused(c, { t: 'build', kind: 'station', yard: HOME }, /은행은 빚이 \$30,000가 될 때까지만 빌려줍니다\(현재 빚 \$29,500\)/)
+    refused(c, { t: 'buy', upgrade: 'truck' }, /아직 감당할 수 없습니다/)
     expect(S.spendable(c)).toBe(500)
   })
 
@@ -137,15 +137,15 @@ describe('building', () => {
     ok(c, { t: 'job', kind: 'fell', field: lot })
     days(c, 3)
     expect(c.fields[lot].felled).toBeGreaterThan(0)
-    refused(c, { t: 'buyLand', field: lot }, /already own/)
+    refused(c, { t: 'buyLand', field: lot }, /이미 .* 소유하고 있습니다/)
     // A field ready to plant is not sold in the season.
     const field = S.PARCELS.findIndex((p, i) => p.holding === 'field' && c.fields[i].tenure === 'none')
-    refused(c, { t: 'buyLand', field }, /only buy a field in spring/)
+    refused(c, { t: 'buyLand', field }, /밭은 봄에만 살 수 있습니다/)
     // Past what the bank lends, the down payment is refused.
     const d = S.createCampaign(world, { seed: 1, startYear: 1990 })
     ok(d, { t: 'begin' })
     d.cash = -S.BUILD_CREDIT + 100
-    refused(d, { t: 'buyLand', field: lot }, /can't afford the down payment/)
+    refused(d, { t: 'buyLand', field: lot }, /아직 계약금을 감당할 수 없습니다/)
   })
 
   // What a building earns back is in the year-end figure where the game has a sum for it: the farm stand's takings
@@ -181,7 +181,7 @@ describe('building', () => {
     for (let i = 0; i < 6; i++) if (S.isField(c, i)) ok(c, { t: 'plan', field: i, plan: { crop: 'rest', variety: 'katahdin', seed: 'certified' } })
     ok(c, { t: 'begin' })
     ok(c, { t: 'endSeason' })
-    refused(c, { t: 'winter', unit: c.crew[1].id, work: 'build' }, /Nothing is being built/)
+    refused(c, { t: 'winter', unit: c.crew[1].id, work: 'build' }, /짓고 있는 것이 없습니다/)
     ok(c, { t: 'build', kind: 'bunk', yard: HOME })
     ok(c, { t: 'winter', unit: c.crew[1].id, work: 'build' })
     const events: S.GameEvent[] = []
@@ -203,7 +203,7 @@ describe('the potato house', () => {
     expect(S.cellarCapacity(d)).toBe(cap + S.CELLAR_CWT)
     expect(d.yearCosts).toBe(S.UPGRADES.house2.cost)
     expect(S.UPGRADES.house2.cost).toBeGreaterThan(S.BUILDINGS.house.cash + S.BUILDINGS.house.logs * S.MILL_PRICE + S.BUILDINGS.house.stone * S.QUARRY_PRICE)
-    refused(d, { t: 'build', kind: 'house', yard: HOME }, /already/)
+    refused(d, { t: 'build', kind: 'house', yard: HOME }, /이미 감자 저장고가 있습니다/)
     // At the Dufour yard, while Dufour land is held.
     ok(d, { t: 'rent', field: 11 })
     ok(d, { t: 'build', kind: 'house', yard: DUFOUR })
@@ -282,8 +282,8 @@ describe('what packing looks like adding', () => {
 describe('the machine shed', () => {
   it('makes machine work 10% faster and lets the farm keep more tractors; without it a second tractor is refused', () => {
     const c = spring()
-    refused(c, { t: 'buy', upgrade: 'tractor2' }, /machine shed/)
-    refused(c, { t: 'buy', upgrade: 'tractor3' }, /machine shed/)
+    refused(c, { t: 'buy', upgrade: 'tractor2' }, /기계 창고가 필요합니다/)
+    refused(c, { t: 'buy', upgrade: 'tractor3' }, /기계 창고가 필요합니다/)
     buildOut(c, 'shed')
     // Next spring the tractors can be bought.
     tend(c, x => S.seasonDone(x))
@@ -291,7 +291,7 @@ describe('the machine shed', () => {
     while (c.phase === 'cellar') ok(c, { t: 'month' })
     ok(c, { t: 'next' })
     c.cash = 100000
-    refused(c, { t: 'buy', upgrade: 'tractor3' }, /second tractor first/)
+    refused(c, { t: 'buy', upgrade: 'tractor3' }, /먼저 두 번째 트랙터를 사세요/)
     ok(c, { t: 'buy', upgrade: 'tractor2' })
     ok(c, { t: 'buy', upgrade: 'tractor3' })
     expect(S.tractorsOwned(c)).toBe(3)
@@ -331,7 +331,7 @@ describe('the bunkhouse', () => {
     const c = spring()
     ok(c, { t: 'hire', kind: 'hand' })
     ok(c, { t: 'hire', kind: 'hand' })
-    refused(c, { t: 'hire', kind: 'hand' }, /bunkhouse/)
+    refused(c, { t: 'hire', kind: 'hand' }, /숙소 침대/)
     buildOut(c, 'bunk')
     expect(S.housingLimit(c)).toBe(S.HOUSED_OUT + S.BUNK_BEDS)
     const none = structuredClone(c)
@@ -351,7 +351,7 @@ describe('the packing shed', () => {
 
   it('packed stock brings 8% more for No. 1 and three quarters of the No. 1 price for B size, less the packing charge', () => {
     const c = structuredClone(base)
-    refused(c, { t: 'winter', unit: 0, work: 'pack' }, /packing shed/)
+    refused(c, { t: 'winter', unit: 0, work: 'pack' }, /포장실이 필요합니다/)
     c.buildings.push({ id: c.nextBuilding++, kind: 'packing', yard: HOME, done: 24, need: 24, built: true })
     const lot = S.openLots(c)[0]
     const plain = S.lotValue(world, c, lot)
@@ -388,7 +388,7 @@ describe('the irrigation pond', () => {
     ok(c, { t: 'job', kind: 'water', field: f })
     const events: S.GameEvent[] = []
     for (let k = 0; k < 10 && order(c, 'water', f); k++) events.push(...days(c, 1))
-    expect(events.some(e => e.type === 'watered' && e.field === f && /pond/.test(e.text))).toBe(true)
+    expect(events.some(e => e.type === 'watered' && e.field === f && /연못 물/.test(e.text))).toBe(true)
     expect(c.yearCosts - costs).toBe(S.POND_COST)
     expect(c.pond).toBeLessThan(pond)
   })
@@ -505,12 +505,12 @@ describe('hauling', () => {
   it('the digger lifts the crop into barrels and an order to haul it goes on top of the list by itself', () => {
     const c = structuredClone(base)
     ok(c, { t: 'job', kind: 'dig', field })
-    refused(c, { t: 'job', kind: 'haul', field }, /automatically/)
+    refused(c, { t: 'job', kind: 'haul', field }, /자동으로 오릅니다/)
     for (let k = 0; k < 10 && c.season!.fields[field].inField === 0; k++) days(c, 1)
     const f = c.season!.fields[field]
     expect(f.inField).toBeGreaterThan(0)
     expect(c.season!.jobs[0].kind).toBe('haul')
-    refused(c, { t: 'cancel', id: c.season!.jobs[0].id }, /has to come in/)
+    refused(c, { t: 'cancel', id: c.season!.jobs[0].id }, /들여와야 해서 운반은 취소할 수 없습니다/)
     expect(S.haulInfo(world, c).map(h => h.field)).toEqual([field])
     expect(S.fieldInfo(c, field).inField).toBeCloseTo(f.inField, 9)
   })
@@ -525,7 +525,7 @@ describe('hauling', () => {
       const f = c.season!.fields[field]
       if (f.status === 'dug' && !f.weighed) {
         sawDug = true
-        refused(c, { t: 'sell', lot: f.lotId, frac: 1 }, /hauled in and weighed/)
+        refused(c, { t: 'sell', lot: f.lotId, frac: 1 }, /실어 들이고 계근한 후에/)
         expect(S.fieldNeeds(world, c)[field].need?.act).not.toBe('sell')
       }
     }

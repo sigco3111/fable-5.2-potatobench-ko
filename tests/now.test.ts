@@ -25,21 +25,22 @@ describe('what a person is doing now', () => {
         const n = personNow(c, u.id, waits)
         seen.add(n.word)
         // the card's line is the word and the rest of it, both from the one call
-        expect(n.line).toBe(n.rest ? `${n.word} ${n.rest}` : n.word)
+        expect(n.line).toBe(n.rest ? `${n.rest} ${n.word}` : n.word)
         const kind = WORK.get(n.word)
-        if (kind && n.word !== 'Next') {
+        if (kind && n.word !== '다음') {
           // working at a field: they are there, not on the road, and the work is on the list
           expect(u.road, `${u.name} on day ${s.day}: ${n.line}`).toBeLessThanOrEqual(0)
           expect(u.at, `${u.name} on day ${s.day}: ${n.line}`).toBe(n.place)
           expect(s.jobs.some(j => j.kind === kind && j.field === n.place)).toBe(true)
         }
-        if (n.word === 'Heading') expect(n.rest).toMatch(/^to /)
-        if (n.word === 'Idle') expect(s.jobs.some(j => (j.unit < 0 || j.unit === u.id) && S.willDo(u, j.kind) && !c.crew.some(o => o !== u && o.job === j.id))).toBe(false)
+        if (n.word === '이동 중') expect(n.rest).toMatch(/(러|가는 중)$/)
+        if (n.word === '한가함' || n.word === '놀고 있음') expect(s.jobs.some(j => (j.unit < 0 || j.unit === u.id) && S.willDo(u, j.kind) && !c.crew.some(o => o !== u && o.job === j.id))).toBe(false)
       }
       for (const a of S.advise(world, c)) if (a.act !== 'wait' && a.act !== 'close' && a.act !== 'sell') S.apply(world, c, { t: 'job', kind: a.act, field: a.field })
       expect(S.apply(world, c, { t: 'day' }).ok).toBe(true)
     }
     // a season shows the person at work, on the way, waiting, idle and on a Sunday
-    for (const w of ['Planting', 'Digging', 'Hauling', 'Sunday', 'Idle']) expect([...seen]).toContain(w)
+    for (const w of ['파종', '캐기', '들이기', '일요일']) expect([...seen]).toContain(w)
+    expect([...seen].some(w => w === '한가함' || w === '놀고 있음')).toBe(true)
   })
 })

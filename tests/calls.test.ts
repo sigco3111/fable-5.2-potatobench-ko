@@ -55,7 +55,7 @@ describe('spraying', () => {
       let ordered = 0, sprayed = 0, dropped = 0
       for (let g = 0; g < 300 && playing(c); g++) {
         for (const p of S.pressing(w, c)) if (p.kind === 'spray' && p.job < 0 && S.apply(w, c, p.fix!).ok) ordered++
-        for (const o of S.jobOutlook(w, c)) expect(o.why).not.toMatch(/Nobody on the farm/)
+        for (const o of S.jobOutlook(w, c)) expect(o.why).not.toMatch(/할 사람이 없습니다/)
         const ev = ok(w, c, { t: 'day' }).events
         sprayed += ev.filter(e => e.type === 'sprayed').length
         dropped += ev.filter(e => e.type === 'dropped' && e.data?.kind === 'spray').length
@@ -75,13 +75,13 @@ describe('spraying', () => {
         if (p.kind !== 'spray' || p.job >= 0) continue
         const f = c.season!.fields[p.field]
         if (f.lastSpray >= 0) again ??= p
-        else expect(p.inWay).toMatch(/Not sprayed yet this season/)
+        else expect(p.inWay).toMatch(/^이번 시즌 아직 살포하지 않았습니다/)
         S.apply(w, c, p.fix!)
       }
       seen.push(...ok(w, c, { t: 'day' }).events)
     }
     expect(again, 'a spray asked for a second time').toBeDefined()
-    expect(again!.inWay).toMatch(/^You last sprayed on [A-Z][a-z]+ \d+ and it's wearing off\. Each order is a single spray/)
+    expect(again!.inWay).toMatch(/^마지막 살포는 \d+월 \d+일였고 약효가 떨어지고 있습니다\. 지시 한 건은 살포 한 번/)
     const passes = seen.filter(e => e.type === 'sprayed').length
     expect(c.season!.fields.reduce((n, f) => n + (f.sprays ?? 0), 0)).toBe(passes)
     if (c.phase === 'season') ok(w, c, { t: 'endSeason' })
@@ -236,7 +236,7 @@ describe('the dig and the kill left to the crew', () => {
         expect(f.dugDay - f.deadDay >= S.SKIN_DAYS || f.dugDay >= greenDig, at).toBe(true)
         expect(c.lots.find(l => l.field === i)!.skin, `${at}: skins set at the dig`).toBe(1)
         if (f.killDay < 0) return
-        const m = /^The crew kills the vines on ([A-Z][a-z]+ \d+) unless you keep them up/.exec(said.get(i) ?? '')
+        const m = /^계속 키우지 않으면 일꾼들이 (\d+월 \d+일)에 줄기를 죽입니다/.exec(said.get(i) ?? '')
         expect(m, `${at}: ${said.get(i)}`).not.toBeNull()
         // Ordered that morning, and done as soon as the weather and the work ahead of it let the crew.
         const on = Array.from({ length: 5 }, (_, k) => S.formatDay(c.year, f.killDay - k))
@@ -280,7 +280,7 @@ describe('the dig and the kill left to the crew', () => {
     }
     expect(c.season!.fields[field].killDay).toBe(-1)
     ok(w, back, { t: 'keepVines', field, keep: false })
-    expect(S.pressing(w, back).find(p => p.kind === 'kill' && p.field === field)?.inWay).toMatch(/^The crew kills the vines on/)
+    expect(S.pressing(w, back).find(p => p.kind === 'kill' && p.field === field)?.inWay).toMatch(/^계속 키우지 않으면 일꾼들이/)
   })
 
   it('an ask that has lapsed starts no clock: the crew kills nothing the coach no longer asks for', () => {
@@ -506,7 +506,7 @@ describe('round five', () => {
     c.incidents.push({ id: c.nextIncident++, kind: 'buyer', day: c.season!.day, until: c.season!.day + 4, choices: ['take', 'refuse'], lot: lot.id })
     const r = ok(w, c, { t: 'sell', lot: lot.id, frac: 1 })
     expect(c.incidents.some(i => i.kind === 'buyer')).toBe(false)
-    expect(r.events.some(e => e.type === 'incidentDone' && /no longer there/.test(e.text))).toBe(true)
+    expect(r.events.some(e => e.type === 'incidentDone' && /더는 없기 때문/.test(e.text))).toBe(true)
   })
 
   it('a routine spray on vines about to be killed is not pressed on the player, and the outlook says what holds an order', () => {
@@ -530,7 +530,7 @@ describe('round five', () => {
         }
         for (const o of S.jobOutlook(w, c)) {
           expect(o.why).not.toMatch(/^You takes|^You is/)
-          if (/once (you've|they've) finished .+/.test(o.why)) held++
+          if (/끝나면 합니다/.test(o.why)) held++
         }
         tend(w, c)
         ok(w, c, { t: 'day' })

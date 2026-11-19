@@ -24,7 +24,7 @@ describe('the crew\'s own vine kill', () => {
           const fields = e.data!.fields as number[]
           expect(fields.length).toBeGreaterThan(0)
           for (const i of fields) expect(had.has(i)).toBe(false)
-          expect(e.text).toBe(`Your crew has put the vine kill ${fields.length > 1 ? `in ${fields.length} fields` : `in ${S.FIELD_NAMES[fields[0]]}`} on the work list, so the skins set before the harvest.`)
+          expect(e.text).toBe(`일꾼들이 ${fields.length > 1 ? `${fields.length}개 밭의` : `${S.FIELD_NAMES[fields[0]]}의`} 줄기 죽이기를 작업 목록에 올렸습니다. 수확 전에 껍질이 굳도록요.`)
         }
       }
     }

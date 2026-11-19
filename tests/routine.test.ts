@@ -103,7 +103,7 @@ describe('the routine', () => {
     expect(seen.some(e => e.type === 'scout')).toBe(false)
     expect(c.season!.jobs.some(j => j.kind === 'scout')).toBe(false)
     const need = S.fieldNeeds(world, c).find(n => n.need?.act === 'scout')!.need!
-    expect(need.why).toMatch(/Nobody on the farm/)
+    expect(need.why).toMatch(/할 사람이 없/)
   })
 
   it('an old save opens with the routine on, and says so once', () => {
@@ -132,7 +132,7 @@ describe('telegrams', () => {
     const seen: GameEvent[] = []
     leave(c, () => false, seen)
     const opened = seen.filter(e => e.type === 'incident')
-    const asked = opened.filter(e => e.data!.kind === 'poach').map(e => /offered (.+?) \$/.exec(e.text)![1])
+    const asked = opened.filter(e => e.data!.kind === 'poach').map(e => /이웃이 (.+?)에게 월 \$/.exec(e.text)![1])
     expect(asked.length).toBeGreaterThan(0)
     expect(new Set(asked).size).toBe(asked.length)
     expect(opened.filter(e => e.data!.kind === 'applicant').length).toBeLessThanOrEqual(1)
@@ -214,7 +214,7 @@ describe('the word to plant (round seven)', () => {
     const c = S.createCampaign(world, { seed: 3, startYear: 2001 })
     ok(c, { t: 'begin' })
     const ask = untilAsked(c)
-    expect(ask.text).toBe('The soil is ready and your crew is waiting for you. Order Plant on any potato field, or they\'ll start on their own in 3 days.')
+    expect(ask.text).toBe('흙이 준비됐고 일꾼들이 당신을 기다립니다. 아무 감자밭에나 심기를 지시하세요. 그렇지 않으면 3일 뒤에 스스로 시작합니다.')
     const asked = c.season!.plantAsk!
     // Every planned potato field that is fit carries the need, as the player's to give.
     const needs = S.fieldNeeds(world, c)
@@ -236,7 +236,7 @@ describe('the word to plant (round seven)', () => {
     const first = S.fieldNeeds(world, c).findIndex(n => n.need?.act === 'plant')
     const r = ok(c, { t: 'job', kind: 'plant', field: first })
     const others = potato(c).length - 1
-    expect(r.events.map(e => [e.type, e.text])).toEqual([['plantWord', `Planting has started. Your crew will plant the other ${others} fields too.`]])
+    expect(r.events.map(e => [e.type, e.text])).toEqual([['plantWord', `파종이 시작됐습니다. 일꾼들이 나머지 ${others}개 밭도 심을 겁니다.`]])
     expect(c.season!.plantWordBy).toBe('you')
     expect(planting(c).map(j => [j.field, j.by])).toEqual([[first, 'you']])
     // No other order from the player: every planned field is planted, the pressed one first.
@@ -257,7 +257,7 @@ describe('the word to plant (round seven)', () => {
     const seen: GameEvent[] = []
     leave(c, x => planting(x).length > 0 || planted(x).length > 0, seen)
     const own = seen.filter(e => e.type === 'plantWord')
-    expect(own.map(e => e.text)).toEqual(['Your crew waited 3 days and has started planting on its own.'])
+    expect(own.map(e => e.text)).toEqual(['일꾼들이 3일을 기다린 뒤 스스로 파종을 시작했습니다.'])
     // (three days, or four where the third is a Sunday off)
     expect(own[0].day - asked).toBeGreaterThanOrEqual(S.PLANT_WORD_DAYS)
     expect(own[0].day - asked).toBeLessThanOrEqual(S.PLANT_WORD_DAYS + 1)
