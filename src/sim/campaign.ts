@@ -1072,7 +1072,7 @@ function command(world: World, c: Campaign, cmd: Cmd): Result {
       const s = c.season
       if (c.phase !== 'season' || !s) return fail('시즌이 아직 시작되지 않았습니다.')
       const f = s.fields[cmd.field]
-      if (!f || f.inField < 0.5) return fail('There\'s nothing in barrels there to haul.')
+      if (!f || f.inField < 0.5) return fail('그곳에 운반할 통이 없습니다.')
       let job = s.jobs.find(j => j.kind === 'haul' && j.field === cmd.field)
       if (!job) {
         const why = addJob(c, 'haul', cmd.field)
@@ -1084,8 +1084,8 @@ function command(world: World, c: Campaign, cmd: Cmd): Result {
       const by = haulByDark(c, cmd.field)
       if (!by) {
         const why = heldUpBy(c, 'haul', false)
-        const fix = c.crew.some(x => !x.foreman && x.prio.machine <= 0) ? ' Set someone\'s priority for machine work to haul them in.' : ''
-        const out = why ? `${why} The barrels in ${name} stay out tonight.` : `Nobody on the farm drives, so the barrels in ${name} stay out tonight.`
+        const fix = c.crew.some(x => !x.foreman && x.prio.machine <= 0) ? ' 기계 일 우선순위를 정해 운반하게 하세요.' : ''
+        const out = why ? `${why} 오늘 밤 ${name}의 통은 밖에 남습니다.` : `농장에 운전할 사람이 없어 오늘 밤 ${name}의 통은 밖에 남습니다.`
         return ok([note(c, 'haulNow', 'warn', `${out}${fix}`)])
       }
       // A day off gives way to the frost, as on a morning the frost is forecast (workday); the extra day tires them.
@@ -1100,26 +1100,26 @@ function command(world: World, c: Campaign, cmd: Cmd): Result {
       const truck = !!c.upgrades.truck && !c.crew.some(o => o.rig === 'truck')
       if (!truck && holders.length >= tractorsRunning(c, s.day) && !holders.includes(u)) {
         const h = holders.find(o => willDo(o, 'haul'))
-        if (!h) return ok([note(c, 'haulNow', 'warn', `Every tractor is out on other work with someone who won't haul, so the barrels in ${name} stay out tonight.`)])
+        if (!h) return ok([note(c, 'haulNow', 'warn', `모든 트랙터가 운반하지 않는 사람과 다른 일에 나가 있어, 오늘 밤 ${name}의 통은 밖에 남습니다.`)])
         u = h
         cwt = Math.min(f.inField, haulRate(c, u, cmd.field, 'tractor') * Math.max(0, 1 - travel(c, u.at, cmd.field)))
         stopsWork = true
       }
       // Whoever hauls drops what they were on, and the answer says so: "Wendell stops digging Lower Middle for it."
       const was = u.job >= 0 && u.job !== job.id ? s.jobs.find(x => x.id === u.job) : undefined
-      if (was) stops = ` ${u.kind === 'farmer' ? 'You stop' : `${u.name.split(' ')[0]} stops`} ${JOB_LABEL[was.kind].toLowerCase()} ${was.field === cmd.field ? 'there' : placeName(was.field)} for it.`
+      if (was) stops = ` ${u.kind === 'farmer' ? '당신은' : `${u.name.split(' ')[0]}은(는)`} 그것 때문에 ${was.field === cmd.field ? '거기서' : `${placeName(was.field)}에서`} ${JOB_LABEL[was.kind]}을(를) 멈춥니다.`
       job.unit = u.id
       if (u.job >= 0 && u.job !== job.id) letGo(u)
       const about = (x: number) => withCommas(Math.max(50, Math.round(x / 50) * 50))
       const left = f.inField - cwt
-      const brings = `${by.rig === 'truck' && !stopsWork ? 'The truck brings' : 'One tractor brings'} in about ${about(cwt)} cwt by dark`
-      const tires = off ? ` It's a day off, so it tires ${u.kind === 'farmer' ? 'you' : 'them'} as a working day does.` : ''
-      const now = `${u.kind === 'farmer' ? 'You\'re' : `${u.name.split(' ')[0]} is`} hauling ${name} now.${stops}${tires} `
-      return ok([note(c, 'haulNow', 'info', `${now}${brings}${left >= 25 ? `, so about ${about(left)} cwt will stay out` : ', which is all of it'}.`)])
+      const brings = `${by.rig === 'truck' && !stopsWork ? '트럭이' : '트랙터 한 대가'} 어둑해질 때까지 약 ${about(cwt)} cwt를 들여옵니다`
+      const tires = off ? ` 쉬는 날이라 ${u.kind === 'farmer' ? '당신도' : '그도'} 일하는 날만큼 지칩니다.` : ''
+      const now = `${u.kind === 'farmer' ? '당신은' : `${u.name.split(' ')[0]}은(는)`} 지금 ${name}을(를) 운반 중입니다.${stops}${tires} `
+      return ok([note(c, 'haulNow', 'info', `${now}${brings}.${left >= 25 ? ` 약 ${about(left)} cwt는 밖에 남습니다.` : ' 전부 들어옵니다.'}`)])
     }
     case 'day': {
       if (c.phase !== 'season' || !c.season) return fail('시즌이 아직 시작되지 않았습니다.')
-      if (c.season.frozen) return fail('The ground has frozen. Close out the season.')
+      if (c.season.frozen) return fail('땅이 얼었습니다. 시즌을 마무리하세요.')
       // (a day already begun has had its morning)
       const orders = c.season.clock ? [] : standingOrders(world, c)
       const day = stepDay(world, c)
@@ -1127,7 +1127,7 @@ function command(world: World, c: Campaign, cmd: Cmd): Result {
     }
     case 'work': {
       if (c.phase !== 'season' || !c.season) return fail('시즌이 아직 시작되지 않았습니다.')
-      if (c.season.frozen) return fail('The ground has frozen. Close out the season.')
+      if (c.season.frozen) return fail('땅이 얼었습니다. 시즌을 마무리하세요.')
       const orders = c.season.clock ? [] : standingOrders(world, c)
       return ok([...orders, ...workDay(world, c, Math.max(0, Math.min(1, cmd.to)))])
     }
@@ -1136,48 +1136,48 @@ function command(world: World, c: Campaign, cmd: Cmd): Result {
       return ok(endSeason(world, c))
     }
     case 'sell': {
-      if (c.phase !== 'season' && c.phase !== 'cellar') return fail('There\'s nothing to sell right now.')
+      if (c.phase !== 'season' && c.phase !== 'cellar') return fail('지금 팔 것이 없습니다.')
       const lot = c.lots.find(l => l.id === cmd.lot)
-      if (!lot || !lot.open) return fail('That lot is gone.')
-      if (Number.isNaN(cmd.frac)) return fail('Choose how much to sell.')
+      if (!lot || !lot.open) return fail('그 물량은 사라졌습니다.')
+      if (Number.isNaN(cmd.frac)) return fail('팔 양을 고르세요.')
       if (c.phase === 'season' && c.season) {
         const f = c.season.fields[lot.field]
-        if (f.status === 'digging') return fail('It\'s still being dug.')
-        if (f.status === 'dug' && !f.weighed) return fail('It\'s still in barrels in the field. You can sell it once it\'s hauled in and weighed.')
+        if (f.status === 'digging') return fail('아직 수확 중입니다.')
+        if (f.status === 'dug' && !f.weighed) return fail('아직 밭의 통에 있습니다. 실어 들이고 계근한 후에 팔 수 있습니다.')
         ageLot(c, lot, c.season.day)
       }
       const owed = -c.cash
       const money = sellLot(world, c, lot, cmd.frac)
-      const loan = owed <= 0 ? '' : c.cash < 0 ? ` The loan is down to $${withCommas(-c.cash)}.` : ` That pays off the loan, and you have $${withCommas(c.cash)} in cash.`
-      return ok([note(c, 'sold', 'good', `Sold ${variety(lot.variety).name} from ${FIELD_NAMES[lot.field]} for $${withCommas(money)}.${loan}`, lot.field)])
+      const loan = owed <= 0 ? '' : c.cash < 0 ? ` 대출은 $${withCommas(-c.cash)}로 줄었습니다.` : ` 대출을 다 갚았고 현금 $${withCommas(c.cash)}가 있습니다.`
+      return ok([note(c, 'sold', 'good', `${FIELD_NAMES[lot.field]}의 ${variety(lot.variety).name}을(를) $${withCommas(money)}에 팔았습니다.${loan}`, lot.field)])
     }
     case 'deliver': {
-      if (c.phase !== 'season' && c.phase !== 'cellar') return fail('There\'s nothing to deliver right now.')
+      if (c.phase !== 'season' && c.phase !== 'cellar') return fail('지금 납품할 것이 없습니다.')
       const lot = c.lots.find(l => l.id === cmd.lot)
-      if (!lot || !lot.open) return fail('That lot is gone.')
+      if (!lot || !lot.open) return fail('그 물량은 사라졌습니다.')
       const k = c.contracts.find(x => x.id === cmd.contract)
-      if (!k) return fail('No such contract.')
-      if (k.settled) return fail('That contract has closed.')
+      if (!k) return fail('그런 계약이 없습니다.')
+      if (k.settled) return fail('그 계약은 끝났습니다.')
       const name = variety(lot.variety).name
-      if (k.variety !== lot.variety) return fail(`${k.buyer} wants ${variety(k.variety).name}, not ${name}.`)
+      if (k.variety !== lot.variety) return fail(`${k.buyer}은(는) ${name}이(가) 아니라 ${variety(k.variety).name}을(를) 원합니다.`)
       const need = k.cwt - k.delivered
-      if (need <= 1e-6) return fail('That contract is already filled.')
-      if (c.phase === 'season' && c.season && c.season.fields[lot.field].status === 'digging') return fail('It\'s still being dug.')
-      if (c.phase === 'season' && c.season && !c.season.fields[lot.field].weighed) return fail('It\'s still in barrels in the field. You can deliver it once it\'s hauled in and weighed.')
-      if (lot.grades.no1 + lot.grades.chef <= 1e-6) return fail('There are no US No. 1 or large potatoes left in that lot.')
+      if (need <= 1e-6) return fail('그 계약은 이미 이행됐습니다.')
+      if (c.phase === 'season' && c.season && c.season.fields[lot.field].status === 'digging') return fail('아직 수확 중입니다.')
+      if (c.phase === 'season' && c.season && !c.season.fields[lot.field].weighed) return fail('아직 밭의 통에 있습니다. 실어 들이고 계근한 후에 납품할 수 있습니다.')
+      if (lot.grades.no1 + lot.grades.chef <= 1e-6) return fail('그 물량에 US No. 1 또는 대구경 감자가 남지 않았습니다.')
       const { take, money } = deliverLot(c, lot, k)
-      return ok([note(c, 'delivered', 'good', `Delivered ${withCommas(take)} cwt of ${name} from ${FIELD_NAMES[lot.field]} to ${k.buyer.toLowerCase()} for $${withCommas(money)}.`, lot.field)])
+      return ok([note(c, 'delivered', 'good', `${FIELD_NAMES[lot.field]}의 ${name} ${withCommas(take)} cwt를 ${k.buyer.toLowerCase()}에 $${withCommas(money)}로 납품했습니다.`, lot.field)])
     }
     case 'seed': {
-      if (c.phase !== 'cellar') return fail('You can only hold back seed once the crop is in the cellar.')
+      if (c.phase !== 'cellar') return fail('작물이 저장고에 들어온 후에만 종자를 남길 수 있습니다.')
       const lot = c.lots.find(l => l.id === cmd.lot)
-      if (!lot || !lot.open) return fail('That lot is gone.')
-      if (lot.broke) return fail('Rot has been through that pile, so it\'s no good for seed.')
+      if (!lot || !lot.open) return fail('그 물량은 사라졌습니다.')
+      if (lot.broke) return fail('그 더미는 부패가 지나가 종자로 쓸 수 없습니다.')
       const n = Math.floor(cmd.fields)
-      if (!(n >= 1)) return fail('Hold back seed for at least one field.')
+      if (!(n >= 1)) return fail('적어도 한 밭 분량의 종자를 남기세요.')
       const need = n * P.SEED_CWT_PER_FIELD
       const have = lot.grades.b + lot.grades.no1
-      if (have < need) return fail(`There aren't enough sound potatoes. This lot has enough for ${Math.floor(have / P.SEED_CWT_PER_FIELD)} ${Math.floor(have / P.SEED_CWT_PER_FIELD) === 1 ? 'field' : 'fields'} at most.`)
+      if (have < need) return fail(`온전한 감자가 부족합니다. 이 물량은 최대 ${Math.floor(have / P.SEED_CWT_PER_FIELD)}개 밭 분량입니다.`)
       const fromB = Math.min(lot.grades.b, need)
       lot.grades.b -= fromB
       lot.grades.no1 -= need - fromB
@@ -1186,7 +1186,7 @@ function command(world: World, c: Campaign, cmd: Cmd): Result {
       return ok()
     }
     case 'month': {
-      if (c.phase !== 'cellar') return fail('The cellar isn\'t open right now.')
+      if (c.phase !== 'cellar') return fail('지금 저장 단계가 아닙니다.')
       const out: GameEvent[] = []
       if (openLots(c).length === 0 || c.month >= P.MONTH_CURVE.length - 1) {
         for (const lot of openLots(c)) sellLot(world, c, lot, 1)
