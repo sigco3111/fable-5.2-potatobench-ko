@@ -172,7 +172,7 @@ describe('the guided first year', () => {
   })
 
   it('every lesson has a name, and the first year is short', () => {
-    for (const x of LESSONS) expect(x.name.length).toBeGreaterThan(3)
+    for (const x of LESSONS) expect(x.name.length).toBeGreaterThan(1)
     expect(LESSONS.filter(x => x.part !== 'spring').length).toBeLessThanOrEqual(20)
   })
 
@@ -253,23 +253,23 @@ describe('what a note says against what the game does (round six)', () => {
           const most = [...cold(w, c)].sort((a, b) => b.cwt - a.cwt)[0]
           for (const input of INPUTS) {
             const said = `${frost.ask({ ...l, input })} ${frost.why({ ...l, input })}`
-            expect(said).not.toMatch(/don't need to do anything|will haul them in|before the frost/)
-            expect(said).toMatch(/a fifth/)
-            expect(said).toContain(`Haul it in now sends a hauler to ${S.FIELD_NAMES[most.field]} today`)
+            expect(said).not.toMatch(/할 필요가 없|알아서 들여|서리 전에|아무것도 하지 않아도/)
+            expect(said).toMatch(/5분의 1/)
+            expect(said).toContain(`지금 들이기를 누르면 오늘 ${S.FIELD_NAMES[most.field]}에 운반 일꾼을 보냅니다`)
             expect(countWords(said)).toBeLessThanOrEqual(35)
           }
           expect(frost.show!(l)).toEqual({ field: most.field })
           // One way to order the haul: the frost toast's own command, and the game's own answer to it, which says
           // how much comes in by dark and how much stays out.
           const act = frost.act!(l)!
-          expect(act.label).toBe('Haul it in now')
+          expect(act.label).toBe('지금 들이기')
           expect(act.cmds).toEqual([{ t: 'haulNow', field: most.field }])
           expect(act.done).toBeUndefined()
           const r = S.apply(w, c, act.cmds[0])
           expect(r.ok).toBe(true)
           // (or that nobody can drive tonight, when the one driver is laid up)
-          expect(r.events[0].text).toMatch(/hauling .* now\. .* by dark|stay out tonight/)
-          if (/will stay out|stay out tonight/.test(r.events[0].text)) short++
+          expect(r.events[0].text).toMatch(/지금 .*을\(를\) 운반 중입니다\..* 어둑해질 때까지|오늘 밤 .*의 통은 밖에 남습니다/)
+          if (/cwt는 밖에 남습니다|오늘 밤 .*의 통은 밖에 남습니다/.test(r.events[0].text)) short++
           expect(c.season!.jobs[0]).toMatchObject({ kind: 'haul', field: most.field })
         })
       }
@@ -309,11 +309,11 @@ describe('what a note says against what the game does (round six)', () => {
       expect(countWords(`${lesson(id)!.ask(v)} ${lesson(id)!.why(v)}`), id).toBeLessThanOrEqual(35)
     }
     // A control is named by the words on it: the winter sheet's heading, and its key's count.
-    expect(lesson('yard')!.ask(look(w, c))).toMatch(/^Under Put up a building, click "\d+ to choose from"/)
+    expect(lesson('yard')!.ask(look(w, c))).toMatch(/^건물 짓기 아래에서 "\d+개 중 선택"을 (클릭|탭)해/)
     // (round seven: what a foreman does and why it pays, with no "block")
     const foreman = `${lesson('foreman')!.ask(look(w, c))} ${lesson('foreman')!.why(look(w, c))}`
-    expect(foreman).toMatch(/^A foreman orders the work on your fields away from home each morning, so nothing out there waits for you\./)
-    expect(foreman).toMatch(/40% more and stop field work/)
+    expect(foreman).toMatch(/^작업반장은 매일 아침 외지 밭의 일을 지시하므로, 그곳의 일이 당신을 기다리지 않습니다\./)
+    expect(foreman).toMatch(/40% 오르고 밭일은 그만둡니다/)
     expect(foreman).not.toMatch(/block/i)
   })
 })
@@ -340,8 +340,8 @@ describe('round seven: what the player is for, and what the agent asks', () => {
     const word = g.current(l)!
     expect(word.id).toBe('word')
     const field = S.fieldNeeds(w, c).findIndex(n => n.need?.act === 'plant')
-    expect(word.ask(l)).toBe('The soil is ready. Click the orange Plant button.')
-    expect(word.why(l)).toBe('One press plants every potato field.')
+    expect(word.ask(l)).toBe('흙이 준비됐습니다. 주황색 파종 버튼을 클릭하세요.')
+    expect(word.why(l)).toBe('한 번 누르면 모든 감자 밭을 심습니다.')
     expect(word.point!(l)).toEqual({ badge: field })
     // It brings the stamps onto the guided screen, and it asks: the game stays paused after Got it.
     expect(g.hidden(c, 'season')).not.toContain('stamps')
@@ -356,11 +356,11 @@ describe('round seven: what the player is for, and what the agent asks', () => {
     // is pointed at, and with them running the tip that says what came of the press.
     const stopped = g.current(look(w, c))!
     expect(stopped.id).toBe('run')
-    expect(stopped.ask(look(w, c))).toBe('Planting is ordered. Press Space to run the days.')
+    expect(stopped.ask(look(w, c))).toBe('파종이 지시됐습니다. Space를 누르면 날이 진행됩니다.')
     const after = g.current(look(w, c, { speed: 1 }))!
     expect(after.id).toBe('plantday')
-    expect(after.ask(look(w, c))).toBe('Planting has started.')
-    expect(after.why(look(w, c))).toBe('You work too. Your face at the bottom shows what you\'re doing.')
+    expect(after.ask(look(w, c))).toBe('파종이 시작됐습니다.')
+    expect(after.why(look(w, c))).toBe('당신도 일합니다. 아래쪽의 당신 얼굴이 하고 있는 일을 보여줍니다.')
     expect(after.asks?.(look(w, c)) ?? false).toBe(false)
     for (const input of INPUTS) for (const x of [word, after]) expect(countWords(`${x.ask({ ...l, input })} ${x.why({ ...l, input })}`), x.id).toBeLessThanOrEqual(20)
   })
@@ -373,7 +373,7 @@ describe('round seven: what the player is for, and what the agent asks', () => {
     expect(c.season!.plantWordBy).toBe('crew')
     const after = g.current(look(w, c, { speed: 1 }))!
     expect(after.id).toBe('plantday')
-    expect(after.ask(look(w, c))).toMatch(/^Your crew started planting on its own\./)
+    expect(after.ask(look(w, c))).toMatch(/^일꾼들이 알아서 파종을 시작했습니다\./)
   })
 
   it('a note that asks for a press on the land says so, and one that only tells does not', () => {
@@ -392,10 +392,10 @@ describe('round seven: what the player is for, and what the agent asks', () => {
     const { w, c } = farm(11)
     const frame = lesson('frame')!
     expect(c.crew.length).toBe(1)
-    expect(frame.why(look(w, c))).toBe('You and anyone you hire do the field work, and you make the big decisions. I\'ll pause the game to explain each one.')
+    expect(frame.why(look(w, c))).toBe('당신과 고용한 사람들이 밭일을 하고, 큰 결정은 당신이 내립니다. 결정마다 게임을 멈추고 설명하겠습니다.')
     expect(frame.why(look(w, c))).not.toMatch(/Your crew handles/)
     S.apply(w, c, { t: 'hire', kind: 'hand' })
-    expect(frame.why(look(w, c))).toMatch(/^You and your crew do the field work/)
+    expect(frame.why(look(w, c))).toMatch(/^당신과 일꾼들이 밭일을 하고/)
   })
 
   it('in the second spring a step waits for its own thing: the field\'s record open holds the walk until it is closed or the player says Got it', () => {
@@ -407,7 +407,7 @@ describe('round seven: what the player is for, and what the agent asks', () => {
     // A field picked: the step about that field, for as long as its record is open, whatever else is looked at.
     const picked = look(w, c, { selection: [0] })
     expect(g.current(picked)?.id).toBe('crop')
-    expect(lesson('crop')!.ask(picked)).toBe(`Choose potatoes or a rest year for ${S.FIELD_NAMES[0]}, and which variety to grow.`)
+    expect(lesson('crop')!.ask(picked)).toBe(`${S.FIELD_NAMES[0]}에 감자 또는 휴경을 선택하고, 어떤 품종을 심을지 고르세요.`)
     for (let k = 0; k < 20; k++) expect(g.current(look(w, c, { selection: [0], fold: k % 2 ? 'crew' : '' }))?.id).toBe('crop')
     // Closed: the walk goes on to People, and not before.
     expect(g.current(look(w, c))?.id).toBe('people')
@@ -470,7 +470,7 @@ describe('the clock and the camera are the player\'s (the owner, 14 November)', 
     if (S.plantingIn(w, c) > 0) {
       const tip = g.current(look(w, c, { speed: 1 }))!
       expect(tip.id).toBe('clock')
-      expect(tip.ask(look(w, c))).toBe('The soil is too cold to plant. Click Skip ahead.')
+      expect(tip.ask(look(w, c))).toBe('흙이 너무 차가워 심을 수 없습니다. 건너뛰기를 클릭하세요.')
       expect(tip.point!(look(w, c))).toEqual({ testid: ['goal-faster'] })
       // Used (the days at the fastest speed): it has done its work.
       expect(g.current(look(w, c, { speed: 3 }))?.id ?? null).not.toBe('clock')
@@ -510,7 +510,7 @@ describe('round eight: the guide in the opening and in the second spring', () =>
     g.note('fold:crew')
     const crew = look(w, c, { fold: 'crew' })
     expect(g.current(crew)?.id).toBe('hire')
-    expect(lesson('hire')!.why(crew)).toMatch(/You can also wait, because you can farm alone for another year\./)
+    expect(lesson('hire')!.why(crew)).toMatch(/기다려도 됩니다\. 또 1년은 혼자 농사지을 수 있습니다\./)
     g.noted('hire')
     expect(g.current(crew)?.id).toBe('land')
     // Land open: a note of its own, for as long as the fold is open or until Got it. The walk does not vanish.
@@ -518,20 +518,20 @@ describe('round eight: the guide in the opening and in the second spring', () =>
     const land = look(w, c, { fold: 'land' })
     for (let k = 0; k < 20; k++) expect(g.current(land)?.id).toBe('lots')
     expect(lesson('lots')!.read).toBe(true)
-    expect(`${lesson('lots')!.ask(land)} ${lesson('lots')!.why(land)}`).toBe('Each lot lists its rent for the year, then its price to buy. More land is a choice, and the land you have is enough for now. Click Got it when you\'ve looked, and I\'ll go on.')
+    expect(`${lesson('lots')!.ask(land)} ${lesson('lots')!.why(land)}`).toBe('각 필지에 연 임대료와 매입가가 나와 있습니다. 땅을 늘리는 것은 선택이며 지금 가진 땅으로 충분합니다. 다 보면 알겠습니다를 클릭하세요. 이어가겠습니다.')
     g.noted('lots')
     expect(g.current(land)?.id).toBe('loan')
     g.skip('loan')
     // The closing line, which the player sees whether or not the money was opened.
     const last = g.current(land)!
     expect(last.id).toBe('begin2')
-    expect(last.ask(land)).toBe('That\'s the plan. Click Start the season when you\'re ready.')
+    expect(last.ask(land)).toBe('계획이 끝났습니다. 준비되면 시즌 시작을 클릭하세요.')
     for (const id of ['lots', 'begin2', 'calls2']) for (const input of INPUTS) {
       const v = { ...land, input }
       expect(countWords(`${lesson(id)!.ask(v)} ${lesson(id)!.why(v)}`), id).toBeLessThanOrEqual(40)
     }
     // The season's first note says the game pauses for the word.
-    expect(lesson('calls2')!.ask(land)).toBe('It\'s a new season. The game pauses when the soil is ready, and planting waits for you.')
+    expect(lesson('calls2')!.ask(land)).toBe('새 시즌입니다. 흙이 준비되면 게임이 멈추고 파종이 당신을 기다립니다.')
   })
 })
 
@@ -565,13 +565,13 @@ describe('round nine: a note put away before its click, and the year a note is h
     expect(g.current(look(w, c, { selection: [tract!] }))?.id).not.toBe('crop')
   })
 
-  it('a note met in a later year is headed with that year, not "Your first year"', () => {
+  it('a note met in a later year is headed with that year, not "첫 해"', () => {
     const { c } = guidedYear(11)
     expect(c.history.length).toBe(1)
-    expect(partName('year', { ...c, history: [] } as S.Campaign)).toBe('Your first year')
-    expect(partName('year', c)).toBe('Year 2')
-    expect(partName('spring', c)).toBe('Your second spring')
-    expect(partName('spring', { ...c, history: [...c.history, c.history[0]] } as S.Campaign)).toBe('Spring, year 3')
-    expect(partName('opening', c)).toBe('Getting started')
+    expect(partName('year', { ...c, history: [] } as S.Campaign)).toBe('첫 해')
+    expect(partName('year', c)).toBe('2년 차')
+    expect(partName('spring', c)).toBe('둘째 해 봄')
+    expect(partName('spring', { ...c, history: [...c.history, c.history[0]] } as S.Campaign)).toBe('3년 차 봄')
+    expect(partName('opening', c)).toBe('시작하기')
   })
 })

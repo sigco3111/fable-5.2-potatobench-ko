@@ -519,7 +519,7 @@ export const LESSONS: Lesson[] = [
     // home for them to run. With one hand it would take the only help out of the field for 40% more pay.
     when: (l, g) => inSeason(l) && hands(l).length >= 2 && beyond(l) && g.passed('hand') && !!l.c && S.goalCosts(l.c).some(x => x.id === 'foreman' && x.can),
     done: (l, g) => g.has('noted:foreman') || !!l.c?.crew.some(u => u.foreman !== ''),
-    ask: () => '작업반장은 매일 아침 집에서 먼저 밭의 일을 지시하므로, 그곳의 일이 당신을 기다리지 않습니다.',
+    ask: () => '작업반장은 매일 아침 외지 밭의 일을 지시하므로, 그곳의 일이 당신을 기다리지 않습니다.',
     why: l => `${first(hand(l)?.name ?? '그')}의 카드에서 작업반장으로 지정하세요. 월급이 40% 오르고 밭일은 그만둡니다.`,
     point: () => ({ testid: ['person-foreman'] }),
     show: l => { const u = hand(l); return u ? { unit: u.id, foreman: true } : null },
