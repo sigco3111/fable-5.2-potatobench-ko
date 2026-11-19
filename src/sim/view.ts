@@ -131,7 +131,7 @@ export interface FieldInfo {
   blightRisk: number | null
 }
 
-const POSITION = ['bottom land', 'mid slope', 'ridge']
+const POSITION = ['골짜기', '중턱', '마루']
 
 export function fieldInfo(c: Campaign, fi: number, world?: World): FieldInfo {
   const fp = c.fields[fi]
@@ -140,8 +140,8 @@ export function fieldInfo(c: Campaign, fi: number, world?: World): FieldInfo {
   const base: FieldInfo = {
     index: fi, name: FIELD_NAMES[fi], tenure: fp.tenure, block: PARCELS[fi].block,
     elev: fp.elev, position: POSITION[fp.elev], soil: fp.soil, vert: fp.vert, streak: fp.streak,
-    crop: plan.crop, status: plan.crop === 'rest' ? 'rest' : 'idle', variety: plan.crop === 'rest' ? 'Oats and clover' : variety(plan.variety).name,
-    stage: plan.crop === 'rest' ? 'Resting' : 'Not planted', daysIn: 0, canopy: 0, moisture: 1, moistureLabel: 'good', tooWet: false,
+    crop: plan.crop, status: plan.crop === 'rest' ? 'rest' : 'idle', variety: plan.crop === 'rest' ? '귀리와 클로버' : variety(plan.variety).name,
+    stage: plan.crop === 'rest' ? '휴경' : '아직 심지 않음', daysIn: 0, canopy: 0, moisture: 1, moistureLabel: 'good', tooWet: false,
     hillPasses: 0, protect: 0, blightKnown: 0, blightHills: 0, blightSeen: false, blightFoundDay: -1, blightPulled: 0, pullBy: null, scoutAge: -1, stunted: 0, estimate: null, tubers: null, skin: 0, bloom: 0, stand: 1, frosted: 0, rime: false, wilt: 0, deadDays: -1, lot: -1,
     cover: fp.cover, coverWord: COVER_WORD[fp.cover], stones: fp.stones, raw: fp.raw, tiled: fp.tiled,
     brushed: brushedNow(c, fi) ? P.BRUSH_YEARS - (c.year - fp.brushed) : 0, sheltered: false, shelteredBy: '',
@@ -159,8 +159,8 @@ export function fieldInfo(c: Campaign, fi: number, world?: World): FieldInfo {
     base.status = 'off'
     base.crop = 'rest'
     base.variety = ''
-    base.stage = fp.tenure === 'none' ? 'Not yours' : fp.cover === 'woods' ? 'Standing woods' : fp.cover === 'brush' ? 'Brush'
-      : fp.cover === 'stumps' ? 'Stumps' : 'New ground, ready next spring'
+    base.stage = fp.tenure === 'none' ? '당신의 땅 아님' : fp.cover === 'woods' ? '수림 그대로' : fp.cover === 'brush' ? '관목'
+      : fp.cover === 'stumps' ? '그루터기' : '새 땅, 다음 봄부터'
     return base
   }
   if (!s || !f) return base
@@ -225,15 +225,15 @@ export function fieldInfo(c: Campaign, fi: number, world?: World): FieldInfo {
     base.skin = Math.min(1, base.deadDays / P.SKIN_DAYS)
   }
   switch (f.status) {
-    case 'idle': base.stage = 'Not planted'; break
-    case 'planted': base.stage = 'Planted, not up'; break
+    case 'idle': base.stage = '아직 심지 않음'; break
+    case 'planted': base.stage = '심음, 아직 안 나옴'; break
     case 'growing':
-      base.stage = f.tiDay < 0 ? 'Growing leaf' : f.matureDay >= 0 ? 'Vines going down' : f.closeDay < 0 ? 'Setting tubers' : 'Bulking'
+      base.stage = f.tiDay < 0 ? '잎 키우는 중' : f.matureDay >= 0 ? '줄기 마르는 중' : f.closeDay < 0 ? '감자 맺는 중' : '감자 굵어지는 중'
       break
-    case 'dead': base.stage = base.skin >= 1 ? 'Vines dead, skins set' : 'Vines dead, skins setting'; break
-    case 'digging': base.stage = 'Being dug'; break
-    case 'dug': base.stage = 'Dug'; break
-    case 'lost': base.stage = 'Lost'; break
+    case 'dead': base.stage = base.skin >= 1 ? '줄기 죽음, 껍질 굳음' : '줄기 죽음, 껍질 굳는 중'; break
+    case 'digging': base.stage = '수확 중'; break
+    case 'dug': base.stage = '수확 끝'; break
+    case 'lost': base.stage = '잃어버림'; break
   }
   return base
 }
@@ -321,8 +321,8 @@ export interface PersonInfo {
 
 // What someone on the road is going to do, after "to".
 const GOING_TO: Record<JobKind, string> = {
-  plant: 'plant', hill: 'hill', scout: 'scout', spray: 'spray', water: 'water', rogue: 'pull blighted plants', sample: 'do a test dig',
-  kill: 'kill the vines', dig: 'dig', fell: 'fell trees', rocks: 'pick rocks', brush: 'cut brush', build: 'build', haul: 'haul the crop',
+  plant: '심기', hill: '북주기', scout: '순찰', spray: '약 치기', water: '물 주기', rogue: '병든 포기 뽑기', sample: '시험 캐기',
+  kill: '줄기 죽이기', dig: '캐기', fell: '벌목', rocks: '돌 고르기', brush: '관목 베기', build: '건축', haul: '수확물 운반',
 }
 
 export function peopleInfo(c: Campaign): PersonInfo[] {
@@ -339,16 +339,16 @@ export function peopleInfo(c: Campaign): PersonInfo[] {
       sp[k] = speed(u, k)
     }
     let doing: string
-    if (u.foreman) doing = `Foreman of ${BLOCK_NAME[u.foreman]}`
-    else if (s && !s.frozen && hurt(u, s.day)) doing = `Hurt: back on ${formatDay(s.year, u.out)}`
+    if (u.foreman) doing = `${BLOCK_NAME[u.foreman]} 작업반장`
+    else if (s && !s.frozen && hurt(u, s.day)) doing = `부상: ${formatDay(s.year, u.out)}에 복귀`
     else if (c.phase === 'season' && s && !s.frozen) {
-      if (rest) doing = 'Sunday: resting'
-      else if (j) doing = travelling ? `Heading to ${placeName(j.field)} to ${GOING_TO[j.kind]}` : `${JOB_LABEL[j.kind]} in ${placeName(j.field)}`
-      else if (h) doing = travelling ? `Heading to ${placeName(h.field)} to help ${GOING_TO[h.kind]}` : `Helping with ${JOB_LABEL[h.kind].toLowerCase()} in ${placeName(h.field)}`
-      else if (travelling) doing = 'On the road'
-      else doing = 'Nothing to do'
-    } else if (c.phase === 'cellar' || (s && s.frozen)) doing = u.winter === 'off' ? 'Laid off for the winter' : `Kept on: ${WINTER_LABEL[u.winter]}`
-    else doing = 'Waiting for the season'
+      if (rest) doing = '일요일: 휴식'
+      else if (j) doing = travelling ? `${placeName(j.field)}(으)로 이동 중: ${GOING_TO[j.kind]}` : `${placeName(j.field)}에서 ${JOB_LABEL[j.kind]}`
+      else if (h) doing = travelling ? `${placeName(h.field)}(으)로 이동 중: ${GOING_TO[h.kind]} 돕기` : `${placeName(h.field)}에서 ${JOB_LABEL[h.kind]} 돕는 중`
+      else if (travelling) doing = '이동 중'
+      else doing = '할 일 없음'
+    } else if (c.phase === 'cellar' || (s && s.frozen)) doing = u.winter === 'off' ? '겨울 해고' : `겨울 고용: ${WINTER_LABEL[u.winter]}`
+    else doing = '시즌을 기다리는 중'
     return {
       id: u.id, name: u.name, kind: u.kind, skills: { ...u.skills }, progress,
       trait: u.trait, traitName: u.trait ? P.TRAITS[u.trait].name : '', traitText: u.trait ? P.TRAITS[u.trait].text : '',
@@ -506,11 +506,11 @@ export function landInfo(c: Campaign): LandInfo[] {
     for (let j = 0; j < P.FIELD_COUNT; j++) if (j !== i && PARCELS[j].block === 'dufour' && PARCELS[j].holding === 'field' && c.fields[j].tenure !== 'none') other = true
     const house = dufour && !other ? YARDS[1].cellar : 0
     const timber = standing(fp.cover) ? `${fp.cover === 'woods' ? 'Woods' : 'Brush'} to clear. Expect about ${P.TIMBER[fp.cover]} loads of logs from ${P.FELL_DAYS[fp.cover]} crew-days of felling, then stumps to pull and rocks to pick.` : ''
-    const brings = timber || (!dufour ? '' : house > 0 ? `The Dufour potato house comes with it, which adds ${withCommas(house)} cwt of storage.`
-      : 'It shares the Dufour potato house you already have.')
+    const brings = timber || (!dufour ? '' : house > 0 ? `뒤푸르 감자 저장고가 딸려 오므로 저장량이 ${withCommas(house)} cwt 늘어납니다.`
+      : '이미 있는 뒤푸르 감자 저장고를 함께 씁니다.')
     const down = Math.round(p.price * P.MORTGAGE_DOWN)
     const spring = c.phase === 'plan'
-    const rentWhy = !spring ? 'You can only rent land in spring.' : p.holding !== 'field' ? `${p.name} isn't for rent. You can only buy it.` : fp.tenure === 'rented' ? 'You already rent it.' : ''
+    const rentWhy = !spring ? '땅은 봄에만 임차할 수 있습니다.' : p.holding !== 'field' ? `${p.name}은(는) 임차할 수 없습니다. 사는 것만 가능합니다.` : fp.tenure === 'rented' ? '이미 임차했습니다.' : ''
     const buyWhy = buyLandBlock(c, i, holdsDufour(c))
     out.push({
       field: i, name: p.name, block: p.block, elev: fp.elev, position: POSITION[fp.elev], tenure: fp.tenure,
@@ -593,7 +593,7 @@ export function haulInfo(world: World, c: Campaign): HaulInfo[] {
     out.push({
       field: i, name: FIELD_NAMES[i], cwt: f.inField, digging: f.status === 'digging',
       daysToHaul: f.inField / haulRate(c, c.crew[0], i, 'tractor'), frostChance: fc ? fc.frostChance : 0,
-      exposure: `A night at ${Math.round(P.FREEZE_IN_FIELD * 9 / 5 + 32)}°F or colder freezes a fifth of it, and each sunny day turns half a percent green.`,
+      exposure: `밤에 ${Math.round(P.FREEZE_IN_FIELD)}°C 이하로 내려가면 5분의 1이 얼고, 맑은 날에는 하루에 0.5%씩 녹변합니다.`,
       hauler,
     })
   }
@@ -704,7 +704,7 @@ export interface MaterialsInfo {
 export function materialsInfo(c: Campaign): MaterialsInfo {
   return {
     logs: wholeLoads(c.logs), stone: wholeLoads(c.stone), logPrice: P.LOG_PRICE, millPrice: P.MILL_PRICE, quarryPrice: P.QUARRY_PRICE,
-    sellWhy: c.phase === 'over' ? 'The farm is gone.' : c.logs <= 0 ? 'There are no logs in the yard.' : '',
+    sellWhy: c.phase === 'over' ? '농장이 없어졌습니다.' : c.logs <= 0 ? '마당에 통나무가 없습니다.' : '',
   }
 }
 
@@ -724,7 +724,7 @@ export function mortgageInfo(c: Campaign): MortgageInfo {
   return {
     loans: c.mortgages.map(m => ({ field: m.field, name: FIELD_NAMES[m.field], loan: m.loan, owed: m.owed })),
     owed, principal: due.principal, interest: due.interest, rate: P.MORTGAGE_RATE, down: P.MORTGAGE_DOWN,
-    payWhy: owed <= 0 ? 'Nothing is owed on the land.' : c.phase !== 'plan' ? 'You can only pay extra on the mortgage in spring.' : c.cash <= 0 ? 'You don\'t have enough cash.' : '',
+    payWhy: owed <= 0 ? '땅에 남은 빚이 없습니다.' : c.phase !== 'plan' ? '추가 상환은 봄에만 할 수 있습니다.' : c.cash <= 0 ? '현금이 부족합니다.' : '',
   }
 }
 

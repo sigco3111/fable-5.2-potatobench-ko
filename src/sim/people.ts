@@ -126,6 +126,11 @@ export function josa(word: string, on: string, off: string): string {
   return word + (batchim ? on : off)
 }
 export const iga = (w: string): string => josa(w, '이', '가')
+export const ro = (w: string): string => {
+  const c = w.charCodeAt(w.length - 1)
+  const j = c >= 0xAC00 && c <= 0xD7A3 ? (c - 0xAC00) % 28 : 0
+  return w + (j === 0 || j === 8 ? '로' : '으로')
+}
 export const eunneun = (w: string): string => josa(w, '은', '는')
 export const eulreul = (w: string): string => josa(w, '을', '를')
 export const waga = (w: string): string => josa(w, '과', '와')
