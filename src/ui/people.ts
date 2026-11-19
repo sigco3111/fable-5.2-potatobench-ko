@@ -46,7 +46,7 @@ export function idleWithWork(c: S.Campaign, p: S.PersonInfo, waits: Record<numbe
   return !!u && s0.jobs.some(j => !waits[j.id] && !held.has(j.id) && (j.unit < 0 || j.unit === p.id) && S.willDo(u, j.kind) && !others.has(`${j.kind}|${j.field}`))
 }
 
-const SKILL_SHORT: Record<S.Skill, string> = { machine: 'Machine', field: 'Field', woods: 'Woods', build: 'Build', pack: 'Pack' }
+const SKILL_SHORT: Record<S.Skill, string> = { machine: '기계', field: '밭일', woods: '산일', build: '건축', pack: '포장' }
 const SKILL_CUT: Record<S.Skill, string> = { machine: 'machine', field: 'field', woods: 'woods', build: 'hammer', pack: 'pack' }
 
 // A person's ring, by the order they joined the farm.
@@ -78,15 +78,15 @@ export interface PersonCard {
 // How rested a person is, in words, with what follows from it: resting today, or slower, or a fall likelier.
 export function restWords(c: S.Campaign, p: S.PersonInfo): string {
   const u = c.crew.find(x => x.id === p.id)
-  if (u && S.resting(u) && c.phase === 'season') return u.rest === 'now' ? 'resting until recovered' : 'worn out, so resting today'
-  if (p.tired >= S.HURT_TIRED) return u?.rest === 'push' ? 'worn out but still working' : 'worn out, so resting tomorrow'
-  return p.tired >= S.TIRED_SLOW_FROM ? (p.kind === 'farmer' ? 'you need a rest day' : 'needs a rest day') : 'fit for work'
+  if (u && S.resting(u) && c.phase === 'season') return u.rest === 'now' ? '회복될 때까지 쉬는 중' : '지쳐서 오늘 쉽니다'
+  if (p.tired >= S.HURT_TIRED) return u?.rest === 'push' ? '지쳤지만 계속 일하는 중' : '지쳐서 내일 쉽니다'
+  return p.tired >= S.TIRED_SLOW_FROM ? (p.kind === 'farmer' ? '쉬는 날이 필요합니다' : '쉬는 날이 필요함') : '일할 상태'
 }
 
 // What lifts a person's mood and what lowers it, in a line: "happy about a bed in the bunkhouse, unhappy about the pay".
 export function moodSaid(why: { up: boolean; text: string }[]): string {
   const ups = why.filter(x => x.up).map(x => x.text), downs = why.filter(x => !x.up).map(x => x.text)
-  return [ups.length ? `happy about ${F.list(ups)}` : '', downs.length ? `unhappy about ${F.list(downs)}` : ''].filter(Boolean).join(', ')
+  return [ups.length ? `${F.list(ups)}에 만족` : '', downs.length ? `${F.list(downs)}에 불만` : ''].filter(Boolean).join(', ')
 }
 
 // When a person rests: by themselves once worn out (the farm's way unless told), now until fresh, or never.
@@ -94,17 +94,17 @@ export function restControl(ctx: Ctx, c: S.Campaign, id: number, testid: string)
   const u = c.crew.find(x => x.id === id)
   if (!u || c.phase !== 'season') return null
   const mode = u.rest ?? 'auto'
-  const name = u.kind === 'farmer' ? 'You' : R.firstName(u.name)
-  const will = name === 'You' ? 'You\'ll' : `${name} will`
+  const name = u.kind === 'farmer' ? '당신' : R.firstName(u.name)
+  const will = name === '당신' ? '당신은' : `${name}은(는)`
   const opt = (m: S.RestMode, word: string, tip: string, said: string) => h('button', {
     class: `btn${mode === m ? ' is-on' : ''}`, type: 'button', testid: `${testid}-${m}`, 'aria-pressed': String(mode === m), title: ctx.touch() ? undefined : tip,
     onclick: () => { const r = ctx.run({ t: 'rest', unit: id, mode: m }); if (r.ok) ctx.announce(`${will} ${said}.`) },
   }, word)
-  return h('div', { class: 'rest-keys', role: 'group', 'aria-label': name === 'You' ? 'When you rest' : `When ${name} rests`, testid },
-    h('span', { class: 't-label' }, 'Rest'),
-    opt('auto', 'When worn out', 'Takes a rest day automatically when worn out, then goes back to work.', 'rest when worn out'),
-    opt('now', 'Rest now', 'Takes days off until recovered.', 'rest now until recovered'),
-    opt('push', 'No rest', 'Keeps working even when worn out, which is slower and makes an injury more likely.', 'keep working when worn out'))
+  return h('div', { class: 'rest-keys', role: 'group', 'aria-label': `${name}의 휴식 방식`, testid },
+    h('span', { class: 't-label' }, '휴식'),
+    opt('auto', '지치면 쉼', '지치면 알아서 하루 쉬고 다시 일합니다.', '지치면 쉽니다'),
+    opt('now', '지금 쉼', '회복될 때까지 쉽니다.', '회복될 때까지 쉽니다'),
+    opt('push', '쉬지 않음', '지쳐도 계속 일하는데, 느려지고 다칠 가능성이 커집니다.', '지쳐도 계속 일합니다'))
 }
 
 // ---------------------------------------------------------------- spraying this season, asked once
@@ -124,20 +124,20 @@ export function sprayAsking(): boolean { return sprayOpen }
 export function putSprayAway(ctx: Ctx): boolean { if (!sprayOpen) return false; sprayOpen = false; ctx.dirty(); return true }
 
 export const SPRAY_WAYS: { id: SprayWay; glyph: string; name: string }[] = [
-  { id: 'auto', glyph: 'spray', name: 'Keep the fields sprayed' },
-  { id: 'ask', glyph: 'ask', name: 'Ask me each time' },
-  { id: 'none', glyph: 'close', name: 'Not this year' },
+  { id: 'auto', glyph: 'spray', name: '밭에 계속 살포' },
+  { id: 'ask', glyph: 'ask', name: '매번 물어보기' },
+  { id: 'none', glyph: 'close', name: '올해는 하지 않음' },
 ]
 
 export function sprayDoes(ctx: Ctx, c: S.Campaign, way: SprayWay): string {
-  if (way === 'ask') return 'A stamp appears on a field when it needs spraying, and you give the order.'
-  if (way === 'none') return 'No spraying, and no stamps asking for it. If blight shows up, nothing will stop it.'
+  if (way === 'ask') return '살포가 필요한 밭에 도장이 뜨고, 당신이 지시합니다.'
+  if (way === 'none') return '살포하지 않고, 도장도 뜨지 않습니다. 역병이 오면 막을 수 없습니다.'
   return keepSprayedLine(ctx.app.world, c)
 }
 
 export function answerSpray(ctx: Ctx, c: S.Campaign, way: SprayWay): void {
   const r = sprayWay(c) === way ? { ok: true } : ctx.run({ t: 'sprayWay', way })
-  if (r.ok) ctx.announce(way === 'auto' ? 'Your crew will keep the fields sprayed automatically.' : way === 'ask' ? 'You\'ll be asked each time a field needs spraying.' : 'No spraying this year.')
+  if (r.ok) ctx.announce(way === 'auto' ? '작업반이 자동으로 밭에 살포를 유지합니다.' : way === 'ask' ? '밭에 살포가 필요할 때마다 물어봅니다.' : '올해는 살포하지 않습니다.')
   putSprayAway(ctx)
 }
 
@@ -147,7 +147,7 @@ export function showForemanKey(): void { foremanAsked = performance.now() }
 
 export function personCard(ctx: Ctx): PersonCard {
   const app = ctx.app
-  const el = h('section', { class: 'person-card sheet sys', testid: 'person-card', 'aria-label': 'Person', hidden: true })
+  const el = h('section', { class: 'person-card sheet sys', testid: 'person-card', 'aria-label': '사람', hidden: true })
   let foreman = false
   let shownFor = -1
   let flashed: { text: string; until: number } | null = null
@@ -217,73 +217,73 @@ export function personCard(ctx: Ctx): PersonCard {
       h('header', { class: 'pc-head' },
         ringed(p, ringOfId(c, p.id), 64),
         h('div', null,
-          farmer ? null : h('p', { class: 't-label', testid: 'person-kind' }, p.foreman ? `Foreman, ${S.BLOCK_NAME[p.foreman]}` : R.KIND_NAME[p.kind]),
-          h('h2', { class: 't-title pc-name', testid: 'person-name' }, farmer ? 'You, the farmer' : p.name),
-          h('p', { class: 'pc-trait' }, farmer ? h('span', { class: 'quiet' }, 'Does every job and draws no wage.') : [h('b', null, `${p.traitName}:`), ' ', h('span', { class: 'quiet' }, p.traitText.replace(/^./, x => x.toLowerCase()))])),
+          farmer ? null : h('p', { class: 't-label', testid: 'person-kind' }, p.foreman ? `작업반장, ${S.BLOCK_NAME[p.foreman]}` : R.KIND_NAME[p.kind]),
+          h('h2', { class: 't-title pc-name', testid: 'person-name' }, farmer ? '당신, 농장주' : p.name),
+          h('p', { class: 'pc-trait' }, farmer ? h('span', { class: 'quiet' }, '모든 일을 하고 품값을 받지 않습니다.') : [h('b', null, `${p.traitName}:`), ' ', h('span', { class: 'quiet' }, p.traitText.replace(/^./, x => x.toLowerCase()))])),
         h('span', { class: 'pc-tools' },
-          h('button', { class: 'iconbtn', type: 'button', testid: 'person-show', 'aria-label': farmer ? 'Find yourself on the farm' : 'Find them on the farm', title: ctx.touch() ? undefined : farmer ? 'Find yourself on the farm' : 'Find them on the farm', onclick: () => { app.selectUnit(p.id, 'land'); ctx.view.follow(p.id) } }, icon('scout', 'i')),
-          h('button', { class: 'close', type: 'button', testid: 'person-close', 'aria-label': `Close${ctx.touch() ? '' : ' (Escape)'}`, onclick: () => app.selectUnit(-1) }, icon('close', 'i')))),
+          h('button', { class: 'iconbtn', type: 'button', testid: 'person-show', 'aria-label': farmer ? '농장에서 당신 찾기' : '농장에서 이 사람 찾기', title: ctx.touch() ? undefined : farmer ? '농장에서 당신 찾기' : '농장에서 이 사람 찾기', onclick: () => { app.selectUnit(p.id, 'land'); ctx.view.follow(p.id) } }, icon('scout', 'i')),
+          h('button', { class: 'close', type: 'button', testid: 'person-close', 'aria-label': `닫기${ctx.touch() ? '' : ' (Escape)'}`, onclick: () => app.selectUnit(-1) }, icon('close', 'i')))),
       h('div', { class: 'card-body', 'data-scroll': 'person' },
       h('p', { class: 'pc-doing', testid: 'person-doing' }, icon(doingGlyph(c, p, waits), 'i'), h('span', null, doing)),
       h('table', { class: 'skills' },
-        h('caption', { class: 'sr' }, 'Skills out of ten, and the priority of each kind of work. 1 gets done first, and a dash means never.'),
+        h('caption', { class: 'sr' }, '10점 만점 기술과 각 일의 우선순위. 1이 가장 먼저, 빗금은 절대 안 함.'),
         h('tbody', null, S.SKILLS.map(k => {
           const lvl = p.skills[k]
           const pr = p.prio[k]
           return h('tr', { class: lvl === best && best >= 5 ? 'best' : '', k: `skill-${k}` },
             h('th', { scope: 'row', title: ctx.touch() ? undefined : R.skillCovers(k) }, icon(SKILL_CUT[k], 'i'), SKILL_SHORT[k]),
             h('td', { class: 'lv num' }, String(lvl)),
-            h('td', null, tens(lvl, lvl < S.SKILL_MAX ? p.progress[k] : 0, { best: lvl === best && best >= 5, label: `${R.SKILL_NAME[k]}: level ${lvl}${lvl < S.SKILL_MAX ? `, ${F.pct(p.progress[k])} of the way to ${lvl + 1}` : ''}` })),
+            h('td', null, tens(lvl, lvl < S.SKILL_MAX ? p.progress[k] : 0, { best: lvl === best && best >= 5, label: `${R.SKILL_NAME[k]}: ${lvl}레벨${lvl < S.SKILL_MAX ? `, ${lvl + 1}레벨까지 ${F.pct(p.progress[k])}` : ''}` })),
             h('td', { class: 'pr' }, h('button', {
               class: `prio key${pr === 0 ? ' never' : ''}${pr === 1 ? ' first' : ''}`, type: 'button', testid: `prio-${k}`,
-              title: ctx.touch() ? undefined : `${R.skillCovers(k)}. 1 gets done first, and a dash means never. Click to move it up, or right-click to move it down.`,
+              title: ctx.touch() ? undefined : `${R.skillCovers(k)}. 1이 가장 먼저, 빗금은 절대 안 함. 클릭하면 올라가고, 오른쪽 클릭하면 내려갑니다.`,
               onclick: () => setPrio(p, k, R.prioNext(pr, true)),
               oncontextmenu: (e: Event) => { e.preventDefault(); setPrio(p, k, R.prioNext(pr)) },
               onkeydown: (e: Event) => prioKey(e as KeyboardEvent, p, k),
-            }, h('span', { class: 'sr' }, `${R.SKILL_NAME[k]} work priority `), R.prioMark(pr),
-            h('span', { class: 'sr' }, `: ${R.prioWord(pr)}. Press for ${R.prioWord(R.prioNext(pr, true))}. ${R.skillCovers(k)}.`))))
+            }, h('span', { class: 'sr' }, `${R.SKILL_NAME[k]} 우선순위 `), R.prioMark(pr),
+            h('span', { class: 'sr' }, `: ${R.prioWord(pr)}. 누르면 ${R.prioWord(R.prioNext(pr, true))}. ${R.skillCovers(k)}.`))))
         }))),
       h('dl', { class: 'state' },
-        h('div', { testid: 'person-tired' }, h('dt', { class: tiredCls }, F.upper(p.tiredWord)), h('dd', null, p.tired >= S.TIRED_SLOW_FROM ? `${F.upper(restWords(c, p))}.${tiredWhy ? ` ${tiredWhy}` : ''}` : tiredWhy || 'Rested enough.')),
-        h('div', { testid: 'person-mood' }, h('dt', { class: moodCls }, `${F.upper(p.moodWord)}${heading ? `, ${heading === 'rising' ? 'improving' : 'getting worse'}` : ''}`),
-          h('dd', null, p.quitIn >= 0 ? `Will quit in ${F.plural(p.quitIn, 'day')} unless their mood improves.` : why.length ? F.upper(`${moodSaid(why)}.`) : p.kind === 'farmer' ? 'Nothing is bothering you.' : 'Nothing is bothering them.')),
-        p.hurtUntil >= 0 ? h('div', null, h('dt', { class: 'c-red' }, 'Hurt'), h('dd', null, `Back on ${F.date(c.year, p.hurtUntil)}.`)) : null),
+        h('div', { testid: 'person-tired' }, h('dt', { class: tiredCls }, F.upper(p.tiredWord)), h('dd', null, p.tired >= S.TIRED_SLOW_FROM ? `${F.upper(restWords(c, p))}.${tiredWhy ? ` ${tiredWhy}` : ''}` : tiredWhy || '충분히 쉬었습니다.')),
+        h('div', { testid: 'person-mood' }, h('dt', { class: moodCls }, `${F.upper(p.moodWord)}${heading ? `, ${heading === 'rising' ? '좋아지는 중' : '나빠지는 중'}` : ''}`),
+          h('dd', null, p.quitIn >= 0 ? `기분이 좋아지지 않으면 ${p.quitIn}일 안에 그만둡니다.` : why.length ? F.upper(`${moodSaid(why)}.`) : p.kind === 'farmer' ? '당신을 괴롭히는 것이 없습니다.' : '이 사람을 괴롭히는 것이 없습니다.')),
+        p.hurtUntil >= 0 ? h('div', null, h('dt', { class: 'c-red' }, '부상'), h('dd', null, `${F.date(c.year, p.hurtUntil)}에 돌아옵니다.`)) : null),
       flashed && performance.now() < flashed.until ? h('p', { class: 'pc-flash c-red', role: 'status' }, flashed.text) : null),
       h('div', { class: 'card-foot' },
       restControl(ctx, c, p.id, 'person-rest'),
-      farmer ? h('p', { class: 'pay quiet it' }, 'You don\'t draw a wage. Your family\'s living costs come out at the end of the year.') : [
-        h('p', { class: 'pay lead' }, h('span', null, h('b', { class: 'num' }, F.money(p.pay)), ` a month${p.foreman ? ' as foreman' : ''}`), h('span', { class: 'dots' }), p.ask ? h('span', { class: 'quiet num' }, `asked for ${F.money(p.ask)}`) : null),
+      farmer ? h('p', { class: 'pay quiet it' }, '당신은 품값을 받지 않습니다. 가족의 생활비는 연말에 나갑니다.') : [
+        h('p', { class: 'pay lead' }, h('span', null, h('b', { class: 'num' }, F.money(p.pay)), ` 월${p.foreman ? ', 작업반장' : ''}`), h('span', { class: 'dots' }), p.ask ? h('span', { class: 'quiet num' }, `요구액 ${F.money(p.ask)}`) : null),
         h('div', { class: 'pc-actions' },
           h('button', {
-            class: 'btn', type: 'button', testid: 'person-raise', title: ctx.touch() ? undefined : 'Every 10% over what they asked for moves their mood about a tenth of the way up.',
-            onclick: () => run({ t: 'raise', unit: p.id, wage: raiseTo(p) }, `${R.firstName(p.name)} now earns ${F.money(raiseTo(p))} a month.`),
-          }, icon('raise', 'i'), h('span', null, 'Raise', h('span', { class: 'sub num' }, `to ${F.money(raiseTo(p))}`))),
+            class: 'btn', type: 'button', testid: 'person-raise', title: ctx.touch() ? undefined : '요구한 것보다 10% 더 줄 때마다 기분이 1할쯤 올라갑니다.',
+            onclick: () => run({ t: 'raise', unit: p.id, wage: raiseTo(p) }, `${R.firstName(p.name)}의 품값이 월 ${F.money(raiseTo(p))}이(가) 됐습니다.`),
+          }, icon('raise', 'i'), h('span', null, '올려주기', h('span', { class: 'sub num' }, `${F.money(raiseTo(p))}(으)로`))),
           blocks.length ? h('button', {
             class: `btn${foreman ? ' is-on' : ''}`, type: 'button', testid: 'person-foreman', 'aria-expanded': String(foreman),
-            title: ctx.touch() ? undefined : 'A foreman adds what one group of fields needs to the work list every working morning, and doesn\'t do field work. A foreman is paid 40% more.',
+            title: ctx.touch() ? undefined : '작업반장은 일하는 아침마다 한 구역의 밭에 필요한 일을 작업 목록에 올리고, 밭일은 하지 않습니다. 품값은 40% 더 받습니다.',
             // Its choices open under it, brought into view with the first one lit.
             onclick: () => { foreman = !foreman; if (foreman) lightUp('.pc-blocks .btn'); else lit = null; ctx.dirty() },
-          }, icon('foreman', 'i'), h('span', null, 'Foreman', p.foreman ? h('span', { class: 'sub' }, BLOCK_NAME[p.foreman].replace(/^The /, '').split(',')[0]) : h('span', { class: 'sub' }, h('span', null, '+40% pay,'), ' ', h('span', null, 'no field work')))) : h('span'),
+          }, icon('foreman', 'i'), h('span', null, '작업반장', p.foreman ? h('span', { class: 'sub' }, BLOCK_NAME[p.foreman].replace(/^The /, '').split(',')[0]) : h('span', { class: 'sub' }, h('span', null, '품값 +40%,'), ' ', h('span', null, '밭일 안 함')))) : h('span'),
           h('button', {
             class: 'btn hazard', type: 'button', testid: 'person-dismiss',
             onclick: async () => {
-              const yes = await confirmPaper(ctx, { title: `Let ${R.firstName(p.name)} go?`, text: R.LET_GO_TEXT, yes: 'Let them go', danger: true })
-              if (yes && run({ t: 'dismiss', unit: p.id }, `You let ${p.name} go.`)) app.selectUnit(-1)
+              const yes = await confirmPaper(ctx, { title: `${R.firstName(p.name)}을(를) 보낼까요?`, text: R.LET_GO_TEXT, yes: '보내기', danger: true })
+              if (yes && run({ t: 'dismiss', unit: p.id }, `${p.name}을(를) 보냈습니다.`)) app.selectUnit(-1)
             },
-          }, icon('letgo', 'i'), h('span', null, 'Let go', h('span', { class: 'sub' }, 'today')))),
+          }, icon('letgo', 'i'), h('span', null, '보내기', h('span', { class: 'sub' }, '오늘')))),
         p.foreman && !foreman ? h('p', { class: 'pc-fore', role: 'status', testid: 'foreman-said' }, icon('foreman', 'i'),
-          h('span', null, `Foreman of ${S.BLOCK_NAME[p.foreman]}. ${R.firstName(p.name)} adds its fields' jobs to the work list each morning and doesn't do field work.`)) : null,
-        foreman ? h('div', { class: 'pc-blocks', role: 'group', 'aria-label': 'Foreman of' },
-          h('p', { class: 'pc-fore', testid: 'foreman-what' }, h('span', null, `A foreman orders the work on one group of fields for you each morning, which pays once you farm fields away from home. ${R.firstName(p.name)} would earn 40% more and stop doing field work. Pick the fields.`)),
+          h('span', null, `${S.BLOCK_NAME[p.foreman]}의 작업반장. ${R.firstName(p.name)}은(는) 매일 아침 그 밭들의 일을 작업 목록에 올리고 밭일은 하지 않습니다.`)) : null,
+        foreman ? h('div', { class: 'pc-blocks', role: 'group', 'aria-label': '작업반장 구역' },
+          h('p', { class: 'pc-fore', testid: 'foreman-what' }, h('span', null, `작업반장은 매일 아침 한 구역의 밭 일을 대신 작업 목록에 올려줍니다. 집에서 먼 밭까지 농사지으면 그 값을 합니다. ${R.firstName(p.name)}은(는) 품값이 40% 오르고 밭일을 그만합니다. 구역을 고르세요.`)),
           blocks.map(b => {
             const other = c.crew.find(u => u.foreman === b && u.id !== p.id)
             return h('button', {
               class: 'btn', type: 'button', testid: `foreman-${b}`, 'aria-pressed': String(p.foreman === b), disabled: !!other,
-              title: other ? `${other.name} is already foreman there` : undefined,
+              title: other ? `${other.name}이(가) 이미 그곳의 작업반장입니다` : undefined,
               onclick: () => nameForeman(p, b),
             }, BLOCK_NAME[b].replace(/^The /, '').split(',')[0])
           }),
-          p.foreman ? h('button', { class: 'btn', type: 'button', testid: 'foreman-none', onclick: () => nameForeman(p, null) }, 'Back to field work') : null) : null,
+          p.foreman ? h('button', { class: 'btn', type: 'button', testid: 'foreman-none', onclick: () => nameForeman(p, null) }, '밭일로 복귀') : null) : null,
       ]),
     ]
   }
@@ -310,7 +310,7 @@ export function personCard(ctx: Ctx): PersonCard {
       jobs: s0?.jobs.map(j => [j.id, j.unit]), crew: c.crew.map(u => [u.id, u.at, u.to, u.job, u.foreman, u.rest]), sun: c.sundaysOff,
     }
     patch(el, JSON.stringify(model), () => body(c, p))
-    el.setAttribute('aria-label', p.kind === 'farmer' ? 'You, the farmer' : p.name)
+    el.setAttribute('aria-label', p.kind === 'farmer' ? '당신, 농장주' : p.name)
     layIn(ctx, el, was)
     showLit()
   }
@@ -379,22 +379,22 @@ export function workGrid(ctx: Ctx): WorkGrid {
     // Which jobs the crew puts on the list by itself, and which wait for the player.
     const routine = S.routineInfo(c)
     const sprayCost = c.phase === 'season' && c.season && !routine.some(r => r.kind === 'spray' && r.auto) ? Math.round(S.sprayOutlook(ctx.app.world, c).dollars / 100) * 100 : 0
-    return h('div', { class: 'farm-rules', role: 'group', 'aria-label': 'Farm rules' },
-      routine.length ? h('div', { class: 'routine', role: 'group', 'aria-label': 'Work your crew does without asking' },
-        h('p', { class: 't-label' }, 'Automatic, or ask me'),
+    return h('div', { class: 'farm-rules', role: 'group', 'aria-label': '농장 규칙' },
+      routine.length ? h('div', { class: 'routine', role: 'group', 'aria-label': '묻지 않고 작업반이 하는 일' },
+        h('p', { class: 't-label' }, '자동, 또는 물어보기'),
         c.season && c.season.watchDay >= 0 ? h('button', { class: 'btn quiet spray-again', type: 'button', testid: 'spray-ask-open', onclick: () => askSpray(ctx) },
-          icon('spray', 'i'), 'Spraying this season: ', h('b', null, sprayWay(c) === 'auto' ? 'kept sprayed' : sprayWay(c) === 'none' ? 'not this year' : 'ask me'), h('span', { class: 'quiet' }, ' · change')) : null,
+          icon('spray', 'i'), '올해 살포: ', h('b', null, sprayWay(c) === 'auto' ? '계속 살포' : sprayWay(c) === 'none' ? '올해 안 함' : '물어보기'), h('span', { class: 'quiet' }, ' · 바꾸기')) : null,
         h('div', { class: 'routine-keys' }, routine.map(r => h('button', {
           class: `btn${r.auto ? ' is-on' : ''}`, type: 'button', testid: `routine-${r.kind}`, 'aria-pressed': String(r.auto),
-          title: ctx.touch() ? undefined : r.auto ? `${R.JOB_VERB[r.kind]}: your crew adds it to the work list automatically. Click to be asked instead.` : `${R.JOB_VERB[r.kind]}: waits for your order. Click to let your crew handle it automatically.`,
-          onclick: () => { const res = ctx.run({ t: 'routine', kind: r.kind as S.RoutineKind, auto: !r.auto }); if (res.ok) ctx.announce(`${R.JOB_VERB[r.kind]}: ${r.auto ? 'ask me' : 'automatic'}.`) },
-        }, icon(r.kind, 'i'), R.JOB_VERB[r.kind], h('span', { class: 'sub' }, r.auto ? 'automatic' : r.kind === 'kill' ? 'your decision, but the crew does it a week after it\'s due'
+          title: ctx.touch() ? undefined : r.auto ? `${R.JOB_VERB[r.kind]}: 작업반이 알아서 작업 목록에 올립니다. 누르면 물어보는 쪽으로 바뀝니다.` : `${R.JOB_VERB[r.kind]}: 당신의 지시를 기다립니다. 누르면 작업반이 알아서 합니다.`,
+          onclick: () => { const res = ctx.run({ t: 'routine', kind: r.kind as S.RoutineKind, auto: !r.auto }); if (res.ok) ctx.announce(`${R.JOB_VERB[r.kind]}: ${r.auto ? '물어보기' : '자동'}.`) },
+        }, icon(r.kind, 'i'), R.JOB_VERB[r.kind], h('span', { class: 'sub' }, r.auto ? '자동' : r.kind === 'kill' ? '당신이 정하지만 작업반이 기한 일주일 뒤에 함'
             // (what keeping the fields sprayed would come to, before the press: a player threw the switch and saw $4,800 leave the year-end figure)
-            : r.kind === 'spray' && sprayCost > 0 ? `ask me \u00b7 automatic is about ${F.money(sprayCost)} this season` : 'ask me'))))) : null,
-      rule('rule-sundays', l.sundaysOff, 'Sundays off', l.sundaysOff ? 'Everyone rests one day a week. Working Sundays gains you a day, but it tires everyone out.' : 'Sundays are worked, which gives you an extra day each week but tires everyone out.'),
+            : r.kind === 'spray' && sprayCost > 0 ? `물어보기 · 자동이면 이번 시즌 약 ${F.money(sprayCost)}` : '물어보기'))))) : null,
+      rule('rule-sundays', l.sundaysOff, '일요일 휴식', l.sundaysOff ? '모두가 주에 하루 쉽니다. 일요일에 일하면 하루를 벌지만 모두가 지칩니다.' : '일요일에도 일해 주에 하루를 더 벌지만 모두가 지칩니다.'),
       // Pickers come forward a few weeks before the harvest break, when they can be thought about.
       l.pickers.ok || l.pickers.on || pickersNear(c)
-        ? rule('rule-pickers', l.pickers.on, 'Pickers', `${F.money(l.pickers.perDay)} for each day worked, and every dig goes ${F.pct(l.pickers.digFaster - 1)} faster. Available ${pickFrom} to ${pickTo}, while the schools are closed.`, l.pickers.ok || l.pickers.on) : null)
+        ? rule('rule-pickers', l.pickers.on, '학생 일꾼', `일한 날마다 ${F.money(l.pickers.perDay)}, 모든 캐기가 ${F.pct(l.pickers.digFaster - 1)} 빨라집니다. 학교가 쉬는 ${pickFrom}부터 ${pickTo}까지.`, l.pickers.ok || l.pickers.on) : null)
   }
 
   function pickersNear(c: S.Campaign): boolean {
@@ -407,17 +407,17 @@ export function workGrid(ctx: Ctx): WorkGrid {
     if (at.row >= people.length) at = { row: people.length - 1, col: at.col }
     return [
       h('header', { class: 'command-head work-head' },
-        h('div', null, h('h2', { class: 't-title', id: 'grid-title' }, 'Who does what'), h('p', { class: 't-caption', testid: 'grid-how' }, `1 gets done first, and a dash means never. ${ctx.touch() ? 'Tap to move work up' : 'Click to move work up, right-click to move it down, or type a number'}. The bar shows skill.`)),
-        h('button', { class: 'close', type: 'button', testid: 'grid-close', 'aria-label': `Close Who does what${ctx.touch() ? '' : ' (G)'}`, onclick: () => toggle(false) }, icon('close', 'i'))),
+        h('div', null, h('h2', { class: 't-title', id: 'grid-title' }, '누가 무엇을 하나'), h('p', { class: 't-caption', testid: 'grid-how' }, `1이 가장 먼저, 빗금은 절대 안 함. ${ctx.touch() ? '눌러서 일을 올리세요' : '클릭하면 올라가고, 오른쪽 클릭하면 내려가고, 숫자를 눌러도 됩니다'}. 막대는 기술을 보여줍니다.`)),
+        h('button', { class: 'close', type: 'button', testid: 'grid-close', 'aria-label': `누가 무엇을 하나 닫기${ctx.touch() ? '' : ' (G)'}`, onclick: () => toggle(false) }, icon('close', 'i'))),
       h('div', { class: 'grid-scroll', 'data-scroll': 'grid' },
         h('table', { class: 'grid', role: 'grid', 'aria-labelledby': 'grid-title' },
-          h('thead', null, h('tr', null, h('th', { scope: 'col' }, h('span', { class: 'sr' }, 'Person')),
+          h('thead', null, h('tr', null, h('th', { scope: 'col' }, h('span', { class: 'sr' }, '사람')),
             S.SKILLS.map(k => h('th', { scope: 'col', title: ctx.touch() ? undefined : R.skillCovers(k) }, icon(SKILL_CUT[k], 'i'), h('span', { class: 't-label' }, SKILL_SHORT[k]))))),
           h('tbody', null, people.map((p, row) => h('tr', { class: `${p.foreman ? 'foreman' : ''}${app.unit === p.id ? ' is-picked' : ''}`.trim(), k: `row-${p.id}` },
             h('th', { scope: 'row' },
               h('button', { class: 'w-who', type: 'button', testid: `grid-person-${p.id}`, tabindex: '-1', onclick: () => { app.selectUnit(p.id) } },
                 ringed(p, ringOfId(c, p.id), 28), h('span', null, R.firstName(p.name)))),
-            p.foreman ? h('td', { colspan: S.SKILLS.length, class: 'w-foreman' }, `Foreman of ${S.BLOCK_NAME[p.foreman]}, so no field work`)
+            p.foreman ? h('td', { colspan: S.SKILLS.length, class: 'w-foreman' }, `${S.BLOCK_NAME[p.foreman]}의 작업반장이라 밭일은 하지 않음`)
               : S.SKILLS.map((k, col) => {
                 const lvl = p.skills[k]
                 const pr = p.prio[k]
@@ -428,7 +428,7 @@ export function workGrid(ctx: Ctx): WorkGrid {
                   oncontextmenu: (e: Event) => { e.preventDefault(); at = { row, col }; set(p.id, k, R.prioNext(pr), R.firstName(p.name)) },
                   onkeydown: (e: Event) => key(e as KeyboardEvent, people, row, col),
                   onfocus: () => { if (at.row !== row || at.col !== col) { at = { row, col }; ctx.dirty() } },
-                }, h('span', { class: 'sr' }, `${R.firstName(p.name)}, ${S.SKILL_LABEL[k]}, skill ${lvl}, priority `), h('span', { class: 'num' }, R.prioMark(pr)),
+                }, h('span', { class: 'sr' }, `${R.firstName(p.name)}, ${S.SKILL_LABEL[k]}, 기술 ${lvl}, 우선순위 `), h('span', { class: 'num' }, R.prioMark(pr)),
                 h('span', { class: 'sr' }, `, ${R.prioWord(pr)}`)))
               })))))),
       note ? h('p', { class: 'pc-flash c-red', role: 'status' }, note) : null,
