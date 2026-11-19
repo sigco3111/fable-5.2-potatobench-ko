@@ -500,7 +500,7 @@ function closeYear(world: World, c: Campaign, out: GameEvent[]): void {
     c.yearMortgage += pay
     for (const m of c.mortgages) m.owed -= Math.min(m.owed, m.loan * P.MORTGAGE_PRINCIPAL)
     c.mortgages = c.mortgages.filter(m => m.owed > 0.005)
-    out.push(note(c, 'mortgage', 'info', `The bank took $${withCommas(pay)} for the land mortgage, $${withCommas(due.principal)} off the loan and $${withCommas(due.interest)} in interest. You still owe $${withCommas(mortgageOwed(c))}.`))
+    out.push(note(c, 'mortgage', 'info', `은행이 땅 담보 대출로 $${withCommas(pay)}를 가져갔습니다. 원금 $${withCommas(due.principal)}, 이자 $${withCommas(due.interest)}입니다. 남은 빚은 $${withCommas(mortgageOwed(c))}입니다.`))
   }
   c.cash -= P.NOTE_PAYMENT + P.LIVING
   if (c.cash < 0) {
@@ -555,10 +555,10 @@ function closeYear(world: World, c: Campaign, out: GameEvent[]): void {
   c.phase = 'ledger'
   if (c.cash < P.CREDIT_LIMIT) {
     c.outcome = 'lost'
-    out.push(note(c, 'lost', 'bad', 'The bank has called in your loan, and the farm is being sold at auction.'))
+    out.push(note(c, 'lost', 'bad', '은행이 대출 회수에 들어갔고, 농장이 경매에 넘어갑니다.'))
   } else if (c.outcome === '' && c.yearIdx + 1 >= c.goalYears) {
     c.outcome = 'kept'
-    out.push(note(c, 'kept', 'good', 'You made it through five seasons, and the farm is still yours.'))
+    out.push(note(c, 'kept', 'good', '다섯 시즌을 버텨냈고, 농장은 여전히 당신의 것입니다.'))
   }
 }
 
@@ -606,7 +606,7 @@ function nextYear(world: World, c: Campaign): Result {
     const fp = c.fields[i]
     if (fp.brushed >= 0 && !brushedNow(c, i)) {
       fp.brushed = -1
-      if (fp.tenure !== 'none') out.push(note(c, 'brushBack', 'info', `The brush has grown back along ${FIELD_NAMES[i]}.`, i))
+      if (fp.tenure !== 'none') out.push(note(c, 'brushBack', 'info', `${FIELD_NAMES[i]}을(를) 따라 관목이 다시 자랐습니다.`, i))
     }
   }
   return ok(out)
@@ -633,7 +633,7 @@ function lapsedBuyers(c: Campaign): GameEvent[] {
     const lot = c.lots.find(l => l.id === inc.lot)
     if (lot && lot.open && lotCwt(lot) >= P.BUYER_MIN_CWT) continue
     c.incidents.splice(c.incidents.indexOf(inc), 1)
-    out.push(note(c, 'incidentDone', 'info', `The buyer has moved on, because ${lot ? `the ${variety(lot.variety).name} from ${FIELD_NAMES[lot.field]}` : 'that lot'} is no longer there to buy.`))
+    out.push(note(c, 'incidentDone', 'info', `구매자가 지나갔습니다. ${lot ? `${FIELD_NAMES[lot.field]}의 ${variety(lot.variety).name}` : '그 물량'}이(가) 더는 없기 때문입니다.`))
   }
   return out
 }
@@ -645,7 +645,7 @@ function openRoutine(c: Campaign): GameEvent | null {
   for (const u of c.crew) u.rest ??= 'auto'
   if (c.routine) return null
   c.routine = { ...P.ROUTINE_DEFAULT }
-  return note(c, 'routine', 'info', 'Your crew now follows a routine. Planting, hilling, walking the fields, test digs, digging and hauling go on the work list automatically. Spraying, watering and killing the vines are your decisions. You can change any of these under Who does what.')
+  return note(c, 'routine', 'info', '이제 일꾼들이 일과를 따릅니다. 파종, 북주기, 밭 순찰, 시험 캐기, 캐기, 운반이 작업 목록에 자동으로 오릅니다. 살포, 물 주기, 줄기 죽이기는 당신이 결정합니다. \'역할 분담\'에서 바꿀 수 있습니다.')
 }
 
 // The year the date falls in now: from January the winter's cellar months, and the ledger closed in spring, are
@@ -677,12 +677,12 @@ export function routineInfo(c: Campaign): { kind: JobKind; auto: boolean }[] {
 function command(world: World, c: Campaign, cmd: Cmd): Result {
   switch (cmd.t) {
     case 'plan': {
-      if (c.phase !== 'plan') return fail('You can only change the plan in spring.')
-      if (!fieldIndex(cmd.field)) return fail('No such field.')
-      if (!held(c, cmd.field)) return fail(`${FIELD_NAMES[cmd.field]} isn't yours. Rent or buy it first.`)
-      if (!isField(c, cmd.field)) return fail(`${FIELD_NAMES[cmd.field]} is still ${COVER_WORD[c.fields[cmd.field].cover]}. Clear it first.`)
+      if (c.phase !== 'plan') return fail('계획은 봄에만 바꿀 수 있습니다.')
+      if (!fieldIndex(cmd.field)) return fail('그런 밭이 없습니다.')
+      if (!held(c, cmd.field)) return fail(`${FIELD_NAMES[cmd.field]}은(는) 당신의 땅이 아닙니다. 먼저 임차하거나 사세요.`)
+      if (!isField(c, cmd.field)) return fail(`${FIELD_NAMES[cmd.field]}은(는) 아직 ${COVER_WORD[c.fields[cmd.field].cover]}입니다. 먼저 개간하세요.`)
       const v = variety(cmd.plan.variety)
-      if (cmd.plan.crop === 'potato' && v.released > c.year) return fail(`${v.name} wasn't released until ${v.released}.`)
+      if (cmd.plan.crop === 'potato' && v.released > c.year) return fail(`${v.name}은(는) ${v.released}년에야 나옵니다.`)
       const before = c.plans[cmd.field]
       c.plans[cmd.field] = { crop: cmd.plan.crop, variety: cmd.plan.variety, seed: cmd.plan.seed }
       const short = savedSeedShort(c)
@@ -690,13 +690,13 @@ function command(world: World, c: Campaign, cmd: Cmd): Result {
       return ok()
     }
     case 'buy': {
-      if (c.phase !== 'plan' && c.phase !== 'season' && c.phase !== 'cellar') return fail('You can buy equipment in spring, during the season, or in winter.')
+      if (c.phase !== 'plan' && c.phase !== 'season' && c.phase !== 'cellar') return fail('장비는 봄, 시즌 중, 또는 겨울에 살 수 있습니다.')
       const u = P.UPGRADES[cmd.upgrade]
-      if (!u) return fail('No such equipment.')
-      if (c.upgrades[cmd.upgrade]) return fail('You already own it.')
-      if ((cmd.upgrade === 'tractor2' || cmd.upgrade === 'tractor3') && !hasBuilt(c, 'shed')) return fail('You need the machine shed before you can keep another tractor.')
-      if (cmd.upgrade === 'tractor3' && !c.upgrades.tractor2) return fail('Buy the second tractor first.')
-      if (cmd.upgrade === 'house2' && buildingAt(c, 'house', HOME_YARD)) return fail('You already have a second potato house at home, built or going up.')
+      if (!u) return fail('그런 장비가 없습니다.')
+      if (c.upgrades[cmd.upgrade]) return fail('이미 갖고 있습니다.')
+      if ((cmd.upgrade === 'tractor2' || cmd.upgrade === 'tractor3') && !hasBuilt(c, 'shed')) return fail('트랙터를 더 두려면 기계 창고가 필요합니다.')
+      if (cmd.upgrade === 'tractor3' && !c.upgrades.tractor2) return fail('먼저 두 번째 트랙터를 사세요.')
+      if (cmd.upgrade === 'house2' && buildingAt(c, 'house', HOME_YARD)) return fail('집에 두 번째 감자 저장고가 이미 있거나 짓는 중입니다.')
       const short = spendBlock(c, u.cost, 'equipment')
       if (short) return fail(short)
       c.cash -= u.cost
@@ -711,12 +711,12 @@ function command(world: World, c: Campaign, cmd: Cmd): Result {
       }
       // (a spring's purchase can be taken back until the season starts; one made later is made)
       if (c.phase === 'plan') springOf(c).bought.push(bought)
-      return ok([note(c, 'bought', 'info', `You bought the ${u.name.toLowerCase()} for $${withCommas(u.cost)}.${c.phase === 'plan' ? ' You can undo this until the season starts.' : ''}`)])
+      return ok([note(c, 'bought', 'info', `${u.name}을(를) $${withCommas(u.cost)}에 샀습니다.${c.phase === 'plan' ? ' 시즌 시작 전까지 취소할 수 있습니다.' : ''}`)])
     }
     case 'unbuy': {
       const k = c.phase === 'plan' ? c.spring?.bought.findIndex(b => b.upgrade === cmd.upgrade) ?? -1 : -1
-      if (k < 0) return fail(c.phase === 'plan' ? 'That wasn\'t bought this spring, so it can\'t be undone.' : 'A purchase can only be undone in spring, before the season starts.')
-      if (cmd.upgrade === 'tractor2' && c.upgrades.tractor3) return fail('Undo the third tractor first.')
+      if (k < 0) return fail(c.phase === 'plan' ? '올봄에 산 것이 아니라 취소할 수 없습니다.' : '구입 취소는 시즌 시작 전 봄에만 할 수 있습니다.')
+      if (cmd.upgrade === 'tractor2' && c.upgrades.tractor3) return fail('먼저 세 번째 트랙터를 취소하세요.')
       const u = P.UPGRADES[cmd.upgrade]
       const b = c.spring!.bought.splice(k, 1)[0]
       c.cash += u.cost
@@ -724,13 +724,13 @@ function command(world: World, c: Campaign, cmd: Cmd): Result {
       c.yearEquip = (c.yearEquip ?? 0) - u.cost
       c.upgrades[cmd.upgrade] = false
       if (b.building !== undefined) c.buildings = c.buildings.filter(x => x.id !== b.building)
-      return ok([note(c, 'unbought', 'info', `You took back the ${u.name.toLowerCase()}, and the $${withCommas(u.cost)} is back in your cash.`)])
+      return ok([note(c, 'unbought', 'info', `${u.name} 구입을 취소했고, $${withCommas(u.cost)}가 현금으로 돌아왔습니다.`)])
     }
     case 'answer': {
       const s = c.season
       const inc = c.incidents.find(i => i.id === cmd.incident)
-      if (!inc || c.phase !== 'season' || !s) return fail('That question is no longer waiting for an answer.')
-      if (!inc.choices.includes(cmd.choice)) return fail(`The choices are: ${inc.choices.map(ch => CHOICE_LABEL[ch]).join(', ')}.`)
+      if (!inc || c.phase !== 'season' || !s) return fail('그 물음은 더는 답을 기다리지 않습니다.')
+      if (!inc.choices.includes(cmd.choice)) return fail(`선택지는 다음과 같습니다: ${inc.choices.map(ch => CHOICE_LABEL[ch]).join(', ')}.`)
       const why = answerBlock(c, inc, cmd.choice)
       if (why) return fail(why)
       const out: GameEvent[] = []
@@ -744,35 +744,35 @@ function command(world: World, c: Campaign, cmd: Cmd): Result {
       const b = startBuilding(c, cmd.kind, cmd.yard)
       if (c.phase === 'season' && c.season) c.season.jobs.push(buildJob(c.season, b))
       const spec = P.BUILDINGS[cmd.kind]
-      const bought = cost.buyLogs > 0 || cost.buyStone > 0 ? `, including ${[cost.buyLogs > 0 ? `${Math.ceil(cost.buyLogs)} loads of logs` : '', cost.buyStone > 0 ? `${Math.ceil(cost.buyStone)} loads of stone` : ''].filter(Boolean).join(' and ')} you had to buy,` : ''
-      const when = c.phase === 'season' ? 'It\'s on the work list for whoever builds.' : c.phase === 'cellar' ? 'Anyone you keep on to build can put it up this winter.' : 'It goes on the work list when the season starts.'
-      return ok([note(c, 'building', 'info', `${article(spec.name, true)} ${spec.name.toLowerCase()} is started in ${YARD_NAME[cmd.yard]}. It costs $${withCommas(cost.total)}${bought} and takes ${spec.days} crew-days of building. ${when}`)])
+      const bought = cost.buyLogs > 0 || cost.buyStone > 0 ? `, 사야 하는 ${[cost.buyLogs > 0 ? `통나무 ${Math.ceil(cost.buyLogs)}트럭` : '', cost.buyStone > 0 ? `돌 ${Math.ceil(cost.buyStone)}트럭` : ''].filter(Boolean).join('과(와) ')} 포함,` : ''
+      const when = c.phase === 'season' ? '건축을 맡은 사람의 작업 목록에 오릅니다.' : c.phase === 'cellar' ? '겨울에 남겨둔 사람이 지을 수 있습니다.' : '시즌이 시작되면 작업 목록에 오릅니다.'
+      return ok([note(c, 'building', 'info', `${YARD_NAME[cmd.yard]}에 ${spec.name} 공사를 시작했습니다. 비용은 $${withCommas(cost.total)}${bought}이고 건축 ${spec.days}인일이 걸립니다. ${when}`)])
     }
     case 'rent': {
-      if (c.phase !== 'plan') return fail('You can only rent land in spring.')
-      if (!fieldIndex(cmd.field)) return fail('No such field.')
+      if (c.phase !== 'plan') return fail('땅은 봄에만 임차할 수 있습니다.')
+      if (!fieldIndex(cmd.field)) return fail('그런 밭이 없습니다.')
       const fp = c.fields[cmd.field]
       const name = FIELD_NAMES[cmd.field]
-      if (fp.tenure === 'owned') return fail(`You already own ${name}.`)
-      if (fp.tenure === 'rented') return fail(`You've already rented ${name} for this year.`)
-      if (PARCELS[cmd.field].holding !== 'field') return fail(`${name} isn't for rent. You can only buy it.`)
+      if (fp.tenure === 'owned') return fail(`이미 ${name}을(를) 소유하고 있습니다.`)
+      if (fp.tenure === 'rented') return fail(`이미 올해 ${name}을(를) 임차했습니다.`)
+      if (PARCELS[cmd.field].holding !== 'field') return fail(`${name}은(는) 임차할 수 없습니다. 사는 것만 가능합니다.`)
       fp.tenure = 'rented'
       c.plans[cmd.field] = defaultPlan(c, cmd.field)
-      return ok([note(c, 'rented', 'info', `You've rented ${name} for the year. The $${withCommas(PARCELS[cmd.field].rent)} rent is due when the season starts.`, cmd.field)])
+      return ok([note(c, 'rented', 'info', `${name}을(를) 올해 임차했습니다. 임차료 $${withCommas(PARCELS[cmd.field].rent)}는 시즌 시작 때 냅니다.`, cmd.field)])
     }
     case 'release': {
-      if (c.phase !== 'plan') return fail('You can only give up rented land in spring.')
-      if (!fieldIndex(cmd.field)) return fail('No such field.')
+      if (c.phase !== 'plan') return fail('임차한 땅은 봄에만 포기할 수 있습니다.')
+      if (!fieldIndex(cmd.field)) return fail('그런 밭이 없습니다.')
       const fp = c.fields[cmd.field]
       const name = FIELD_NAMES[cmd.field]
-      if (fp.tenure === 'owned') return fail(`You own ${name}, and land can't be sold back.`)
-      if (fp.tenure === 'none') return fail(`${name} isn't yours.`)
+      if (fp.tenure === 'owned') return fail(`${name}을(를) 소유하고 있고, 땅은 되팔 수 없습니다.`)
+      if (fp.tenure === 'none') return fail(`${name}은(는) 당신의 땅이 아닙니다.`)
       fp.tenure = 'none'
       c.plans[cmd.field] = { ...REST_PLAN }
       return ok([note(c, 'released', 'info', `${name} goes back to its owner.`, cmd.field)])
     }
     case 'buyLand': {
-      if (!fieldIndex(cmd.field)) return fail('No such field.')
+      if (!fieldIndex(cmd.field)) return fail('그런 밭이 없습니다.')
       const blocked = buyLandBlock(c, cmd.field, holdsDufour(c))
       if (blocked) return fail(blocked)
       const fp = c.fields[cmd.field]
@@ -785,7 +785,7 @@ function command(world: World, c: Campaign, cmd: Cmd): Result {
       c.mortgages.push({ field: cmd.field, loan: price - down, owed: price - down })
       fp.tenure = 'owned'
       if (was === 'none') c.plans[cmd.field] = defaultPlan(c, cmd.field)
-      return ok([note(c, 'landBought', 'good', `${name} is yours. You bought it for $${withCommas(price)}, with $${withCommas(down)} down and $${withCommas(price - down)} on the land mortgage.`, cmd.field)])
+      return ok([note(c, 'landBought', 'good', `${name}이(가) 당신의 것이 됐습니다. $${withCommas(price)}에 샀고, 계약금 $${withCommas(down)}, 땅 담보 대출 $${withCommas(price - down)}입니다.`, cmd.field)])
     }
     case 'stump': {
       const why = stumpBlock(c, cmd.field)
@@ -793,7 +793,7 @@ function command(world: World, c: Campaign, cmd: Cmd): Result {
       cost(c, P.STUMP_FEE)
       c.yearWorks += P.STUMP_FEE
       c.fields[cmd.field].works = { kind: 'stump', left: P.STUMP_DAYS }
-      return ok([note(c, 'stumping', 'info', `A contractor will pull the stumps on ${FIELD_NAMES[cmd.field]}. It costs $${withCommas(P.STUMP_FEE)} and takes about ${P.STUMP_DAYS} season days.`, cmd.field)])
+      return ok([note(c, 'stumping', 'info', `업자가 ${FIELD_NAMES[cmd.field]}의 그루터기를 뽑습니다. 비용은 $${withCommas(P.STUMP_FEE)}이고 시즌 약 ${P.STUMP_DAYS}일 걸립니다.`, cmd.field)])
     }
     case 'tile': {
       const why = tileBlock(c, cmd.field)
