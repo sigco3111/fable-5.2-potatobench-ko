@@ -769,7 +769,7 @@ function command(world: World, c: Campaign, cmd: Cmd): Result {
       if (fp.tenure === 'none') return fail(`${name}은(는) 당신의 땅이 아닙니다.`)
       fp.tenure = 'none'
       c.plans[cmd.field] = { ...REST_PLAN }
-      return ok([note(c, 'released', 'info', `${name} goes back to its owner.`, cmd.field)])
+      return ok([note(c, 'released', 'info', `${name}이(가) 주인에게 돌아갑니다.`, cmd.field)])
     }
     case 'buyLand': {
       if (!fieldIndex(cmd.field)) return fail('그런 밭이 없습니다.')

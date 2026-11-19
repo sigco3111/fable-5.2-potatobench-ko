@@ -457,7 +457,7 @@ export function labourInfo(c: Campaign): LabourInfo {
   const window = inSeason && pickersWindow(c)
   const from = formatDay(c.year, dayIndex(c.year, P.PICKERS_FROM.month, P.PICKERS_FROM.dom))
   const to = formatDay(c.year, dayIndex(c.year, P.PICKERS_TO.month, P.PICKERS_TO.dom))
-  const pickersWhy = !inSeason ? 'You can hire pickers during the harvest.' : !window ? `Schools only close for the harvest from ${from} to ${to}.` : ''
+  const pickersWhy = !inSeason ? '학생 일꾼은 수확기에 고용할 수 있습니다.' : !window ? `학교는 ${from}~${to} 수확기에만 휴업합니다.` : ''
   return {
     weekday: s ? WEEKDAYS[weekday(s.year, s.day)] : '',
     restDay: inSeason && !workday(c, s!),
@@ -505,7 +505,7 @@ export function landInfo(c: Campaign): LandInfo[] {
     let other = false
     for (let j = 0; j < P.FIELD_COUNT; j++) if (j !== i && PARCELS[j].block === 'dufour' && PARCELS[j].holding === 'field' && c.fields[j].tenure !== 'none') other = true
     const house = dufour && !other ? YARDS[1].cellar : 0
-    const timber = standing(fp.cover) ? `${fp.cover === 'woods' ? 'Woods' : 'Brush'} to clear. Expect about ${P.TIMBER[fp.cover]} loads of logs from ${P.FELL_DAYS[fp.cover]} crew-days of felling, then stumps to pull and rocks to pick.` : ''
+    const timber = standing(fp.cover) ? `${fp.cover === 'woods' ? '수림' : '관목'}을 개간해야 합니다. 벌목 약 ${P.FELL_DAYS[fp.cover]}인일로 통나무 약 ${P.TIMBER[fp.cover]}트럭이 나오고, 이어서 그루터기를 뽑고 돌을 골라야 합니다.` : ''
     const brings = timber || (!dufour ? '' : house > 0 ? `뒤푸르 감자 저장고가 딸려 오므로 저장량이 ${withCommas(house)} cwt 늘어납니다.`
       : '이미 있는 뒤푸르 감자 저장고를 함께 씁니다.')
     const down = Math.round(p.price * P.MORTGAGE_DOWN)
