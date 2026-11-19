@@ -405,25 +405,25 @@ function moneyBook(world: World, c: Campaign): { now: MoneyNow; fields: Map<numb
   const spent = c.yearCosts + spring
   const other = c.yearStorage + c.yearRent + c.yearLand + c.yearMortgage + c.yearWorks + c.yearBuilding + c.yearPacking + c.yearPenalties
   const kinds: MoneyPart[] = [
-    { label: 'seed and field work', amount: spent - c.yearWages - other - (c.yearEquip ?? 0) }, { label: 'equipment', amount: c.yearEquip ?? 0 },
-    { label: 'wages', amount: c.yearWages }, { label: 'rent', amount: c.yearRent }, { label: 'land', amount: c.yearLand },
-    { label: 'storage', amount: c.yearStorage }, { label: 'building', amount: c.yearBuilding + c.yearWorks }, { label: 'packing', amount: c.yearPacking },
-    { label: 'penalties', amount: c.yearPenalties }, { label: 'mortgage', amount: c.yearMortgage },
+    { label: '종자와 밭 작업', amount: spent - c.yearWages - other - (c.yearEquip ?? 0) }, { label: '장비', amount: c.yearEquip ?? 0 },
+    { label: '품값', amount: c.yearWages }, { label: '임차료', amount: c.yearRent }, { label: '땅', amount: c.yearLand },
+    { label: '저장', amount: c.yearStorage }, { label: '건축', amount: c.yearBuilding + c.yearWorks }, { label: '포장', amount: c.yearPacking },
+    { label: '위약금', amount: c.yearPenalties }, { label: '담보 대출', amount: c.yearMortgage },
   ].filter(p => p.amount >= 0.5).sort((a, b) => b.amount - a.amount)
   const parts: MoneyPart[] = [
-    { id: 'start', label: 'Cash at the start of the year', amount: cash - c.yearRevenue + spent },
-    { id: 'sold', label: 'Sold so far', amount: c.yearRevenue },
-    { id: 'spent', label: 'Spent so far', amount: -spent, of: kinds },
-    { id: 'stored', label: 'Stored crop', amount: stored },
-    { id: 'growing', label: 'Crop in the ground', amount: growing },
-    { id: 'rest', label: 'Oats and clover', amount: rest },
-    { id: 'stand', label: 'The farm stand, to the season\'s close', amount: stand },
-    { id: 'wages', label: 'Wages to the year end', amount: -wages },
-    { id: 'sprays', label: 'Sprays still to come', amount: -sprays },
-    { id: 'penalties', label: 'Contract penalties', amount: -penalties },
-    { id: 'bills', label: 'The bank payment and living costs', amount: -(P.NOTE_PAYMENT + P.LIVING) },
-    { id: 'mortgage', label: 'The land mortgage', amount: -mortgage },
-    { id: 'interest', label: 'Interest on what\'s left owed', amount: -interest },
+    { id: 'start', label: '연초 현금', amount: cash - c.yearRevenue + spent },
+    { id: 'sold', label: '지금까지 판매', amount: c.yearRevenue },
+    { id: 'spent', label: '지금까지 지출', amount: -spent, of: kinds },
+    { id: 'stored', label: '저장 작물', amount: stored },
+    { id: 'growing', label: '땅 속 작물', amount: growing },
+    { id: 'rest', label: '귀리와 클로버', amount: rest },
+    { id: 'stand', label: '직판장, 시즌 말까지', amount: stand },
+    { id: 'wages', label: '연말까지 품값', amount: -wages },
+    { id: 'sprays', label: '앞으로 남은 살포', amount: -sprays },
+    { id: 'penalties', label: '계약 위약금', amount: -penalties },
+    { id: 'bills', label: '은행 상환과 생계비', amount: -(P.NOTE_PAYMENT + P.LIVING) },
+    { id: 'mortgage', label: '땅 담보 대출', amount: -mortgage },
+    { id: 'interest', label: '남은 빚의 이자', amount: -interest },
   ].filter(p => Math.abs(p.amount) >= 0.5)
   const range = { lo: before - lo - owedAt(before - lo), hi: before + hi - owedAt(before + hi) }
   const callRisk = range.hi < P.CREDIT_LIMIT ? 'likely' : after < P.CREDIT_LIMIT ? 'possible' : 'none'
@@ -445,12 +445,12 @@ export function monthCost(c: Campaign): number {
 export function planCut(c: Campaign): { what: string; saves: number } | null {
   const pays = 1 + Math.floor((dayIndex(c.year, SEASON_CLOSE.month, SEASON_CLOSE.dom) - dayIndex(c.year, P.SEASON_START.month, P.SEASON_START.dom)) / P.WAGE_DAYS)
   const out: { what: string; saves: number }[] = []
-  for (const u of c.crew) if (u.kind !== 'farmer' && u.wage > 0) out.push({ what: `Letting ${u.name.split(' ')[0]} go`, saves: payOf(u) * pays })
+  for (const u of c.crew) if (u.kind !== 'farmer' && u.wage > 0) out.push({ what: `${u.name.split(' ')[0]}보내기`, saves: payOf(u) * pays })
   c.plans.forEach((p, i) => {
     if (!held(c, i) || c.fields[i].cover !== 'open') return
     const planting = p.crop === 'potato' ? P.FIELD_COST + (p.seed === 'certified' ? P.SEED_CWT_PER_FIELD * P.CERT_SEED_PER_CWT : 0) : P.REST_COST
-    if (c.fields[i].tenure === 'rented') out.push({ what: `Giving up ${FIELD_NAMES[i]}`, saves: PARCELS[i].rent + planting })
-    else if (p.crop === 'potato') out.push({ what: `Resting ${FIELD_NAMES[i]}`, saves: planting - P.REST_COST })
+    if (c.fields[i].tenure === 'rented') out.push({ what: `${FIELD_NAMES[i]} 포기`, saves: PARCELS[i].rent + planting })
+    else if (p.crop === 'potato') out.push({ what: `${FIELD_NAMES[i]} 휴경`, saves: planting - P.REST_COST })
   })
   return out.sort((a, b) => b.saves - a.saves)[0] ?? null
 }
@@ -484,20 +484,20 @@ export function planRescue(world: World, c: Campaign): { what: string; gains: nu
   if (c.phase !== 'plan') return null
   const was = moneyPlan(world, c).after
   const tries: { what: string; cmd: Cmd }[] = []
-  for (const b of c.spring?.bought ?? []) tries.push({ what: `Not buying the ${P.UPGRADES[b.upgrade].name.toLowerCase()}`, cmd: { t: 'unbuy', upgrade: b.upgrade } })
+  for (const b of c.spring?.bought ?? []) tries.push({ what: `${P.UPGRADES[b.upgrade].name} 사지 않기`, cmd: { t: 'unbuy', upgrade: b.upgrade } })
   for (const u of c.crew) {
     if (u.kind === 'farmer' || u.wage <= 0) continue
     const fresh = c.spring?.hired.some(x => x.unit === u.id)
-    tries.push({ what: `${fresh ? 'Not hiring' : 'Letting'} ${u.name.split(' ')[0]}${fresh ? '' : ' go'}`, cmd: fresh ? { t: 'unhire', unit: u.id } : { t: 'dismiss', unit: u.id } })
+    tries.push({ what: fresh ? `${u.name.split(' ')[0]} 고용 취소` : `${u.name.split(' ')[0]}보내기`, cmd: fresh ? { t: 'unhire', unit: u.id } : { t: 'dismiss', unit: u.id } })
   }
   const grown = c.plans.find((p, i) => held(c, i) && p.crop === 'potato')?.variety ?? 'katahdin'
   c.plans.forEach((p, i) => {
     if (!held(c, i) || c.fields[i].cover !== 'open') return
-    if (c.fields[i].tenure === 'rented') tries.push({ what: `Giving up ${FIELD_NAMES[i]}`, cmd: { t: 'release', field: i } })
+    if (c.fields[i].tenure === 'rented') tries.push({ what: `${FIELD_NAMES[i]} 포기`, cmd: { t: 'release', field: i } })
     if (p.crop === 'potato') {
-      tries.push({ what: `Resting ${FIELD_NAMES[i]}`, cmd: { t: 'plan', field: i, plan: { ...p, crop: 'rest' } } })
-      if (p.seed === 'certified') tries.push({ what: `Saved seed in ${FIELD_NAMES[i]}`, cmd: { t: 'plan', field: i, plan: { ...p, seed: 'saved' } } })
-    } else tries.push({ what: `Planting ${FIELD_NAMES[i]}`, cmd: { t: 'plan', field: i, plan: { crop: 'potato', variety: grown, seed: 'certified' } } })
+      tries.push({ what: `${FIELD_NAMES[i]} 휴경`, cmd: { t: 'plan', field: i, plan: { ...p, crop: 'rest' } } })
+      if (p.seed === 'certified') tries.push({ what: `${FIELD_NAMES[i]}에 자가 종자`, cmd: { t: 'plan', field: i, plan: { ...p, seed: 'saved' } } })
+    } else tries.push({ what: `${FIELD_NAMES[i]}에 파종`, cmd: { t: 'plan', field: i, plan: { crop: 'potato', variety: grown, seed: 'certified' } } })
   })
   let best: { what: string; gains: number } | null = null
   for (const t of tries) {
@@ -678,67 +678,67 @@ function causeText(a: MoneyLook, b: MoneyLook, part: string, x: number, d: Recor
     out.remedy = remedyFor(why, now)
     const days = now.unsprayed
     switch (why) {
-      case 'dry': return `${name} dry`
-      case 'scab': return `Scab in ${name}, dry soil`
-      case 'blight': return now.protect >= 0.35 ? `Blight in ${name}` : days < 0 ? `Blight in ${name}, never sprayed` : `${name} unsprayed ${days} days`
-      case 'frost': return `Frost hit ${name}`
-      case 'virus': return `Virus in ${name}`
-      default: return `Weeds in ${name}, never hilled`
+      case 'dry': return `${name} 건조`
+      case 'scab': return `${name} 더뎅이병, 마른 흙`
+      case 'blight': return now.protect >= 0.35 ? `${name} 역병` : days < 0 ? `${name} 역병, 한 번도 살포 안 함` : `${name} ${days}일째 살포 안 함`
+      case 'frost': return `${name}에 서리`
+      case 'virus': return `${name} 바이러스`
+      default: return `${name} 잡초, 북주기 안 함`
     }
   }
   if (part === 'price') {
     const ids = Object.entries(moved).filter(([, p]) => Math.sign(p) === Math.sign(x)).sort((p, q) => Math.abs(q[1]) - Math.abs(p[1]))
-    return ids.length === 1 || (ids.length && Math.abs(ids[0][1]) >= Math.abs(x) * 0.8) ? `${variety(ids[0][0] as VarietyId).name} price ${up ? 'rose' : 'fell'}` : `Potato prices ${up ? 'rose' : 'fell'}`
+    return ids.length === 1 || (ids.length && Math.abs(ids[0][1]) >= Math.abs(x) * 0.8) ? `${variety(ids[0][0] as VarietyId).name} 가격 ${up ? '상승' : '하락'}` : `감자 가격 ${up ? '상승' : '하락'}`
   }
   if (part === 'keeping') {
     const facts = (l: MoneyLook) => Object.values(l.fields).map(f => f.facts).filter(f => !!f)
     const count = (l: MoneyLook, k: 'sprouted' | 'broke') => facts(l).reduce((t, f) => t + f![k], 0)
-    if (!up && count(b, 'broke') > count(a, 'broke')) return 'Rot in the potato house'
-    if (!up && count(b, 'sprouted') > count(a, 'sprouted')) return 'Stored crop sprouted'
-    return up ? 'Stored crop' : 'Storage, shrink and rot'
+    if (!up && count(b, 'broke') > count(a, 'broke')) return '감자 저장고의 부패'
+    if (!up && count(b, 'sprouted') > count(a, 'sprouted')) return '저장 작물의 싹틈'
+    return up ? '저장 작물' : '저장, 감모와 부패'
   }
   if (part === 'crops') {
     const top = Object.entries(d).filter(([k, v]) => k.startsWith('crop:') && Math.sign(v) === Math.sign(x)).sort((p, q) => Math.abs(q[1]) - Math.abs(p[1]))[0]
-    if (!top) return `Fields look ${up ? 'heavier' : 'lighter'}`
+    if (!top) return `밭 작황이 ${up ? '좋아짐' : '나빠짐'}`
     const i = Number(top[0].slice(5))
-    return seen(i, FIELD_NAMES[i], true) || `Fields look ${up ? 'heavier' : 'lighter'}, ${FIELD_NAMES[i]} most`
+    return seen(i, FIELD_NAMES[i], true) || `밭 작황이 ${up ? '좋아짐' : '나빠짐'}, ${FIELD_NAMES[i]}이(가) 가장 큼`
   }
   if (part.startsWith('crop:')) {
     const i = Number(part.slice(5))
     const name = FIELD_NAMES[i]
     const was = last.fields[i]?.facts ?? a.fields[i]?.facts, now = b.fields[i]?.facts
-    if (!now) return `Crop from ${name}`
-    if (was && was.status !== 'lost' && now.status === 'lost') return `${name} left in the ground`
-    if (now.revenue > (was?.revenue ?? 0) + 0.5) return b.contracts > a.contracts + 0.5 ? `${name} delivered on contract` : `${name} sold`
-    if (now.weighed && !was?.weighed) return `${name} weighed in ${up ? 'heavy' : 'light'}`
-    if (now.killed && !was?.killed) return `Vines killed in ${name}`
-    if (now.dead && !was?.dead) return `Vines died in ${name}`
-    if (now.rogued > (was?.rogued ?? 0)) return `Blight pulled in ${name}`
-    if (now.frost > (was?.frost ?? 0) + 0.5) return `Barrels froze in ${name}`
-    if (now.dug > (was?.dug ?? 0)) return `${name} dug ${up ? 'heavy' : 'light'}`
+    if (!now) return `${name}의 수확`
+    if (was && was.status !== 'lost' && now.status === 'lost') return `${name}이(가) 땅에 남겨짐`
+    if (now.revenue > (was?.revenue ?? 0) + 0.5) return b.contracts > a.contracts + 0.5 ? `${name} 계약 납품` : `${name} 판매`
+    if (now.weighed && !was?.weighed) return `${name} 계근 ${up ? '많음' : '적음'}`
+    if (now.killed && !was?.killed) return `${name} 줄기 죽임`
+    if (now.dead && !was?.dead) return `${name} 줄기 마름`
+    if (now.rogued > (was?.rogued ?? 0)) return `${name}에서 병든 포기 뽑음`
+    if (now.frost > (was?.frost ?? 0) + 0.5) return `${name}의 통이 얼어버림`
+    if (now.dug > (was?.dug ?? 0)) return `${name} 수확 ${up ? '많음' : '적음'}`
     const told = seen(i, name, false)
     if (told) return told
-    if (now.samples > (was?.samples ?? 0)) return `${name}'s test dig came ${up ? 'heavy' : 'light'}`
-    if (now.set && !was?.set) return `Tubers set in ${name}`
+    if (now.samples > (was?.samples ?? 0)) return `${name} 시험 캐기 ${up ? '많음' : '적음'}`
+    if (now.set && !was?.set) return `${name}에 감자 맺힘`
     // A crop that is in no longer "looks" anything: it brought, or is worth, more or less than was counted.
-    if (now.revenue > 0.5) return `${name} brought ${up ? 'more' : 'less'} than counted`
-    if (now.weighed) return `${name}'s stored crop worth ${up ? 'more' : 'less'}`
-    return `${name} looks ${up ? 'heavier' : 'lighter'}`
+    if (now.revenue > 0.5) return `${name}이(가) 예상보다 ${up ? '많이' : '적게'} 벌림`
+    if (now.weighed) return `${name}의 저장 작물 가치 ${up ? '높아짐' : '낮아짐'}`
+    return `${name} 작황이 ${up ? '좋아짐' : '나빠짐'}`
   }
   if (part === 'wages') {
     const hired = b.crew.filter(u => !a.crew.some(w => w.id === u.id))
     const gone = a.crew.filter(u => !b.crew.some(w => w.id === u.id))
-    if (!up && hired.length) return `${first(hired[0].name)}'s wages to year end`
-    if (up && gone.length) return `No more wages for ${first(gone[0].name)}`
-    if (!up && b.pickers && !a.pickers) return 'Pickers\' wages'
-    return up ? 'Less to pay in wages' : 'More to pay in wages'
+    if (!up && hired.length) return `${first(hired[0].name)}의 연말까지 품값`
+    if (up && gone.length) return `${first(gone[0].name)}의 품값이 없어짐`
+    if (!up && b.pickers && !a.pickers) return '학생 일꾼 품값'
+    return up ? '품값 부담이 줄어듦' : '품값 부담이 늘어남'
   }
   const WORDS: Record<string, [string, string]> = {
-    orders: ['Field work', 'Field work'], sprays: ['Fewer sprays to pay for', 'Keeping the fields sprayed'], rest: ['Oats and clover', 'Oats and clover'],
-    penalties: ['Contract nearer filled', 'Contract looks short'], storage: ['Storage', 'Storage'], rent: ['Rent', 'Rent'], land: ['Land', 'Land bought'],
-    contractor: ['Contractors', 'Contractors'], building: ['Building', 'Building'], packing: ['Packing', 'Packing'], mortgage: ['Land mortgage', 'Land mortgage'],
-    bills: ['Year-end bills', 'Year-end bills'], logs: ['Logs sold', 'Logs'], stand: ['The farm stand\'s sales', 'Fewer days of the farm stand'], other: ['Other sales', 'Other costs'],
-    interest: ['Less interest owed', 'Interest on what\'s owed'], start: ['Opening cash', 'Opening cash'],
+    orders: ['밭 작업', '밭 작업'], sprays: ['살포 비용이 줄어듦', '밭 살포 유지'], rest: ['귀리와 클로버', '귀리와 클로버'],
+    penalties: ['계약 이행에 가까워짐', '계약 이행이 모자라 보임'], storage: ['저장', '저장'], rent: ['임차료', '임차료'], land: ['땅', '땅 구입'],
+    contractor: ['업자', '업자'], building: ['건축', '건축'], packing: ['포장', '포장'], mortgage: ['땅 담보 대출', '땅 담보 대출'],
+    bills: ['연말 청구서', '연말 청구서'], logs: ['통나무 판매', '통나무'], stand: ['직판장 판매', '직판장 영업일이 줄어듦'], other: ['기타 판매', '기타 비용'],
+    interest: ['이자 부담이 줄어듦', '빚의 이자'], start: ['연초 현금', '연초 현금'],
   }
   return (WORDS[part] ?? [part, part])[up ? 0 : 1]
 }
@@ -877,18 +877,18 @@ export function yearStory(y: YearSummary): YearStory {
   const other = y.revenue - y.restIncome - y.contracts - y.logs - y.stand
   const growingCost = y.costs - y.wages - y.rent - y.land - y.storage - y.building - y.works - y.mortgage - y.penalties - y.packing
   const lines: MoneyPart[] = [
-    { label: 'Potato sales', amount: other },
-    { label: 'Contract deliveries', amount: y.contracts },
-    { label: 'Oats and clover', amount: y.restIncome },
-    { label: 'Logs and the farm stand', amount: y.logs + y.stand },
-    { label: 'Growing costs, equipment and field work', amount: -growingCost },
-    { label: 'Wages', amount: -y.wages },
-    { label: 'Rent and land', amount: -(y.rent + y.land + y.mortgage) },
-    { label: 'Buildings and contractors', amount: -(y.building + y.works) },
-    { label: 'Storage and packing', amount: -(y.storage + y.packing) },
-    { label: 'Contract penalties', amount: -y.penalties },
-    { label: 'The bank payment and your family\'s living costs', amount: -(y.note + y.living) },
-    { label: 'Interest on the loan', amount: -y.interest },
+    { label: '감자 판매', amount: other },
+    { label: '계약 납품', amount: y.contracts },
+    { label: '귀리와 클로버', amount: y.restIncome },
+    { label: '통나무와 직판장', amount: y.logs + y.stand },
+    { label: '재배비, 장비와 밭 작업', amount: -growingCost },
+    { label: '품값', amount: -y.wages },
+    { label: '임차료와 땅', amount: -(y.rent + y.land + y.mortgage) },
+    { label: '건물과 업자', amount: -(y.building + y.works) },
+    { label: '저장과 포장', amount: -(y.storage + y.packing) },
+    { label: '계약 위약금', amount: -y.penalties },
+    { label: '은행 상환과 가족 생계비', amount: -(y.note + y.living) },
+    { label: '대출 이자', amount: -y.interest },
   ]
   const reasons = lines.filter(l => Math.abs(l.amount) >= 0.5).sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount)).slice(0, 3)
   return { year: y.year, began: y.cashStart, ended: y.cashEnd, reasons }
@@ -903,9 +903,9 @@ export function goalCosts(c: Campaign): GoalCost[] {
   const out: GoalCost[] = []
   const cash = (cost: number) => spendBlock(c, cost, 'equipment')
   const tract = TRACTS.find(i => c.fields[i].tenure !== 'none' && c.fields[i].cover === 'stumps') ?? -1
-  out.push({ id: 'stump', label: 'Pull the stumps', cost: P.STUMP_FEE, can: tract >= 0 && !stumpBlock(c, tract), why: tract < 0 ? 'You have no felled tract with stumps to pull.' : stumpBlock(c, tract) })
+  out.push({ id: 'stump', label: '그루터기 뽑기', cost: P.STUMP_FEE, can: tract >= 0 && !stumpBlock(c, tract), why: tract < 0 ? '그루터기를 뽑을 벌목한 구역이 없습니다.' : stumpBlock(c, tract) })
   const bottom = c.fields.findIndex((f, i) => f.tenure === 'owned' && f.cover === 'open' && f.elev === 0 && !f.tiled && i >= 0)
-  out.push({ id: 'tile', label: 'Lay tile drains', cost: P.TILE_FEE, can: bottom >= 0 && !tileBlock(c, bottom), why: bottom < 0 ? 'You don\'t own any bottom land that still needs tile.' : tileBlock(c, bottom) })
+  out.push({ id: 'tile', label: '암거 배수관 설치', cost: P.TILE_FEE, can: bottom >= 0 && !tileBlock(c, bottom), why: bottom < 0 ? '배수관이 필요한 골짜기 땅을 소유하고 있지 않습니다.' : tileBlock(c, bottom) })
   for (const kind of P.BUILDING_KINDS as BuildingKind[]) {
     const cost = buildCost(c, kind).total
     const why = buildBlock(c, kind, HOME_YARD, holdsAnyDufour(c))
@@ -913,18 +913,18 @@ export function goalCosts(c: Campaign): GoalCost[] {
   }
   for (const id of Object.keys(P.UPGRADES) as UpgradeId[]) {
     const u = P.UPGRADES[id]
-    const why = c.upgrades[id] ? 'You already own it.' : c.phase !== 'plan' && c.phase !== 'season' && c.phase !== 'cellar' ? 'You can buy equipment in spring, during the season, or in winter.' : cash(u.cost)
+    const why = c.upgrades[id] ? '이미 갖고 있습니다.' : c.phase !== 'plan' && c.phase !== 'season' && c.phase !== 'cellar' ? '장비는 봄, 시즌 중, 또는 겨울에 살 수 있습니다.' : cash(u.cost)
     out.push({ id: `buy:${id}`, label: u.name, cost: u.cost, can: !why, why })
   }
-  const roomWhy = hiredCount(c) >= housingLimit(c) ? 'Every place to live is taken, and a bunkhouse adds six more.' : c.phase !== 'plan' && c.phase !== 'season' ? 'You can hire in spring or during the season.' : ''
-  out.push({ id: 'hire', label: 'Hire someone', cost: P.HAND_WAGE, can: !roomWhy, why: roomWhy })
+  const roomWhy = hiredCount(c) >= housingLimit(c) ? '살 곳이 다 찼고, 숙소를 지으면 여섯 자리가 더 납니다.' : c.phase !== 'plan' && c.phase !== 'season' ? '고용은 봄이나 시즌 중에 할 수 있습니다.' : ''
+  out.push({ id: 'hire', label: '사람 고용', cost: P.HAND_WAGE, can: !roomWhy, why: roomWhy })
   const hand = c.crew.find(u => u.kind !== 'farmer' && !u.foreman)
-  const foremanWhy = !hand ? 'A foreman has to be one of your hired people, so hire someone first.' : ''
-  out.push({ id: 'foreman', label: 'Name a foreman', cost: hand ? Math.round(hand.wage * (P.FOREMAN_PAY - 1)) : Math.round(P.HAND_WAGE * (P.FOREMAN_PAY - 1)), can: !foremanWhy, why: foremanWhy })
+  const foremanWhy = !hand ? '작업반장은 고용한 사람 중에서 뽑으니, 먼저 사람을 고용하세요.' : ''
+  out.push({ id: 'foreman', label: '작업반장 임명', cost: hand ? Math.round(hand.wage * (P.FOREMAN_PAY - 1)) : Math.round(P.HAND_WAGE * (P.FOREMAN_PAY - 1)), can: !foremanWhy, why: foremanWhy })
   const field = PARCELS.findIndex((p, i) => p.holding === 'field' && c.fields[i].tenure === 'none')
   if (field >= 0) {
     const rent = PARCELS[field].rent
-    out.push({ id: 'rent', label: 'Rent a field', cost: rent, can: c.phase === 'plan', why: c.phase === 'plan' ? '' : 'You can only rent land in spring.' })
+    out.push({ id: 'rent', label: '밭 임차', cost: rent, can: c.phase === 'plan', why: c.phase === 'plan' ? '' : '땅은 봄에만 임차할 수 있습니다.' })
   }
   return out
 }
@@ -1041,17 +1041,17 @@ export function plantingIn(world: World, c: Campaign): number {
 export function plantReady(world: World, c: Campaign, field: number): PlantReady {
   const s = c.season
   const need = P.PLANT_SOIL_C, rots = P.PLANT_ROT_C
-  if (!s) return { ok: false, soilT: 0, need, rots, why: 'Planting happens during the season.' }
+  if (!s) return { ok: false, soilT: 0, need, rots, why: '파종은 시즌 중에 합니다.' }
   const soilT = s.soilT
-  const f = (x: number) => Math.round(x * 9 / 5 + 32)
+  const f = (x: number) => Math.round(x)
   // Too early or too cold, said once with the soil's reading and the day to wait for: the card, the advice and the
   // coach all read this sentence.
   if (s.day < dayIndex(s.year, P.PLANT_FROM.month, P.PLANT_FROM.dom) || soilT < need) {
     const wait = plantingIn(world, c)
-    const until = wait > 0 ? `wait until about ${formatDay(s.year, s.day + wait)}` : 'wait for it to warm up'
-    return { ok: false, soilT, need, rots, why: soilT < need ? `The soil here is ${f(soilT)}°F and seed needs ${f(need)}°F or it can rot, so ${until}.` : `It's too early, since a cold spell can still rot the seed, so ${until}.` }
+    const until = wait > 0 ? `약 ${formatDay(s.year, s.day + wait)}까지 기다리세요` : '따뜻해질 때까지 기다리세요'
+    return { ok: false, soilT, need, rots, why: soilT < need ? `여기 흙은 ${f(soilT)}°C이고 종자는 ${f(need)}°C가 필요하며 아니면 썩을 수 있으니, ${until}.` : `아직 이릅니다. 추위가 종자를 썩힐 수 있으니, ${until}.` }
   }
-  if (fieldInfo(c, field).tooWet) return { ok: false, soilT, need, rots, why: 'It\'s too wet to work, but it\'ll dry in a day or two.' }
-  return { ok: true, soilT, need, rots, why: `The soil here is ${f(soilT)}°F and dry enough to work.` }
+  if (fieldInfo(c, field).tooWet) return { ok: false, soilT, need, rots, why: '너무 젖어 일할 수 없지만 하루 이틀이면 마릅니다.' }
+  return { ok: true, soilT, need, rots, why: `여기 흙은 ${f(soilT)}°C이고 일하기에 충분히 말랐습니다.` }
 }
 
