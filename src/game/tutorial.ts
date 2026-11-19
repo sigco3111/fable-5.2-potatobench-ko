@@ -419,9 +419,9 @@ export const LESSONS: Lesson[] = [
     done: (_l, g) => g.has('select:plan'),
     ask: l => {
       const i = potatoField(l.c)
-      return l.input === 'keys' && l.c ? `It's a new spring. Press ${digitOf(l.c, i) || '1'} to choose what ${name(i)} grows.` : `It's a new spring. ${click(l)} a field's tag to choose what it grows.`
+      return l.input === 'keys' && l.c ? `새봄입니다. ${digitOf(l.c, i) || '1'}을(를) 눌러 ${name(i)}에 심을 것을 고르세요.` : `새봄입니다. 밭의 태그를 ${l.input === 'touch' ? '탭해' : '클릭해'} 심을 것을 고르세요.`
     },
-    why: l => (l.c?.seedStock.some(x => x.fields > 0) ? 'Seed saved from your cellar is free but can carry virus, while certified seed is clean.' : 'Each variety yields, stores and sells differently. Compare them all shows them side by side.'),
+    why: l => (l.c?.seedStock.some(x => x.fields > 0) ? '저장고에서 남긴 종자는 공짜지만 바이러스를 옮길 수 있고, 인증 종자는 깨끗합니다.' : '품종마다 수확량, 저장성, 판매가 다릅니다. 모두 비교하기에서 나란히 볼 수 있습니다.'),
     point: l => (l.input === 'keys' ? { field: potatoField(l.c) } : { fields: potatoFields(l.c) }),
   },
   {
@@ -431,33 +431,33 @@ export const LESSONS: Lesson[] = [
     // (a field that can be planted: a tract's record offers clearing, not a crop)
     when: (l, g) => l.screen === 'plan' && !!l.c && l.c.history.length > 0 && g.passed('seed') && l.selection.length > 0 && S.held(l.c, l.selection[0]) && l.c.fields[l.selection[0]].cover === 'open',
     done: (l, g, since) => g.has('noted:crop') || (!!since && l.selection.length === 0),
-    ask: l => `Choose potatoes or a rest year for ${name(l.selection[0] ?? 0)}, and which variety to grow.`,
-    why: l => `Take your time. ${by(l, 'Click', 'Tap', 'Press')} Got it or close the record when you're done, and I'll go on.`,
+    ask: l => `${name(l.selection[0] ?? 0)}에 감자 또는 휴경을 선택하고, 어떤 품종을 심을지 고르세요.`,
+    why: l => `천천히 하세요. 다 하면 ${by(l, '알겠습니다를 클릭하거나', '알겠습니다를 탭하거나', '알겠습니다를 누르거나')} 기록을 닫으세요. 이어가겠습니다.`,
   },
   {
     id: 'people', part: 'spring', name: '일꾼 고용', uses: ['fold:crew'],
     when: l => l.screen === 'plan' && !!l.c && l.c.history.length > 0,
     done: (l, g) => g.has('fold:crew') || (!!l.c && l.c.crew.length > 1),
-    ask: l => `${l.input === 'touch' ? 'Tap' : 'Open'} People to see who's looking for work and what each person is best at.`,
+    ask: l => `사람들을 ${l.input === 'touch' ? '탭해' : '열어'} 일자리를 찾는 사람과 각자 잘하는 일을 보세요.`,
     // (Twelve two-year farms of the reference practice: a hire in year two works about a day in five and costs more
     // than it brings, so the note says when help pays instead of asking for a hire.)
-    why: () => 'You can farm these fields alone. A hire is for when there\'s more work than you can do: more land, or woods to clear.',
+    why: () => '이 밭들은 혼자서도 농사지을 수 있습니다. 고용은 일이 감당보다 많을 때, 땅이 더 있거나 숲을 개간할 때를 위한 것입니다.',
     point: () => ({ testid: ['crew-open'] }),
   },
   {
     id: 'hire', part: 'spring', name: '고용할 사람 고르기', read: true, follows: true,
     when: (l, g) => l.screen === 'plan' && l.fold === 'crew' && g.passed('people') && !!l.c && l.c.crew.length === 1,
     done: (l, g, since) => g.has('noted:hire') || (!!l.c && l.c.crew.length > 1) || (!!since && l.fold !== 'crew'),
-    ask: l => `Each person asks for a monthly wage. ${by(l, 'Click Hire next to the one you want.', 'Tap Hire next to the one you want.', 'Press Tab to reach Hire next to the one you want.')}`,
-    why: () => 'Each person\'s best skill is marked. You can also wait, because you can farm alone for another year.',
+    ask: l => `사람마다 월급을 요구합니다. ${by(l, '원하는 사람 옆의 고용을 클릭하세요.', '원하는 사람 옆의 고용을 탭하세요.', 'Tab으로 원하는 사람 옆의 고용까지 이동하세요.')}`,
+    why: () => '각자의 최고 기술이 표시돼 있습니다. 기다려도 됩니다. 또 1년은 혼자 농사지을 수 있습니다.',
     point: () => ({ testid: ['applicant-hire-*', 'hire-*'] }),
   },
   {
     id: 'land', part: 'spring', name: '땅 임대·구매', uses: ['fold:land'],
     when: l => l.screen === 'plan' && !!l.c && l.c.history.length > 0,
     done: (l, g) => g.has('fold:land') || (!!l.c && l.c.fields.some((f, i) => i < S.TRACTS[0] && i >= 6 && f.tenure !== 'none')),
-    ask: l => `${l.input === 'touch' ? 'Tap' : 'Open'} Land to rent a field by the year or buy one with a mortgage.`,
-    why: () => 'More land means more crop and more work. You can also clear woods and brush to make new fields.',
+    ask: l => `땅을 ${l.input === 'touch' ? '탭해' : '열어'} 밭을 연 단위로 임대하거나 대출을 끼고 사세요.`,
+    why: () => '땅이 많으면 수확도 일도 늘어납니다. 숲과 덤불을 개간해 새 밭을 만들 수도 있습니다.',
     point: () => ({ testid: ['land-open'] }),
   },
   {
@@ -466,15 +466,15 @@ export const LESSONS: Lesson[] = [
     id: 'lots', part: 'spring', name: '땅 살펴보기', read: true, follows: true,
     when: (l, g) => l.screen === 'plan' && l.fold === 'land' && g.passed('land') && !!l.c && l.c.history.length > 0,
     done: (l, g, since) => g.has('noted:lots') || (!!since && l.fold !== 'land'),
-    ask: () => 'Each lot lists its rent for the year, then its price to buy.',
-    why: l => `More land is a choice, and the land you have is enough for now. ${by(l, 'Click', 'Tap', 'Press')} Got it when you've looked, and I'll go on.`,
+    ask: () => '각 필지에 연 임대료와 매입가가 나와 있습니다.',
+    why: l => `땅을 늘리는 것은 선택이며 지금 가진 땅으로 충분합니다. 다 보면 ${by(l, '알겠습니다를 클릭하세요', '알겠습니다를 탭하세요', '알겠습니다를 누르세요')}. 이어가겠습니다.`,
   },
   {
     id: 'loan', part: 'spring', name: '돈과 봄 대출', uses: ['paper:money'],
     when: l => l.screen === 'plan' && !!l.c && l.c.history.length > 0,
     done: (_l, g) => g.has('paper:money') || g.has('noted:loan'),
-    ask: l => `${l.input === 'touch' ? 'Tap' : 'Click'} See the money to check what this plan costs and how much the spring loan covers.`,
-    why: () => 'The bank lends you money each spring, and your yearly bank payment is due at the end of the year.',
+    ask: l => `돈 보기를 ${l.input === 'touch' ? '탭해' : '클릭해'} 이 계획의 비용과 봄 대출이 얼마나 대는지 확인하세요.`,
+    why: () => '은행이 매년 봄 돈을 빌려주고, 연간 상환금은 연말에 냅니다.',
     point: () => ({ testid: ['money-open'] }),
   },
   {
@@ -482,16 +482,16 @@ export const LESSONS: Lesson[] = [
     when: l => l.screen === 'plan' && !!l.c && l.c.history.length > 0,
     done: (l, _g, since) => !!since && !!l.c && l.c.phase !== 'plan',
     // The walk's closing line.
-    ask: l => by(l, 'That\'s the plan. Click Start the season when you\'re ready.', 'That\'s the plan. Tap Start the season when you\'re ready.', 'That\'s the plan. Start the season when you\'re ready.'),
-    why: () => 'Machines and contracts can wait until a later spring.',
+    ask: l => by(l, '계획이 끝났습니다. 준비되면 시즌 시작을 클릭하세요.', '계획이 끝났습니다. 준비되면 시즌 시작을 탭하세요.', '계획이 끝났습니다. 준비되면 시즌을 시작하세요.'),
+    why: () => '기계와 계약은 나중 봄까지 기다려도 됩니다.',
     point: () => ({ testid: ['begin-season'] }),
   },
   {
     id: 'calls2', part: 'spring', name: '이번 시즌의 결정', read: true,
     when: l => inSeason(l) && !!l.c && l.c.history.length > 0,
     done: (_l, g) => g.has('noted:calls2'),
-    ask: () => 'It\'s a new season. The game pauses when the soil is ready, and planting waits for you.',
-    why: () => 'Your other big decisions are spray, water and kill the vines, and a stamp appears when one is due.',
+    ask: () => '새 시즌입니다. 흙이 준비되면 게임이 멈추고 파종이 당신을 기다립니다.',
+    why: () => '다른 큰 결정은 살포, 물주기, 줄기 죽이기이며, 때가 되면 도장이 나타납니다.',
   },
   {
     id: 'hand', part: 'spring', name: '고용한 일꾼 만나기', read: true, uses: ['unit:hand'],
@@ -499,9 +499,9 @@ export const LESSONS: Lesson[] = [
     done: (_l, g) => g.has('unit:hand') || g.has('noted:hand'),
     ask: l => {
       const n = first(hand(l)?.name ?? 'A hand')
-      return by(l, `Click ${n}'s face to see what they're good at.`, `Tap ${n}'s face to see what they're good at.`, `Select ${n}'s name at the bottom to see what they're good at.`)
+      return by(l, `${n}의 얼굴을 클릭해 잘하는 일을 보세요.`, `${n}의 얼굴을 탭해 잘하는 일을 보세요.`, `아래쪽에서 ${n}의 이름을 선택해 잘하는 일을 보세요.`)
     },
-    why: () => 'While someone is selected, any orders you give go only to them.',
+    why: () => '사람을 선택한 동안에는 지시가 그 사람에게만 갑니다.',
     point: l => { const u = hand(l); return u ? { unit: u.id } : null },
     asks: () => true,
   },
@@ -509,8 +509,8 @@ export const LESSONS: Lesson[] = [
     id: 'grid', part: 'spring', name: '각자의 일', read: true, uses: ['open:work-grid'],
     when: l => inSeason(l) && !!l.c && l.c.crew.length >= 3,
     done: (l, g) => g.has('open:work-grid') || g.has('noted:grid') || !!l.c?.crew.some(u => u.foreman !== ''),
-    ask: l => by(l, 'Click the grid at the bottom to see who does what and which jobs each person does first.', 'Tap the grid at the bottom to see who does what and which jobs each person does first.', 'Press G to open the grid and see who does what and which jobs each person does first.'),
-    why: () => 'People get better at the work they do, so put someone who\'s good with machines on the tractor.',
+    ask: l => by(l, '아래쪽 배치도를 클릭해 누가 무엇을 하는지, 각자 어떤 일을 먼저 하는지 보세요.', '아래쪽 배치도를 탭해 누가 무엇을 하는지, 각자 어떤 일을 먼저 하는지 보세요.', 'G를 눌러 배치도를 열어 누가 무엇을 하는지, 각자 어떤 일을 먼저 하는지 보세요.'),
+    why: () => '사람은 하는 일에 능숙해지므로, 기계에 강한 사람을 트랙터에 배치하세요.',
     point: () => ({ testid: ['grid-open'] }),
   },
   {
@@ -519,8 +519,8 @@ export const LESSONS: Lesson[] = [
     // home for them to run. With one hand it would take the only help out of the field for 40% more pay.
     when: (l, g) => inSeason(l) && hands(l).length >= 2 && beyond(l) && g.passed('hand') && !!l.c && S.goalCosts(l.c).some(x => x.id === 'foreman' && x.can),
     done: (l, g) => g.has('noted:foreman') || !!l.c?.crew.some(u => u.foreman !== ''),
-    ask: () => 'A foreman orders the work on your fields away from home each morning, so nothing out there waits for you.',
-    why: l => `Name one with Foreman on ${first(hand(l)?.name ?? 'their')}'s card. They earn 40% more and stop field work.`,
+    ask: () => '작업반장은 매일 아침 집에서 먼저 밭의 일을 지시하므로, 그곳의 일이 당신을 기다리지 않습니다.',
+    why: l => `${first(hand(l)?.name ?? '그')}의 카드에서 작업반장으로 지정하세요. 월급이 40% 오르고 밭일은 그만둡니다.`,
     point: () => ({ testid: ['person-foreman'] }),
     show: l => { const u = hand(l); return u ? { unit: u.id, foreman: true } : null },
   },
@@ -529,12 +529,12 @@ export const LESSONS: Lesson[] = [
 const BY_ID = new Map(LESSONS.map(x => [x.id, x]))
 export function lesson(id: string): Lesson | undefined { return BY_ID.get(id) }
 
-export const PART_NAME: Record<Part, string> = { opening: 'Getting started', year: 'Your first year', spring: 'Your second spring' }
+export const PART_NAME: Record<Part, string> = { opening: '시작하기', year: '첫 해', spring: '둘째 해 봄' }
 // The heading on a note: its part's name, or the year the farm is really in when a lesson is met later than that.
 export function partName(part: Part, c: S.Campaign | null): string {
   const n = (c?.history.length ?? 0) + 1
-  if (part === 'year' && n > 1) return `Year ${n}`
-  if (part === 'spring' && n !== 2) return `Spring, year ${n}`
+  if (part === 'year' && n > 1) return `${n}년 차`
+  if (part === 'spring' && n !== 2) return `${n}년 차 봄`
   return PART_NAME[part]
 }
 
