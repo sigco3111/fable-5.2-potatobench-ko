@@ -190,9 +190,9 @@ export function needsHand(c: Campaign): boolean {
 // decision and when it comes. Never a job that is not theirs. Null when the next step is the player's own to take.
 // What the forecast says about blight, for the line under a spray decision: the day it comes, or that none is in sight.
 function blightAhead(world: World | undefined, c: Campaign): string {
-  if (!world) return 'when blight weather is forecast'
+  if (!world) return '역병 날씨가 예보되면'
   const k = forecast(world, c, 6).findIndex(d => d.blight >= 2)
-  return k < 0 ? 'no blight weather in the forecast' : `blight weather ${k === 0 ? 'today' : k === 1 ? 'tomorrow' : `in ${k} days`}`
+  return k < 0 ? '예보에 역병 날씨가 없음' : `역병 날씨 ${k === 0 ? '오늘' : k === 1 ? '내일' : `${k}일 후`}`
 }
 
 export function waitingFor(c: Campaign, world?: World): { title: string; when: string } | null {
@@ -205,7 +205,7 @@ export function waitingFor(c: Campaign, world?: World): { title: string; when: s
   const planted = potato.filter(i => s.fields[i].plantDay >= 0).length
   if (planted < potato.length) {
     if (!crew('plant') || !plantWordGiven(s)) return null
-    return { title: `Planting: ${planted} of ${potato.length} ${potato.length === 1 ? 'field' : 'fields'}`, when: 'your crew plants the rest on its own' }
+    return { title: `파종: ${potato.length}개 밭 중 ${planted}개`, when: '일꾼들이 나머지를 알아서 심습니다' }
   }
   if (!crew('hill') || !crew('scout')) return null
   const up = potato.filter(i => { const f = s.fields[i]; return (f.status === 'planted' || f.status === 'growing') && f.deadDay < 0 })
@@ -214,8 +214,8 @@ export function waitingFor(c: Campaign, world?: World): { title: string; when: s
   // While the spraying is the player's (not left to the crew), a spray is their next decision until the vine kill
   // comes near: before the first one it comes with the first blight weather, after it with each new forecast of it.
   if (up.length && !crew('spray') && sprayWayNow(c) !== 'none' && !(due && due.day - s.day <= KILL_NEAR)) {
-    if (!s.fields.some(f => f.lastSpray >= 0)) return { title: 'The crop is growing', when: 'your crew tends it; your next decision is a spray, when blight weather comes' }
-    return { title: 'Next up: a spray', when: blightAhead(world, c) }
+    if (!s.fields.some(f => f.lastSpray >= 0)) return { title: '작물이 자라는 중', when: '일꾼들이 돌봅니다. 다음 결정은 살포, 역병 날씨가 올 때' }
+    return { title: '다음: 살포', when: blightAhead(world, c) }
   }
   if (up.length && !crew('kill')) {
     // Due and not yet ordered: the decision is the player's now, and the goal or the stamp says so.
@@ -223,13 +223,13 @@ export function waitingFor(c: Campaign, world?: World): { title: string; when: s
     // Ordered, and the vines not yet down: how far along it is, as the planting was.
     if (kills.some(x => x.listed)) {
       const dead = potato.filter(i => s.fields[i].killDay >= 0 || s.fields[i].deadDay >= 0).length
-      return { title: `Killing the vines: ${dead} of ${potato.length} ${potato.length === 1 ? 'field' : 'fields'}`, when: 'on the work list' }
+      return { title: `줄기 죽이기: ${potato.length}개 밭 중 ${dead}개`, when: '작업 목록에 있음' }
     }
     // (two viewers who knew nothing of potatoes read "killing the vines" as a disaster: the line says what it is for)
-    return { title: 'Next up: kill the vines for harvest', when: due ? `due around ${formatDay(c.year, due.day, true)}, to toughen the skins for digging` : 'in September, to toughen the skins for digging' }
+    return { title: '다음: 수확을 위한 줄기 죽이기', when: due ? `수확할 수 있게 껍질을 굳히려고 ${formatDay(c.year, due.day, true)}쯤 예정` : '9월에, 수확할 수 있게 껍질을 굳히려고' }
   }
   if (!crew('dig') || !crew('haul')) return null
-  if (potato.some(i => !s.fields[i].weighed && s.fields[i].status !== 'lost')) return up.length ? { title: 'The crop is growing', when: 'your crew kills the vines and digs it; then you sell or store it' } : { title: 'The harvest is coming in', when: 'your crew digs and hauls; then you sell or store it' }
+  if (potato.some(i => !s.fields[i].weighed && s.fields[i].status !== 'lost')) return up.length ? { title: '작물이 자라는 중', when: '일꾼들이 줄기를 죽이고 캐냅니다. 그다음 팔거나 저장하세요' } : { title: '수확이 들어오는 중', when: '일꾼들이 캐고 운반합니다. 그다음 팔거나 저장하세요' }
   return null
 }
 
@@ -253,10 +253,10 @@ export function idleWork(c: Campaign): { who: number[]; options: FreeWork[] } | 
   const options: FreeWork[] = []
   const brush = all.filter(i => crop(i) && can('brush', i)).sort((a, b) => c.fields[a].elev - c.fields[b].elev || a - b)[0]
   const rocks = all.filter(i => can('rocks', i) && c.fields[i].stones >= ROCKS_ADVISE).sort((a, b) => c.fields[b].stones - c.fields[a].stones || a - b)[0]
-  if (brush !== undefined) options.push({ kind: 'brush', field: brush, who, gain: 'Cuts back the overgrown hedgerow round the field: less blight weather and frost on that crop.' })
-  else if (rocks !== undefined) options.push({ kind: 'rocks', field: rocks, who, gain: 'Faster planting and digging there, less bruising, and stone for building.' })
+  if (brush !== undefined) options.push({ kind: 'brush', field: brush, who, gain: '밭 둘레의 무성한 산울타리를 잘라냅니다. 그 작물에 역병 날씨와 서리가 줄어듭니다.' })
+  else if (rocks !== undefined) options.push({ kind: 'rocks', field: rocks, who, gain: '그곳의 파종과 캐기가 빨라지고 멍이 줄며, 건축에 쓸 돌이 생깁니다.' })
   const fell = all.filter(i => can('fell', i)).sort((a, b) => Number(c.fields[a].cover !== 'brush') - Number(c.fields[b].cover !== 'brush') || a - b)[0]
-  if (fell !== undefined) options.push({ kind: 'fell', field: fell, who, gain: 'Logs for building or to sell at the mill, and the first step to a new field.' })
+  if (fell !== undefined) options.push({ kind: 'fell', field: fell, who, gain: '건축하거나 제재소에 팔 통나무가 생기고, 새 밭의 첫걸음입니다.' })
   return options.length ? { who, options } : null
 }
 // The first of them.
