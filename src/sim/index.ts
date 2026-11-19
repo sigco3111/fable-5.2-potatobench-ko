@@ -10,7 +10,7 @@ export { BUYERS, contractOffers, DUE_LABEL } from './buyers.ts'
 export { canDo, crewCount, hireBlock, hireRoom, travelDays, UNIT_LABEL } from './crew.ts'
 export {
   applicantsFor, askFor, bestSkill, defaultPrio, hasBed, housingLimit, hiredCount, hurt, jobSkill, moodTarget, moodWord, payOf, resultLevel,
-  scoutChance, SKILL_LABEL, speed, sprayCover, tiredWord, upgradePerson, willDo, xpNeed,
+  scoutChance, SKILL_LABEL, speed, sprayCover, tiredWord, upgradePerson, willDo, xpNeed, josa, iga, eunneun, eulreul, waga, ro,
 } from './people.ts'
 export { hashCampaign } from './hash.ts'
 export { lotCwt, markOdds, tuberWeights, type Tuber } from './harvest.ts'
