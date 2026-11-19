@@ -54,7 +54,7 @@ export function defaultPlans(c: Campaign): FieldPlan[] {
 }
 
 export function createCampaign(world: World, opts: { seed: number; startYear: number }): Campaign {
-  if (!hasYear(world, opts.startYear)) throw new Error(`no weather for ${opts.startYear}`)
+  if (!hasYear(world, opts.startYear)) throw new Error(`${opts.startYear}년의 날씨 데이터가 없습니다`)
   const c: Campaign = {
     v: P.SAVE_VERSION,
     seed: opts.seed | 0,
@@ -849,7 +849,7 @@ function command(world: World, c: Campaign, cmd: Cmd): Result {
       const short = savedSeedShort(c)
       if (short) return fail(short)
       const pc = planCosts(c)
-      if (c.cash - pc.total < P.OPERATING_LIMIT) return fail('The bank won\'t lend that much for spring. Rest a field, or plant saved seed, which is free but carries virus.')
+      if (c.cash - pc.total < P.OPERATING_LIMIT) return fail('은행이 봄에 그만큼은 빌려주지 않습니다. 밭을 쉬게 하거나, 공짜지만 바이러스가 있는 자가 종자를 심으세요.')
       cost(c, pc.total)
       c.yearRent += pc.rent
       c.yearWages += pc.wages
@@ -865,7 +865,7 @@ function command(world: World, c: Campaign, cmd: Cmd): Result {
         const why = hireRoom(c)
         if (why) return fail(why)
         const a = c.applicants.find(x => x.id === cmd.applicant)
-        if (!a) return fail(c.phase === 'plan' ? 'No such applicant.' : 'The people who asked for work in spring have found other work.')
+        if (!a) return fail(c.phase === 'plan' ? '그런 지원자가 없습니다.' : '봄에 일을 찾던 사람들은 다른 일자리를 찾았습니다.')
         c.applicants = c.applicants.filter(x => x !== a)
         const u = fromApplicant(c, a)
         if (c.phase === 'plan') springOf(c).hired.push({ unit: u.id, applicant: a })
@@ -1202,25 +1202,25 @@ function command(world: World, c: Campaign, cmd: Cmd): Result {
       return ok(out)
     }
     case 'next': {
-      if (c.phase !== 'ledger') return fail('The year isn\'t closed yet.')
+      if (c.phase !== 'ledger') return fail('아직 해가 마무리되지 않았습니다.')
       return nextYear(world, c)
     }
   }
-  return fail('No such command.')
+  return fail('그런 명령이 없습니다.')
 }
 
 // Why this answer cannot be given now, or '' when it can.
 export function answerBlock(c: Campaign, inc: Incident, choice: string): string {
   switch (choice) {
     case 'hire': return hireRoom(c)
-    case 'rush': return c.season && inc.back! <= c.season.day + 1 ? 'The part arrives tomorrow anyway.' : ''
+    case 'rush': return c.season && inc.back! <= c.season.day + 1 ? '어차피 부품이 내일 옵니다.' : ''
     case 'match': {
       const u = c.crew.find(x => x.id === inc.unit)
-      return u ? '' : 'They\'ve already left.'
+      return u ? '' : '이미 떠났습니다.'
     }
     case 'take': {
       const lot = c.lots.find(l => l.id === inc.lot)
-      if (!lot || !lot.open) return 'That lot is gone.'
+      if (!lot || !lot.open) return '그 물량은 사라졌습니다.'
       return ''
     }
   }
@@ -1241,7 +1241,7 @@ function answer(world: World, c: Campaign, s: Season, inc: Incident, choice: str
       const u = c.crew.find(x => x.id === inc.unit)!
       const was = u.wage
       u.wage = inc.wage!
-      out.push(note(c, 'incidentDone', 'info', `${u.name} is staying, and their wage goes from $${withCommas(was)} to $${withCommas(u.wage)} a month.`))
+      out.push(note(c, 'incidentDone', 'info', `${u.name}은(는) 남기로 했고, 품값이 월 $${withCommas(was)}에서 $${withCommas(u.wage)}로 오릅니다.`))
       return
     }
     case 'rush': {
@@ -1249,7 +1249,7 @@ function answer(world: World, c: Campaign, s: Season, inc: Incident, choice: str
       cost(c, P.RUSH_PART)
       const k = c.broken.indexOf(inc.back!)
       if (k >= 0) c.broken[k] = s.day + 1
-      out.push(note(c, 'incidentDone', 'info', `You paid $${withCommas(P.RUSH_PART)} for a rush part, so the tractor will be back tomorrow.`))
+      out.push(note(c, 'incidentDone', 'info', `급송 부품에 $${withCommas(P.RUSH_PART)}를 냈고, 트랙터는 내일 돌아옵니다.`))
       return
     }
     case 'take': {
@@ -1261,7 +1261,7 @@ function answer(world: World, c: Campaign, s: Season, inc: Incident, choice: str
       c.cash += bonus
       c.yearRevenue += bonus
       lot.revenue += bonus
-      out.push(note(c, 'incidentDone', 'good', `Sold the ${variety(lot.variety).name} from ${FIELD_NAMES[lot.field]} to the buyer for $${withCommas(money + bonus)}, 10% over the market price.`, lot.field))
+      out.push(note(c, 'incidentDone', 'good', `${FIELD_NAMES[lot.field]}의 ${variety(lot.variety).name}을(를) 구매자에게 시세보다 10% 높은 $${withCommas(money + bonus)}에 팔았습니다.`, lot.field))
       return
     }
   }
@@ -1272,14 +1272,14 @@ function answer(world: World, c: Campaign, s: Season, inc: Incident, choice: str
 export function stumpBlock(c: Campaign, field: number): string {
   const why = worksPhase(c)
   if (why) return why
-  if (!fieldIndex(field)) return 'No such field.'
+  if (!fieldIndex(field)) return '그런 밭이 없습니다.'
   const fp = c.fields[field]
   const name = FIELD_NAMES[field]
-  if (fp.tenure === 'none') return `${name} isn't yours.`
-  if (standing(fp.cover)) return `${name} is still ${COVER_WORD[fp.cover]}. Fell it first.`
-  if (fp.cover !== 'stumps') return `There are no stumps on ${name}.`
-  if (fp.works) return 'The contractor is already there.'
-  if (spendBlock(c, P.STUMP_FEE, 'contractors')) return `You can't afford the contractor yet. It costs $${withCommas(P.STUMP_FEE)}.`
+  if (fp.tenure === 'none') return `${name}은(는) 당신의 땅이 아닙니다.`
+  if (standing(fp.cover)) return `${name}은(는) 아직 ${COVER_WORD[fp.cover]}입니다. 먼저 벌목하세요.`
+  if (fp.cover !== 'stumps') return `${name}에는 그루터기가 없습니다.`
+  if (fp.works) return '업자가 이미 그곳에 있습니다.'
+  if (spendBlock(c, P.STUMP_FEE, 'contractors')) return `아직 업자 비용이 없습니다. $${withCommas(P.STUMP_FEE)}가 듭니다.`
   return ''
 }
 
@@ -1287,17 +1287,17 @@ export function stumpBlock(c: Campaign, field: number): string {
 export function tileBlock(c: Campaign, field: number): string {
   const why = worksPhase(c)
   if (why) return why
-  if (!fieldIndex(field)) return 'No such field.'
+  if (!fieldIndex(field)) return '그런 밭이 없습니다.'
   const fp = c.fields[field]
   const name = FIELD_NAMES[field]
-  if (fp.tenure !== 'owned') return 'Tile drains can only go under your own land.'
-  if (fp.cover !== 'open') return `${name} is still ${COVER_WORD[fp.cover]}. Clear it first.`
-  if (fp.elev !== 0) return 'Only bottom land needs tile, because the slopes drain on their own.'
-  if (fp.tiled) return `${name} is already tiled.`
-  if (fp.works) return 'The contractor is already there.'
+  if (fp.tenure !== 'owned') return '암거 배수관은 소유한 땅 아래에만 깔 수 있습니다.'
+  if (fp.cover !== 'open') return `${name}은(는) 아직 ${COVER_WORD[fp.cover]}입니다. 먼저 개간하세요.`
+  if (fp.elev !== 0) return '골짜기 땅만 배수관이 필요합니다. 비탈은 물이 저절로 빠집니다.'
+  if (fp.tiled) return `${name}은(는) 이미 배수관이 있습니다.`
+  if (fp.works) return '업자가 이미 그곳에 있습니다.'
   const st = c.season?.fields[field].status
-  if (c.phase === 'season' && (st === 'planted' || st === 'growing' || st === 'dead' || st === 'digging')) return 'Tile can only be laid when no crop is in the ground.'
-  if (spendBlock(c, P.TILE_FEE, 'contractors')) return `You can't afford the contractor yet. It costs $${withCommas(P.TILE_FEE)}.`
+  if (c.phase === 'season' && (st === 'planted' || st === 'growing' || st === 'dead' || st === 'digging')) return '배수관은 작물이 없을 때만 깔 수 있습니다.'
+  if (spendBlock(c, P.TILE_FEE, 'contractors')) return `아직 업자 비용이 없습니다. $${withCommas(P.TILE_FEE)}가 듭니다.`
   return ''
 }
 
@@ -1305,7 +1305,7 @@ export function tileBlock(c: Campaign, field: number): string {
 function worksPhase(c: Campaign): string {
   if (c.phase === 'plan') return ''
   if (c.phase === 'season' && c.season && !c.season.frozen) return ''
-  return 'Contractors only work during the season, so order it in spring.'
+  return '업자는 시즌 중에만 일하니 봄에 주문하세요.'
 }
 
 export function canEndSeason(c: Campaign): boolean {
