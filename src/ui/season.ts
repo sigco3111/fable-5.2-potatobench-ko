@@ -94,7 +94,7 @@ export function seasonScreen(ctx: Ctx, plateLayer: HTMLElement, o: { onMenu: () 
   let ranAt = 0
   const veil = h('div', { class: 'veil sys', hidden: true })
   // The way back from a zoom, a pan or a tilt, always in the same place: what the Home key does.
-  const homeKey = h('button', { class: 'iconbtn view-home sys', type: 'button', testid: 'view-home', 'aria-label': 'Show the whole farm (Home)', title: 'Show the whole farm (Home)', onclick: () => ctx.view.home() }, icon('land', 'i'))
+  const homeKey = h('button', { class: 'iconbtn view-home sys', type: 'button', testid: 'view-home', 'aria-label': '농장 전체 보기 (Home)', title: '농장 전체 보기 (Home)', onclick: () => ctx.view.home() }, icon('land', 'i'))
   let tray: { el: HTMLElement; field: number; day: number } | null = null
 
   const openTicket = (lot: number) => { const spec = ticket(ctx, lot, { fresh: false }); if (spec) ctx.papers.open(spec) }
@@ -135,14 +135,14 @@ export function seasonScreen(ctx: Ctx, plateLayer: HTMLElement, o: { onMenu: () 
       const forming = s0.day - fs.tiDay <= S.SCAB_DAYS
       if (f.moisture >= (forming ? 0.5 : 0.38) || f.tooWet || out.some(t => t.field === i) || s0.jobs.some(j => j.kind === 'water' && j.field === i)) continue
       out.push({
-        field: i, glyph: 'water', text: `${f.name} is drying out`, urgent: false, go: go(i),
-        order: { label: JOB_VERB.water, cost: S.jobCost(c, 'water', i), run: () => { const r = app.order('water', { fields: [i], unit: -1 })[0]; ctx.say(r?.ok ? `Watering ${f.name} is on the work list.` : `${f.name}: ${r?.err ?? 'that can\'t be ordered now.'}`, 'info') } },
-        why: `${forming ? 'Dry soil while the potatoes form sets scab' : 'Dry soil while the potatoes size up cuts the yield'}. Watering costs ${F.money(S.jobCost(c, 'water', i))}; rain is free if it comes.`,
+        field: i, glyph: 'water', text: `${f.name}이(가) 말라가고 있습니다`, urgent: false, go: go(i),
+        order: { label: JOB_VERB.water, cost: S.jobCost(c, 'water', i), run: () => { const r = app.order('water', { fields: [i], unit: -1 })[0]; ctx.say(r?.ok ? `${f.name} 물주기가 작업 목록에 올랐습니다.` : `${f.name}: ${r?.err ?? '지금은 지시할 수 없습니다.'}`, 'info') } },
+        why: `${forming ? '감자가 맺힐 때 마른 흙은 더부룩병을 부릅니다' : '감자가 굵어질 때 마른 흙은 수확을 줄입니다'}. 물주기는 ${F.money(S.jobCost(c, 'water', i))}이(가) 들고, 비가 오면 공짜입니다.`,
       })
     }
     for (const x of fates(app.world, c).pressing) {
       if (x.job < 0 || !x.inWay) continue
-      out.push({ field: x.field, glyph: x.kind, text: `${JOB_VERB[x.kind]} ${S.FIELD_NAMES[x.field] ?? ''} is held up`, why: F.localize(x.inWay), urgent: true, go: go(x.field) })
+      out.push({ field: x.field, glyph: x.kind, text: `${S.FIELD_NAMES[x.field] ?? ''}의 ${JOB_VERB[x.kind]}이(가) 막혀 있습니다`, why: F.localize(x.inWay), urgent: true, go: go(x.field) })
     }
     return out.sort((p, q) => Number(q.urgent) - Number(p.urgent))
   }
@@ -263,8 +263,8 @@ export function seasonScreen(ctx: Ctx, plateLayer: HTMLElement, o: { onMenu: () 
     if (hint) { hint = null; ctx.notes.unpin() }
     ctx.notes.push({
       level: 'info', glyph: 'sample', ttl: 20000, field: e.field, day: e.day,
-      text: `The test dig at ${name} is in. Show me`,
-      full: `The test dig at ${name} is in. Press to see what came up.`,
+      text: `${name}의 시험 캐기 결과가 나왔습니다. 보기`,
+      full: `${name}의 시험 캐기 결과가 나왔습니다. 눌러서 무엇이 나왔는지 보세요.`,
       go: () => openTray(e, false), offer: true,
     })
   }
@@ -289,7 +289,7 @@ export function seasonScreen(ctx: Ctx, plateLayer: HTMLElement, o: { onMenu: () 
     for (const a of notesSlot.querySelectorAll<HTMLElement>('.alert')) {
       const r = a.getBoundingClientRect()
       // (a slip that offers to show something is there to be pressed: it stays whole and in reach)
-      const offer = !!a.querySelector(':scope > span:not(.sr)')?.textContent?.trim().endsWith('Show me')
+      const offer = !!a.querySelector(':scope > span:not(.sr)')?.textContent?.trim().endsWith('보기')
       const over = !offer && !!r.width && tags.some(t => r.left < t.right && r.right > t.left && r.top < t.bottom && r.bottom > t.top)
       a.classList.toggle('over-land', over)
     }
@@ -319,11 +319,11 @@ export function seasonScreen(ctx: Ctx, plateLayer: HTMLElement, o: { onMenu: () 
       if (!j) return
       startedSaid.add(key)
       const u = c.crew.find(x => x.id === j.unit)
-      const who = !u || u.kind === 'farmer' ? 'You\'re' : `${u.name.split(' ')[0]} is`
+      const who = !u || u.kind === 'farmer' ? '당신이' : `${u.name.split(' ')[0]}이(가)`
       ctx.notes.push({
         level: 'info', glyph: kind, ttl: 12000, field: j.field, day: s0.day,
-        text: `Digging has started in ${S.FIELD_NAMES[j.field]}. Show me`,
-        full: `Digging has started in ${S.FIELD_NAMES[j.field]} without an order from you. ${who} working there. Press to see.`,
+        text: `${S.FIELD_NAMES[j.field]}에서 캐기가 시작됐습니다. 보기`,
+        full: `${S.FIELD_NAMES[j.field]}에서 당신의 지시 없이 캐기가 시작됐습니다. ${who} 그곳에서 일하고 있습니다. 눌러서 보세요.`,
         // To the field the sentence names, where the work shows.
         go: () => { app.selectUnit(-1); app.select(j.field); app.focus(j.field) }, offer: true,
       })
@@ -335,7 +335,7 @@ export function seasonScreen(ctx: Ctx, plateLayer: HTMLElement, o: { onMenu: () 
     if (!s0 || guidedYear(c)) return
     const tomorrow = S.formatDay(s0.year, s0.day + 1)
     for (const p of S.killsAhead(app.world, c)) {
-      const date = /on ([A-Z][a-z]+ \d+)/.exec(p.inWay)?.[1] ?? ''
+      const date = /(\d+월 \d+일)에/.exec(p.inWay)?.[1] ?? ''
       const soon = date === tomorrow
       const key = `${c.seed}.${c.year}.${p.field}.${soon ? 'soon' : 'set'}`
       if (killSaid.has(key)) continue
@@ -344,8 +344,8 @@ export function seasonScreen(ctx: Ctx, plateLayer: HTMLElement, o: { onMenu: () 
       const due = S.killOutlook(c, p.field)
       ctx.notes.push({
         level: soon ? 'warn' : 'info', glyph: 'kill', ttl: 14000, field: p.field, day: s0.day,
-        text: `${name}: ${due && date && !soon ? `vine kill due around ${S.formatDay(s0.year, due.day, true)}. Your crew does it on ${date}` : `your crew will kill the vines ${soon ? 'tomorrow' : date ? `on ${date}` : 'soon'}`}. Show me`,
-        full: `${F.localize(p.inWay)} Press to see the field, where you can tell the crew to keep the vines up.`,
+        text: `${name}: ${due && date && !soon ? `줄기 죽이기는 ${S.formatDay(s0.year, due.day, true)}쯤. 작업반이 ${date}에 합니다` : `작업반이 ${soon ? '내일' : date ? `${date}에` : '곧'} 줄기를 죽입니다`}. 보기`,
+        full: `${F.localize(p.inWay)} 눌러 밭을 보고, 작업반에게 줄기를 살려두라고 말할 수 있습니다.`,
         go: () => { app.select(p.field); app.focus(p.field) }, offer: !soon,
       })
     }
@@ -362,7 +362,7 @@ export function seasonScreen(ctx: Ctx, plateLayer: HTMLElement, o: { onMenu: () 
     sprayAsked = key
     if (S.routineInfo(c).some(r => r.kind === 'spray' && r.auto)) return
     askSpray(ctx)
-    app.stopFor('You need to decide how to handle spraying this season.', 'spray')
+    app.stopFor('올해 살포를 어떻게 할지 정해야 합니다.', 'spray')
   }
   // A pause that waits for a press on a stamp (the word to plant, a vine kill that is the player's): unless every
   // field that carries one is on the screen itself (a tag waiting at the edge for land out of view is not the
@@ -433,7 +433,7 @@ export function seasonScreen(ctx: Ctx, plateLayer: HTMLElement, o: { onMenu: () 
     if (hint) {
       const kind = hint.kind
       // Five words at the foot; the field's card has the rest.
-      ctx.notes.pin({ key: `tip-${kind}`, glyph: kind, text: `${ctx.touch() ? 'Tap' : 'Click'} the ringed stamp to ${JOB_VERB[kind].toLowerCase()}.`, onClose: () => { hint = null; ctx.dirty() } })
+      ctx.notes.pin({ key: `tip-${kind}`, glyph: kind, text: `빛나는 도장을 ${ctx.touch() ? '눌러' : '클릭해'} ${JOB_VERB[kind]}을(를) 지시하세요.`, onClose: () => { hint = null; ctx.dirty() } })
     } else ctx.notes.unpin()
   }
 
@@ -454,9 +454,9 @@ export function seasonScreen(ctx: Ctx, plateLayer: HTMLElement, o: { onMenu: () 
 
   // A field's stage (src/sim/view.ts) as a player would say it.
   const STATE_WORD: Record<string, string> = {
-    'Resting': 'resting', 'Not planted': 'not planted', 'Planted, not up': 'planted', 'Growing leaf': 'growing', 'Setting tubers': 'growing',
-    'Bulking': 'potatoes forming', 'Vines going down': 'ripening', 'Vines dead, skins setting': 'skins setting', 'Vines dead, skins set': 'ready to dig',
-    'Being dug': 'being dug', 'Dug': 'dug', 'Lost': 'lost',
+    '휴경': '휴경 중', '아직 심지 않음': '아직 심지 않음', '심음, 아직 안 나옴': '심음', '잎 키우는 중': '자라는 중', '감자 맺는 중': '자라는 중',
+    '감자 굵어지는 중': '감자 여무는 중', '줄기 마르는 중': '여무는 중', '줄기 죽음, 껍질 굳는 중': '껍질 굳는 중', '줄기 죽음, 껍질 굳음': '캘 준비됨',
+    '수확 중': '수확 중', '수확 끝': '수확 끝', '잃어버림': '잃어버림',
   }
   function plateModel(i: number): PlateModel | null {
     const c = app.campaign!
@@ -475,43 +475,43 @@ export function seasonScreen(ctx: Ctx, plateLayer: HTMLElement, o: { onMenu: () 
     const live = f.status === 'growing' || f.status === 'planted'
     const marks: PlateModel['marks'] = []
     const said: string[] = []
-    if (live && (f.moistureLabel === 'dry' || f.moistureLabel === 'wilting')) { marks.push({ glyph: 'dry', cls: f.moistureLabel === 'wilting' ? 'bad' : 'warn' }); said.push(`soil ${f.moistureLabel}`) }
+    if (live && (f.moistureLabel === 'dry' || f.moistureLabel === 'wilting')) { marks.push({ glyph: 'dry', cls: f.moistureLabel === 'wilting' ? 'bad' : 'warn' }); said.push(`흙 ${f.moistureLabel === 'wilting' ? '시듦' : '마름'}`) }
     if (f.blightHills > 0 && (live || f.status === 'dead')) {
       marks.push({ glyph: isStale(f) ? 'blight-old' : 'blight', cls: 'bad' })
-      said.push(`blight seen on ${F.plural(f.blightHills, 'plant')}${f.scoutAge >= 0 ? `, scouted ${F.ago(f.scoutAge)}` : ''}`)
+      said.push(`포기 ${f.blightHills}개에 역병${f.scoutAge >= 0 ? `, 살펴본 때: ${F.ago(f.scoutAge)}` : ''}`)
     }
     const anyBlight = s0.fields.some((_, k) => S.fieldInfo(c, k).blightHills > 0)
-    if (f.status === 'growing' && f.protect < 0.35 && (s0.watchDay >= 0 || anyBlight)) { marks.push({ glyph: 'bare', cls: 'warn' }); said.push('leaves unprotected') }
+    if (f.status === 'growing' && f.protect < 0.35 && (s0.watchDay >= 0 || anyBlight)) { marks.push({ glyph: 'bare', cls: 'warn' }); said.push('잎에 약 없음') }
     let sub: string | undefined
     if (f.inField >= 0.5) {
       const frost = frostAt[i] ?? 0
-      sub = `${F.massValue(f.inField) >= 1000 ? `${F.num(F.massValue(f.inField) / 1000, 1)}k` : F.num(F.massValue(f.inField))} in barrels`
-      said.push(`${F.mass(f.inField)} in barrels${frost >= 30 ? `, ${frost}% chance of frost tonight` : ''}`)
+      sub = `통에 ${F.massValue(f.inField) >= 1000 ? `${F.num(F.massValue(f.inField) / 1000, 1)}k` : F.num(F.massValue(f.inField))}`
+      said.push(`통에 ${F.mass(f.inField)}${frost >= 30 ? `, 오늘 밤 서리 확률 ${frost}%` : ''}`)
     }
     // At a wide desk each field's tag says its state in a word or two (viewers who knew nothing of the game, of a July
     // farm: "why are two fields yellow?", "which are ready?"). A count of barrels, where there is one, comes first.
     if (!sub && !tract && app.centerTags) sub = STATE_WORD[f.stage] ?? undefined
-    if (f.works) { marks.push({ glyph: f.works.kind, cls: '' }); said.push(f.works.kind === 'stump' ? 'stumps being pulled' : 'tile drains going in') }
-    if (tract && f.cover !== 'open' && c.fields[i].felled > 0 && f.clearing) said.push(`${F.pct(f.clearing.felled)} felled`)
+    if (f.works) { marks.push({ glyph: f.works.kind, cls: '' }); said.push(f.works.kind === 'stump' ? '그루터기 뽑는 중' : '암거 배수관 공사 중') }
+    if (tract && f.cover !== 'open' && c.fields[i].felled > 0 && f.clearing) said.push(`${F.pct(f.clearing.felled)} 벌목함`)
     const waits = S.jobWaits(app.world, c)
     const head = s0.jobs.find(j => !waits[j.id])
     const queue = queued.map(j => ({ glyph: j.kind as string, active: j === head }))
-    if (queue.length) said.push(`on the work list: ${F.list(queued.map(j => JOB_VERB[j.kind].toLowerCase()))}`)
+    if (queue.length) said.push(`작업 목록: ${F.list(queued.map(j => JOB_VERB[j.kind]))}`)
     const lot = f.lot >= 0 ? c.lots.find(l => l.id === f.lot) : undefined
     // Spraying the player said not to do this year carries no stamp.
     // At the word to plant one press plants every field: the one key stands alone, and the other fields carry no
     // stamp until the word is given (three fresh viewers of four stamps: "it looks like I need four clicks").
     const oneKey = asked === 'plant' && keyed >= 0 && keyed !== i && need?.act === 'plant'
     const badge = oneKey ? null : need && isJob(need.act) && !(need.act === 'spray' && sprayWay(c) === 'none')
-      ? { glyph: need.act as string, label: `${F.localize(need.text)} ${F.localize(need.why)}`, urgent: need.urgent, ink: inkFor(need.act, need.urgent, f), word: keyed === i ? (asked === 'plant' && all.filter(n => n.need?.act === 'plant').length > 1 ? 'Plant all' : JOB_VERB[need.act]) : undefined }
+      ? { glyph: need.act as string, label: `${F.localize(need.text)} ${F.localize(need.why)}`, urgent: need.urgent, ink: inkFor(need.act, need.urgent, f), word: keyed === i ? (asked === 'plant' && all.filter(n => n.need?.act === 'plant').length > 1 ? '모두 심기' : JOB_VERB[need.act]) : undefined }
       : need && need.act === 'sell' && lot ? { glyph: 'ticket', label: `${F.localize(need.text)} ${F.localize(need.why)}`, urgent: need.urgent, ink: 'ink' as Ink } : null
     const key = digitFor(c, i)
-    const what = tract ? (f.cover === 'open' ? 'new ground, ready to plant next spring' : f.coverWord) : f.status === 'rest' ? 'resting in oats and clover' : `${f.variety}, ${f.stage.toLowerCase()}`
+    const what = tract ? (f.cover === 'open' ? '새 땅, 다음 봄에 심을 수 있음' : f.coverWord) : f.status === 'rest' ? '귀리와 클로버로 쉬는 중' : `${f.variety}, ${f.stage.toLowerCase()}`
     return {
       name: f.name,
       glyph: tract ? COVER_GLYPH[f.cover] : stageGlyph(f),
-      sub, marks, queue, badge, key, cls: tract ? 'tract' : undefined, hoverName: !tract && f.status === 'rest' ? 'Resting: oats and clover' : undefined,
-      said: `${key ? `Key ${key}` : f.block === 'home' ? 'The home farm' : 'Beyond the home farm'}: ${what}${said.length ? `, ${said.join(', ')}` : ''}${badge ? `. Needs: ${F.localize(need!.text)}` : '.'}`,
+      sub, marks, queue, badge, key, cls: tract ? 'tract' : undefined, hoverName: !tract && f.status === 'rest' ? '휴경: 귀리와 클로버' : undefined,
+      said: `${key ? `키 ${key}` : f.block === 'home' ? '집 농장' : '집 농장 밖'}: ${what}${said.length ? `, ${said.join(', ')}` : ''}${badge ? `. 필요: ${F.localize(need!.text)}` : '.'}`,
       taught: !!badge && ((!!hint && need?.act === hint.kind) || goalField === i || keyed === i),
     }
   }
@@ -528,7 +528,7 @@ export function seasonScreen(ctx: Ctx, plateLayer: HTMLElement, o: { onMenu: () 
     const asked = !!c.season && !S.plantWordGiven(c.season)
     const r = right ? app.orderAt(i) : app.smartOrder(i)
     // (a right-click's order is said by its own answer, who was sent and to what: it may not be the field's need)
-    if (r.ok) { if (!right) ctx.announce(`${need ? F.localize(need.text) : 'Order given.'} It's on the work list.`) }
+    if (r.ok) { if (!right) ctx.announce(`${need ? F.localize(need.text) : '지시했습니다.'} 작업 목록에 올랐습니다.`) }
     else if (right) app.notice(r.err)
     else ctx.say(`${S.FIELD_NAMES[i]}: ${r.err}`, 'info')
     if (asked && c.season && S.plantWordGiven(c.season)) landQuietUntil = performance.now() + WORD_QUIET_MS
@@ -584,10 +584,10 @@ export function seasonScreen(ctx: Ctx, plateLayer: HTMLElement, o: { onMenu: () 
       if (!on) continue
       const up = c.buildings.find(b => b.yard === m.y && !b.built)
       const sel = app.yard === m.y
-      const name = m.y === S.HOME_YARD ? 'Home yard' : 'Dufour yard'
+      const name = m.y === S.HOME_YARD ? '집 마당' : '뒤푸르 마당'
       patch(m.wrap, JSON.stringify([sel, up ? [up.kind, Math.round(up.done / up.need * 100)] : 0, goalYard === m.y, ctx.touch()]), () => h('button', {
         class: `yard-tag sys plate yard${sel ? ' is-sel on' : ''}${goalYard === m.y ? ' goal-ring' : ''}`, type: 'button', testid: m.y === S.HOME_YARD ? 'yard-home' : 'yard-dufour', 'aria-pressed': String(sel),
-        'aria-label': `${YARD_TITLE[m.y]}${up ? `, where the ${S.BUILDINGS[up.kind].name.toLowerCase()} is ${F.pct(up.done / up.need)} built` : ''}. Press to build here${ctx.touch() ? '' : ' (Y)'}.`,
+        'aria-label': `${YARD_TITLE[m.y]}${up ? `, ${S.BUILDINGS[up.kind].name} ${F.pct(up.done / up.need)} 지어짐` : ''}. 눌러 여기에 짓기${ctx.touch() ? '' : ' (Y)'}.`,
         onclick: () => app.selectYard(sel ? 0 : m.y),
       }, icon('yard', 'i'), name, up ? h('span', { class: 'yard-pct num' }, F.pct(up.done / up.need)) : null))
       m.w = toScreen((m.wrap.firstElementChild as HTMLElement | null)?.offsetWidth ?? 0) || m.w
@@ -744,7 +744,7 @@ export function seasonScreen(ctx: Ctx, plateLayer: HTMLElement, o: { onMenu: () 
     app.focus(next)
     plateLayer.querySelector<HTMLElement>(`[data-k="field-${next}"]`)?.focus({ preventScroll: true })
     const n = needs[next].need!
-    ctx.announce(`${S.FIELD_NAMES[next]} selected. ${F.localize(n.text)} ${F.localize(n.why)} Press Enter to give the order.`)
+    ctx.announce(`${S.FIELD_NAMES[next]}을(를) 골랐습니다. ${F.localize(n.text)} ${F.localize(n.why)} Enter로 지시하세요.`)
     return true
   }
 
@@ -788,7 +788,7 @@ export function seasonScreen(ctx: Ctx, plateLayer: HTMLElement, o: { onMenu: () 
       if (onControl) (t.closest?.('button, a') as HTMLElement | null)?.blur()
       // Just after an answer set the days going by themselves, Space is taken as "go on", not as a pause: the chip
       // that says the days are running is lit again instead.
-      if (!app.pressPause()) { ranAt = performance.now(); ctx.dirty(); ctx.announce(`The game is running at ${SPEED_X[app.speed]}.`) }
+      if (!app.pressPause()) { ranAt = performance.now(); ctx.dirty(); ctx.announce(`게임이 ${SPEED_X[app.speed]} 속도로 진행됩니다.`) }
       return true
     }
     if (k === 'Enter') {
@@ -813,13 +813,13 @@ export function seasonScreen(ctx: Ctx, plateLayer: HTMLElement, o: { onMenu: () 
       const jobs = c.season.jobs.filter(j => j.kind !== 'haul' && j.kind !== 'build')
       const mine = app.selection.length ? jobs.filter(j => app.selection.includes(j.field)) : jobs
       const last = mine[mine.length - 1]
-      if (!last) ctx.say('There\'s nothing on the work list to remove.')
-      else if (ctx.run({ t: 'cancel', id: last.id }).ok) ctx.announce(`${jobText(last)} was taken off the work list.`)
+      if (!last) ctx.say('작업 목록에 뺄 것이 없습니다.')
+      else if (ctx.run({ t: 'cancel', id: last.id }).ok) ctx.announce(`${jobText(last)}을(를) 작업 목록에서 뺐습니다.`)
       return true
     }
     const low = k.toLowerCase()
     if (low === 'f' && !e.ctrlKey) { if (!S.seasonDone(c)) app.cycleSpeed(); return true }
-    if (low === 'g' && !e.ctrlKey) { if (c.crew.length >= 3) grid.toggle(); else ctx.say('Who does what opens once you have three people on the farm.'); return true }
+    if (low === 'g' && !e.ctrlKey) { if (c.crew.length >= 3) grid.toggle(); else ctx.say('농장에 사람이 셋이 되면 누가 무엇을 하나가 열립니다.'); return true }
     if (low === 'y' && !e.ctrlKey) {
       if (yardShown(c)) app.selectYard(app.yard === S.HOME_YARD ? 0 : S.HOME_YARD)
       else openBuild(ctx)
@@ -842,7 +842,7 @@ export function seasonScreen(ctx: Ctx, plateLayer: HTMLElement, o: { onMenu: () 
     const unit = typeof a.data?.unit === 'number' ? a.data.unit : -1
     if (a.type === 'incident' && typeof a.data?.incident === 'number') { const id = a.data.incident; return () => incident.open(id) }
     // Frost on the barrels: the haul of the biggest pile first, today.
-    if (a.type === 'frostBarrels') return () => { const h = app.campaign ? S.haulInfo(app.world, app.campaign).sort((x, y) => y.cwt - x.cwt)[0] : undefined; if (h) app.haulAhead(h.field); else ctx.say('The barrels are all in. Nothing is left out tonight.', 'good') }
+    if (a.type === 'frostBarrels') return () => { const h = app.campaign ? S.haulInfo(app.world, app.campaign).sort((x, y) => y.cwt - x.cwt)[0] : undefined; if (h) app.haulAhead(h.field); else ctx.say('통이 모두 들어왔습니다. 오늘 밤 밖에 남은 것이 없습니다.', 'good') }
     if (a.type === 'barrelsOut' && a.field >= 0) { const field = a.field; return () => app.haulAhead(field) }
     // An ask about several fields at once leads to To do, where one key orders them all and says what that costs
     // (where the menu is up: a phone goes to the first field, as before).
@@ -853,7 +853,7 @@ export function seasonScreen(ctx: Ctx, plateLayer: HTMLElement, o: { onMenu: () 
       return () => {
         const u = app.campaign?.crew.find(x => x.id === unit)
         if (!u || !ctx.run({ t: 'priority', unit, work, level: S.PRIORITY_MAX }).ok) return
-        ctx.say(`${u.name.split(' ')[0]} will now take ${S.SKILL_LABEL[work]} when nothing else needs them.`)
+        ctx.say(`${u.name.split(' ')[0]}은(는) 이제 다른 일이 없으면 ${S.SKILL_LABEL[work]}을(를) 합니다.`)
       }
     }
     if (unit >= 0 && a.type !== 'poached' && a.type !== 'quit') return () => { if (app.campaign?.crew.some(u => u.id === unit)) { app.select(-1); app.selectUnit(unit) } }
@@ -906,13 +906,13 @@ export function seasonScreen(ctx: Ctx, plateLayer: HTMLElement, o: { onMenu: () 
     paused.hidden = !stopped || (stoppedFor && layout !== 'narrow')
     el.classList.toggle('is-paused', !paused.hidden)
     if (!paused.hidden) patch(paused, JSON.stringify([ctx.touch(), app.resumeSpeed]), () => h('button', { class: 'paused-go btn', type: 'button', testid: 'paused-go', onclick: () => app.togglePause() },
-      h('span', { class: 't-label paused-word' }, 'Paused'), icon('play', 'i'), `Resume at ${SPEED_X[app.resumeSpeed || 1]}`, ctx.touch() ? null : h('span', { class: 'key' }, 'Space')))
+      h('span', { class: 't-label paused-word' }, '멈춤'), icon('play', 'i'), `${SPEED_X[app.resumeSpeed || 1]}로 재개`, ctx.touch() ? null : h('span', { class: 'key' }, 'Space')))
     const wasRunning = !running.hidden
     running.hidden = app.speed === 0 || S.seasonDone(c) || (stoppedFor && layout !== 'narrow') || (layout === 'narrow' && app.selection.length > 0)
     if (!running.hidden && !wasRunning) ranAt = performance.now()
     if (!running.hidden) {
       patch(running, JSON.stringify([ctx.touch(), app.speed, app.skipBack > 0]), () => h('button', { class: 'paused-go btn', type: 'button', testid: 'running-stop', onclick: () => { if (!app.pressPause()) { ranAt = performance.now(); ctx.dirty() } } },
-        icon('pause', 'i'), app.skipBack > 0 ? 'Skipping ahead' : `Running at ${SPEED_X[app.speed]}`, ctx.touch() ? null : h('span', { class: 'key' }, 'Space')))
+        icon('pause', 'i'), app.skipBack > 0 ? '앞으로 건너뛰는 중' : `${SPEED_X[app.speed]}로 진행 중`, ctx.touch() ? null : h('span', { class: 'key' }, 'Space')))
       running.classList.toggle('lit', performance.now() - ranAt < 2400)
       if (performance.now() - ranAt < 2400) setTimeout(() => ctx.dirty(), 2450)
     }
