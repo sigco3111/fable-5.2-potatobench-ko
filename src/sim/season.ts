@@ -1314,12 +1314,12 @@ function peopleDay(c: Campaign, s: Season, turns: Turn[], out: GameEvent[]): voi
     u.tired = Math.max(0, Math.min(1, u.tired + tire * used - P.REST_PER_DAY * (1 - used)))
     if (wasTired < P.HURT_TIRED && u.tired >= P.HURT_TIRED) {
       push(s, out, 'wornOut', -1, 'warn', (u.rest ?? 'auto') === 'push'
-        ? `${subject(u, 'is', 'You are')} worn out but still working, which means slower work and a risk of injury on a machine or in the woods.`
-        : `${subject(u, 'is', 'You are')} worn out and will rest tomorrow before anyone gets hurt.`, { unit: u.id })
+        ? `${subject(u, '지쳤지만 계속 일하고 있어 작업이 느려지고 기계나 숲에서 다칠 위험이 있습니다')}.`
+        : `${subject(u, '지쳐 있어 다치기 전에 내일 쉽니다')}.`, { unit: u.id })
     }
     if (u.rest === 'now' && u.tired < P.REST_UNTIL) {
       u.rest = 'auto'
-      push(s, out, 'rested', -1, 'info', `${subject(u, 'is', 'You\'re')} rested and will be back at work tomorrow.`, { unit: u.id })
+      push(s, out, 'rested', -1, 'info', `${subject(u, '쉬었으니 내일 다시 일합니다')}.`, { unit: u.id })
     }
     const target = moodTarget(c, u, fieldsIn)
     let pull = P.MOOD_PULL
@@ -1330,14 +1330,14 @@ function peopleDay(c: Campaign, s: Season, turns: Turn[], out: GameEvent[]): voi
     if (u.mood > 1) u.mood = 1
     if (u.kind === 'farmer') continue
     if (u.mood < P.QUIT_MOOD) {
-      if (u.low === 0) push(s, out, 'unhappy', -1, 'warn', `${u.name} is unhappy and will quit if it lasts a week.`, { unit: u.id })
+      if (u.low === 0) push(s, out, 'unhappy', -1, 'warn', `${u.name}은(는) 불만이 쌓여 일주일 더 가면 그만둡니다.`, { unit: u.id })
       u.low++
     } else u.low = 0
     if (u.low >= P.QUIT_DAYS) quit.push(u)
   }
   for (const u of quit) {
     removePerson(c, u)
-    push(s, out, 'quit', -1, 'bad', `${u.name} has had enough and quit.`, { unit: u.id })
+    push(s, out, 'quit', -1, 'bad', `${u.name}은(는) 더 못 참고 그만뒀습니다.`, { unit: u.id })
   }
 }
 
@@ -1363,7 +1363,7 @@ export function sheltering(c: Campaign, tract: number): string {
     const dx = p.x - t.x, dz = p.z - t.z
     if (dx * dx + dz * dz <= P.SHELTER_RANGE * P.SHELTER_RANGE && fieldEnv(c, i).shelter < 0) out.push(FIELD_NAMES[i])
   }
-  return out.length ? ` ${out.join(' and ')} ${out.length === 1 ? 'is' : 'are'} out in the open now, which makes ${out.length === 1 ? 'it' : 'them'} drier, windier and less frosty.` : ''
+  return out.length ? ` 이제 ${out.join(', ')}이(가) 탁 트여 더 건조하고 바람이 세며 서리는 덜 듭니다.` : ''
 }
 
 // The contractors' day: stumps pulled and tile laid, a season day at a time.
@@ -1442,11 +1442,11 @@ function fieldDay(world: World, c: Campaign, s: Season, fi: number, d: Day, sevR
   }
   if (alive && !(f.flags & F_DRY) && f.emergeDay >= 0 && f.ksAvg < 0.55) {
     f.flags |= F_DRY
-    push(s, out, 'dry', fi, 'warn', `${name} is drying out, and the plants are wilting by afternoon.`)
+    push(s, out, 'dry', fi, 'warn', `${name}이(가) 말라 오후면 식물이 시듭니다.`)
   }
   if (!(f.flags & F_LOGGED) && f.logDays >= 3) {
     f.flags |= F_LOGGED
-    push(s, out, 'logged', fi, 'warn', `Water is standing in ${name}.`)
+    push(s, out, 'logged', fi, 'warn', `${name}에 물이 고여 있습니다.`)
   }
 
   // Thermal time.
@@ -1589,18 +1589,18 @@ function fieldDay(world: World, c: Campaign, s: Season, fi: number, d: Day, sevR
     f.pdEmerge = f.pdAir
     f.flags |= F_EMERGED
     const gaps = Math.round((1 - planted / P.HILLS) * 100)
-    if (gaps >= 8) push(s, out, 'emerged', fi, 'warn', `${name} is up but thin, because about ${gaps}% of the seed rotted in the cold ground.`, { gaps })
-    else push(s, out, 'emerged', fi, 'good', `${name} is up, and you can see rows of green from the road.`)
+    if (gaps >= 8) push(s, out, 'emerged', fi, 'warn', `${name}은(는) 싹이 났지만 성깁니다. 종자의 약 ${gaps}%가 찬 땅에서 썩었기 때문입니다.`, { gaps })
+    else push(s, out, 'emerged', fi, 'good', `${name}의 싹이 났고, 길에서도 초록 열이 보입니다.`)
   }
   if (f.status === 'planted' && planted === 0) {
     f.status = 'lost'
-    push(s, out, 'lost', fi, 'bad', `The seed rotted in ${name} because the ground was cold and wet.`)
+    push(s, out, 'lost', fi, 'bad', `땅이 차고 젖어 ${name}의 종자가 썩었습니다.`)
     return
   }
   if (alive && f.emergeDay >= 0) {
     if (frostKill >= 0.05) { f.frostDay = s.day; f.frostShare = frostKill }
     if (frostKill >= 0.25) {
-      push(s, out, 'frost', fi, 'bad', `Frost hit ${name} and blackened ${Math.round(frostKill * 100)}% of the leaves.`, { kill: Math.round(frostKill * 100) })
+      push(s, out, 'frost', fi, 'bad', `서리가 ${name}을(를) 덮쳐 잎의 ${Math.round(frostKill * 100)}%가 검게 변했습니다.`, { kill: Math.round(frostKill * 100) })
     }
     if (f.tiDay < 0 && f.pdAir - f.pdEmerge >= v.tiPd) {
       f.tiDay = s.day
@@ -1611,22 +1611,22 @@ function fieldDay(world: World, c: Campaign, s: Season, fi: number, d: Day, sevR
         const n = v.set * (0.72 + 0.56 * nextUnit(c)) * water * ((st & H_VIRUS) ? 0.85 : 1)
         f.hN[i] = Math.max(1, Math.round(n))
       }
-      push(s, out, 'ti', fi, 'info', `Potatoes are starting to form in ${name}. From here on the crop grows underground.`)
+      push(s, out, 'ti', fi, 'info', `${name}에 감자가 맺히기 시작했습니다. 이제부터 작물은 땅속에서 자랍니다.`)
     }
     if (f.closeDay < 0 && f.canopy >= P.CLOSURE) {
       f.closeDay = s.day
-      push(s, out, 'closed', fi, 'info', `The rows have closed in ${name}.${f.hillPasses === 0 ? ' It was never hilled.' : ''}`)
+      push(s, out, 'closed', fi, 'info', `${name}의 열이 닫혔습니다.${f.hillPasses === 0 ? ' 한 번도 북주기를 하지 않았습니다.' : ''}`)
     }
     if (f.matureDay < 0 && up > 0 && sumAge / up >= matAt) {
       f.matureDay = s.day
-      push(s, out, 'mature', fi, 'info', `The vines in ${name} are starting to die back.`)
+      push(s, out, 'mature', fi, 'info', `${name}의 줄기가 마르기 시작했습니다.`)
     }
     if (!f.seenFromRoad && f.sev >= P.ROAD_SEV) {
       f.seenFromRoad = true
       f.blightFound ??= s.day
       for (let i = 0; i < P.HILLS; i++) if (f.hLes[i] >= P.LESION_START && !(f.hState[i] & GONE)) f.hState[i] |= H_KNOWN
       f.knownSev = knownSeverity(f)
-      push(s, out, 'blightSeen', fi, 'bad', `There's blight in ${name}. You can see the brown patches from the road.`)
+      push(s, out, 'blightSeen', fi, 'bad', `${name}에 역병이 있습니다. 길에서도 갈색 반점이 보입니다.`)
     }
     if (f.seenFromRoad) {
       for (let i = 0; i < P.HILLS; i++) if (f.hLes[i] >= 0.2 && !(f.hState[i] & GONE)) f.hState[i] |= H_KNOWN
@@ -1634,13 +1634,13 @@ function fieldDay(world: World, c: Campaign, s: Season, fi: number, d: Day, sevR
     if (f.tiDay >= 0 && f.green < 0.03) {
       f.deadDay = s.day
       f.status = 'dead'
-      const why = frostKill > 0.5 ? 'Frost killed the vines' : f.sev > 0.5 ? 'Blight has killed the vines' : 'The vines have died back'
-      push(s, out, 'vinesDead', fi, f.sev > 0.5 || frostKill > 0.5 ? 'bad' : 'info', `${why} in ${name}.`)
+      const why = frostKill > 0.5 ? '서리가 줄기를 죽였습니다' : f.sev > 0.5 ? '역병이 줄기를 죽였습니다' : '줄기가 다 말랐습니다'
+      push(s, out, 'vinesDead', fi, f.sev > 0.5 || frostKill > 0.5 ? 'bad' : 'info', `${name}에서 ${why}.`)
     }
   }
   if (f.deadDay >= 0 && !(f.flags & F_SKIN) && s.day - f.deadDay >= P.SKIN_DAYS && f.status === 'dead') {
     f.flags |= F_SKIN
-    push(s, out, 'skinSet', fi, 'good', `The skins are set in ${name}, so it's ready to dig.`)
+    push(s, out, 'skinSet', fi, 'good', `${name}의 껍질이 굳어 수확할 준비가 됐습니다.`)
   }
 }
 
@@ -1665,9 +1665,9 @@ export function stepDay(world: World, c: Campaign): GameEvent[] {
 
   const nb = world.neighbor[String(s.year)]
   if (nb) {
-    const news = s.day === nb.plant ? 'planting' : s.day === nb.hill1 ? 'hilling' : s.day === nb.firstSpray ? 'out with the sprayer'
-      : s.day === nb.kill ? 'killing the vines' : s.day === nb.dig ? 'starting to dig' : ''
-    if (news) push(s, out, 'neighbor', -1, 'info', `From the road, you can see the neighbor ${news}.`)
+    const news = s.day === nb.plant ? '파종을 하고' : s.day === nb.hill1 ? '북주기를 하고' : s.day === nb.firstSpray ? '살포기를 꺼내 들고'
+      : s.day === nb.kill ? '줄기를 죽이고' : s.day === nb.dig ? '캐기를 시작하고' : ''
+    if (news) push(s, out, 'neighbor', -1, 'info', `길에서 이웃이 ${news} 있는 것이 보입니다.`)
   }
 
   s.soilT += P.SOIL_T_GAIN * (d.tmean - s.soilT)
@@ -1677,7 +1677,7 @@ export function stepDay(world: World, c: Campaign): GameEvent[] {
     s.sv += sevRegion
     if (s.watchDay < 0 && s.sv >= P.SV_THRESHOLD) {
       s.watchDay = s.day
-      push(s, out, 'watch', -1, 'warn', `The blight watch is on. Wet weather has added up to ${P.SV_THRESHOLD} severity values, so expect spores from now on.`)
+      push(s, out, 'watch', -1, 'warn', `역병 경보가 시작됐습니다. 습한 날씨가 심각도 값 ${P.SV_THRESHOLD}에 쌓였으니 이제부터 포자를 조심하세요.`)
     }
   }
   s.svToday = sevRegion
@@ -1711,9 +1711,9 @@ export function stepDay(world: World, c: Campaign): GameEvent[] {
         f.status = 'lost'
       }
     }
-    leftInField(c, s, out, 'froze in the barrels')
+    leftInField(c, s, out, '통에서 얼어')
     closeIncidents(c, s, out)
-    push(s, out, 'freeze', -1, 'info', `The ground froze on ${formatDay(s.year, s.day)}, so the season is over.`)
+    push(s, out, 'freeze', -1, 'info', `${formatDay(s.year, s.day)}에 땅이 얼어 시즌이 끝났습니다.`)
   }
   s.day++
   c.steps++
@@ -1737,7 +1737,7 @@ function morning(c: Campaign, s: Season, out: GameEvent[]): void {
   const back = c.broken.filter(b => b <= s.day).length
   if (back > 0) {
     c.broken = c.broken.filter(b => b > s.day)
-    push(s, out, 'repaired', -1, 'good', back === 1 ? 'The tractor is running again.' : `${back} tractors are running again.`)
+    push(s, out, 'repaired', -1, 'good', back === 1 ? '트랙터가 다시 돌아갑니다.' : `트랙터 ${back}대가 다시 돌아갑니다.`)
   }
   for (const inc of [...c.incidents]) if (inc.until < s.day) resolveIncident(c, s, inc, defaultChoice(inc), out)
   let running = tractorsRunning(c, s.day)
@@ -1753,7 +1753,7 @@ function openIncident(c: Campaign, s: Season, out: GameEvent[], fields: Omit<Inc
   const inc: Incident = { id: c.nextIncident++, day: s.day, ...fields }
   c.incidents.push(inc)
   s.telegram = s.day
-  const choices = inc.choices.map((ch, k) => k ? CHOICE_LABEL[ch].replace(/^./, x => x.toLowerCase()) : CHOICE_LABEL[ch]).join(' or ')
+  const choices = inc.choices.map((ch, k) => k ? CHOICE_LABEL[ch].replace(/^./, x => x.toLowerCase()) : CHOICE_LABEL[ch]).join(' 아니면 ')
   push(s, out, 'incident', -1, 'warn', `${INCIDENT_TITLE[inc.kind]}. ${incidentText(c, inc)} ${choices}?`, { incident: inc.id, kind: inc.kind })
   return inc
 }
@@ -1765,23 +1765,23 @@ export function resolveIncident(c: Campaign, s: Season, inc: Incident, choice: s
   if (k >= 0) c.incidents.splice(k, 1)
   switch (choice) {
     case 'pass':
-      push(s, out, 'incidentDone', -1, 'info', `${inc.applicant!.name} has gone to look for work elsewhere.`, { incident: inc.id })
+      push(s, out, 'incidentDone', -1, 'info', `${inc.applicant!.name}은(는) 다른 곳에서 일자리를 찾으러 갔습니다.`, { incident: inc.id })
       break
     case 'let': {
       const u = c.crew.find(x => x.id === inc.unit)
       if (u && u.mood < P.POACH_MOOD) {
         removePerson(c, u)
-        push(s, out, 'poached', -1, 'bad', `${u.name} takes the neighbor's offer and leaves.`, { incident: inc.id, unit: u.id })
+        push(s, out, 'poached', -1, 'bad', `${u.name}은(는) 이웃의 제의를 받아들여 떠납니다.`, { incident: inc.id, unit: u.id })
       } else if (u) {
-        push(s, out, 'incidentDone', -1, 'good', `${u.name} is happy enough here and stays.`, { incident: inc.id, unit: u.id })
+        push(s, out, 'incidentDone', -1, 'good', `${u.name}은(는) 여기가 괜찮아 남습니다.`, { incident: inc.id, unit: u.id })
       }
       break
     }
     case 'wait':
-      push(s, out, 'incidentDone', -1, 'info', `The part is on its way, and the tractor will be back on ${formatDay(s.year, inc.back!)}.`, { incident: inc.id })
+      push(s, out, 'incidentDone', -1, 'info', `부품이 오는 중이며 트랙터는 ${formatDay(s.year, inc.back!)}에 돌아옵니다.`, { incident: inc.id })
       break
     case 'refuse':
-      push(s, out, 'incidentDone', -1, 'info', 'The buyer has moved on down the road.', { incident: inc.id })
+      push(s, out, 'incidentDone', -1, 'info', '구매자는 다음 곳으로 지나갔습니다.', { incident: inc.id })
       break
   }
 }
@@ -1814,14 +1814,14 @@ function drawIncidents(c: Campaign, s: Season, turns: Turn[], out: GameEvent[]):
       u.out = s.day + 1 + days
       letGo(u)
       delete u.help
-      push(s, out, 'hurt', -1, 'bad', `${subject(u, 'is', 'You are')} hurt after working worn out ${t.spent.woods > 0 ? 'in the woods' : 'on the tractor'}, and will be off for ${days} days, back on ${formatDay(s.year, u.out)}.`, { unit: u.id, days })
+      push(s, out, 'hurt', -1, 'bad', `${subject(u, `지친 채로 ${t.spent.woods > 0 ? '숲' : '트랙터'}에서 일하다 다쳐 ${days}일간 쉬고 ${formatDay(s.year, u.out)}에 복귀합니다`)}.`, { unit: u.id, days })
     }
     if (t.tractor && c.broken.length < tractorsOwned(c) && !firstPlanting) {
       if (u01(7200 + u.id) < breakdownChance(u, shed)) {
         const mechanic = c.crew.some(x => x.skills.machine >= P.MECHANIC && !hurt(x, s.day + 1))
         const back = s.day + 1 + (mechanic ? 1 : P.BREAK_DAYS)
         c.broken.push(back)
-        if (mechanic) push(s, out, 'breakdown', -1, 'warn', `A tractor broke down while ${subject(u, 'was', 'you were')} driving it. Someone on the farm can fix it, so it'll be back on ${formatDay(s.year, back)}.`, { unit: u.id })
+        if (mechanic) push(s, out, 'breakdown', -1, 'warn', `${iga(u.name)} 운전하던 트랙터가 고장 났습니다. 농장에 고칠 수 있는 사람이 있어 ${formatDay(s.year, back)}에 돌아옵니다.`, { unit: u.id })
         else openIncident(c, s, out, { kind: 'breakdown', until: back - 2, choices: ['rush', 'wait'], unit: u.id, back })
       }
     }
