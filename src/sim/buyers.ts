@@ -9,15 +9,15 @@ interface Buyer { name: string; wants: VarietyId[]; standard: boolean }
 
 // standard: the buyer always wants the first variety on its list that has been released.
 export const BUYERS: Buyer[] = [
-  { name: 'The chip plant', wants: ['atlantic', 'kennebec', 'superior'], standard: true },
-  { name: 'The fry plant', wants: ['burbank', 'caribou', 'kennebec'], standard: false },
-  { name: 'The packer', wants: ['katahdin', 'superior', 'norland', 'gold', 'kennebec'], standard: false },
-  { name: 'The seed house', wants: ['katahdin', 'superior', 'norland', 'kennebec', 'gold', 'caribou', 'burbank', 'atlantic'], standard: false },
+  { name: '칩 공장', wants: ['atlantic', 'kennebec', 'superior'], standard: true },
+  { name: '프라이 공장', wants: ['burbank', 'caribou', 'kennebec'], standard: false },
+  { name: '포장업자', wants: ['katahdin', 'superior', 'norland', 'gold', 'kennebec'], standard: false },
+  { name: '종묘사', wants: ['katahdin', 'superior', 'norland', 'kennebec', 'gold', 'caribou', 'burbank', 'atlantic'], standard: false },
 ]
 
 export const DUE_LABEL: Record<Due, string> = {
-  harvest: 'straight from the field by the end of the season',
-  winter: 'from storage by the end of February',
+  harvest: '시즌 끝까지 밭에서 바로 납품',
+  winter: '2월 말까지 저장고에서 납품',
 }
 
 // This spring's offers: three different buyers, each with a variety out that year, a quantity of about one or two

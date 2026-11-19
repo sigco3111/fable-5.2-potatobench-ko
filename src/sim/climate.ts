@@ -21,7 +21,7 @@ export function isFarmYear(year: number): boolean {
 
 // "Year 3" for a made-up farm; the year itself for one played on the record.
 export function yearLabel(year: number): string {
-  return isFarmYear(year) ? `Year ${year - FARM_YEAR0}` : String(year)
+  return isFarmYear(year) ? `${year - FARM_YEAR0}년차` : String(year)
 }
 
 function donorDay(record: WeatherData, donor: number, year: number, day: number): number {

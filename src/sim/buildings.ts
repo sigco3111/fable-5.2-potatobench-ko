@@ -1,12 +1,13 @@
 // Farm buildings: what each costs in cash, logs and stone, building them, and what a standing one does.
 import { withCommas } from './calendar.ts'
+import { eunneun, eulreul, iga } from './people.ts'
 import { travelDays } from './crew.ts'
 import { DUFOUR_YARD, HOME_YARD, PARCELS } from './farm.ts'
 import * as P from './params.ts'
 import type { Building, BuildingKind, Campaign, World } from './types.ts'
 import { getDay } from './weather.ts'
 
-export const YARD_NAME: Record<number, string> = { [HOME_YARD]: 'the home yard', [DUFOUR_YARD]: 'the Dufour yard' }
+export const YARD_NAME: Record<number, string> = { [HOME_YARD]: '본가 마당', [DUFOUR_YARD]: '뒤푸르 마당' }
 
 // 'a' or 'an' for a name.
 export function article(name: string, capital = false): string {
@@ -64,8 +65,8 @@ export function spendable(c: Campaign): number {
 // Why the farm cannot pay this much for such a thing now, or '' when it can. what: 'buildings', 'equipment'.
 export function spendBlock(c: Campaign, cost: number, what: string): string {
   if (cost <= spendable(c) + 1e-6) return ''
-  if (c.phase === 'plan') return `You can't afford it yet. It costs $${withCommas(cost)}, and in spring the bank won't lend for ${what}.`
-  return `You can't afford it yet. It costs $${withCommas(cost)}, and the bank lends until you owe $${withCommas(P.BUILD_CREDIT)} (you ${c.cash < 0 ? `owe $${withCommas(Math.round(-c.cash))}` : `have $${withCommas(Math.floor(c.cash))}`}).`
+  if (c.phase === 'plan') return `아직 감당할 수 없습니다. $${withCommas(cost)}가 들고, 봄에는 은행이 ${what}에는 대출해 주지 않습니다.`
+  return `아직 감당할 수 없습니다. $${withCommas(cost)}가 들고, 은행은 빚이 $${withCommas(P.BUILD_CREDIT)}가 될 때까지만 빌려줍니다(현재 ${c.cash < 0 ? `빚 $${withCommas(Math.round(-c.cash))}` : `보유 $${withCommas(Math.floor(c.cash))}`}).`
 }
 
 // Why this land cannot be bought now, or '' when it can. A field is bought in spring, with the year's plan; woods
@@ -73,31 +74,31 @@ export function spendBlock(c: Campaign, cost: number, what: string): string {
 // more land), a quarter down from what the farm can spend and the rest on the land mortgage.
 export function buyLandBlock(c: Campaign, field: number, dufourHeld: boolean): string {
   const fp = c.fields[field], p = PARCELS[field]
-  if (!fp || !p) return 'No such field.'
-  if (fp.tenure === 'owned') return `You already own ${p.name}.`
+  if (!fp || !p) return '그런 밭이 없습니다.'
+  if (fp.tenure === 'owned') return `이미 ${eulreul(p.name)} 소유하고 있습니다.`
   const tract = fp.cover === 'woods' || fp.cover === 'brush'
-  if (c.phase !== 'plan' && !(tract && (c.phase === 'season' || c.phase === 'cellar'))) return tract ? 'You can buy land to clear in spring, during the season, or in winter.' : 'You can only buy a field in spring. Woods and brush to clear can be bought at any time.'
-  if (p.holding === 'dufour' && !dufourHeld) return `${p.name} comes with the Dufour place, so rent or buy a Dufour field first.`
+  if (c.phase !== 'plan' && !(tract && (c.phase === 'season' || c.phase === 'cellar'))) return tract ? '개간할 땅은 봄, 시즌 중, 겨울에 살 수 있습니다.' : '밭은 봄에만 살 수 있습니다. 개간할 수림이나 관목 땅은 언제든 살 수 있습니다.'
+  if (p.holding === 'dufour' && !dufourHeld) return `${eunneun(p.name)} 뒤푸르 농장에 딸려 있으니, 먼저 뒤푸르 밭을 임차하거나 사세요.`
   const down = Math.round(p.price * P.MORTGAGE_DOWN)
-  if (down > spendable(c) + 1e-6) return `You can't afford the down payment yet. It's $${withCommas(down)}, a quarter of the price.`
+  if (down > spendable(c) + 1e-6) return `아직 계약금을 감당할 수 없습니다. 가격의 4분의 1인 $${withCommas(down)}입니다.`
   return ''
 }
 
 // Why this building cannot be started at this yard now, or '' when it can.
 export function buildBlock(c: Campaign, kind: BuildingKind, yard: number, dufourHeld: boolean): string {
   const spec = P.BUILDINGS[kind]
-  if (!spec) return 'No such building.'
-  if (c.phase === 'ledger' || c.phase === 'over') return 'You can order a building in spring, during the season, or in winter.'
-  if (c.phase === 'season' && (!c.season || c.season.frozen)) return 'The ground has frozen, so order it in winter instead.'
-  if (yard !== HOME_YARD && yard !== DUFOUR_YARD) return 'No such yard.'
+  if (!spec) return '그런 건물이 없습니다.'
+  if (c.phase === 'ledger' || c.phase === 'over') return '건축은 봄, 시즌 중, 겨울에 주문할 수 있습니다.'
+  if (c.phase === 'season' && (!c.season || c.season.frozen)) return '땅이 얼었으니 겨울에 주문하세요.'
+  if (yard !== HOME_YARD && yard !== DUFOUR_YARD) return '그런 마당이 없습니다.'
   if (yard === DUFOUR_YARD) {
-    if (!spec.dufour) return `${article(spec.name, true)} ${spec.name.toLowerCase()} can only go in the home yard.`
-    if (!dufourHeld) return 'The Dufour yard is yours only while you hold Dufour land.'
+    if (!spec.dufour) return `${eunneun(spec.name)} 본가 마당에만 지을 수 있습니다.`
+    if (!dufourHeld) return '뒤푸르 마당은 뒤푸르 땅을 보유하는 동안만 쓸 수 있습니다.'
   }
   const at = buildingAt(c, kind, yard)
-  if (at) return at.built ? `There's already ${article(spec.name)} ${spec.name.toLowerCase()} in ${YARD_NAME[yard]}.` : `${article(spec.name, true)} ${spec.name.toLowerCase()} is already going up in ${YARD_NAME[yard]}.`
+  if (at) return at.built ? `${YARD_NAME[yard]}에 이미 ${iga(spec.name)} 있습니다.` : `${YARD_NAME[yard]}에 이미 ${iga(spec.name)} 올라가고 있습니다.`
   const cost = buildCost(c, kind)
-  return spendBlock(c, cost.total, 'buildings')
+  return spendBlock(c, cost.total, '건축')
 }
 
 // Pays for a building, takes its materials from the yard, and starts it.

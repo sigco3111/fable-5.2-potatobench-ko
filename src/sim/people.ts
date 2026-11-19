@@ -4,7 +4,7 @@ import * as P from './params.ts'
 import { hashUnit } from './rng.ts'
 import type { Applicant, Campaign, JobKind, Skill, Trait, Unit, UnitKind } from './types.ts'
 
-export const SKILL_LABEL: Record<Skill, string> = { machine: 'machine work', field: 'field work', woods: 'woods work', build: 'building', pack: 'packing' }
+export const SKILL_LABEL: Record<Skill, string> = { machine: '기계 작업', field: '밭일', woods: '임업 작업', build: '건축', pack: '포장' }
 
 export function zeroSkills(): Record<Skill, number> {
   return { machine: 0, field: 0, woods: 0, build: 0, pack: 0 }
@@ -120,8 +120,19 @@ export function upgradePerson(u: Record<string, unknown>, seed: number, year: nu
 
 // A person as the subject of a sentence: the name and what is said of them ("Ada is hurt"), or, for the farmer, the
 // same thing said to the player ("You are hurt").
-export function subject(u: Unit, one: string, you: string): string {
-  return u.kind === 'farmer' ? you : `${u.name} ${one}`
+export function josa(word: string, on: string, off: string): string {
+  const c = word.charCodeAt(word.length - 1)
+  const batchim = c >= 0xAC00 && c <= 0xD7A3 && (c - 0xAC00) % 28 !== 0
+  return word + (batchim ? on : off)
+}
+export const iga = (w: string): string => josa(w, '이', '가')
+export const eunneun = (w: string): string => josa(w, '은', '는')
+export const eulreul = (w: string): string => josa(w, '을', '를')
+export const waga = (w: string): string => josa(w, '과', '와')
+
+// A person as the subject of a sentence: the name with the right particle, the predicate following.
+export function subject(u: Unit, one: string, _you?: string): string {
+  return `${iga(u.name)} ${one}`
 }
 
 // Whether a person takes today off: rests by themselves once worn out (unless told to work on), or was told to rest
@@ -220,11 +231,11 @@ export function moodTarget(c: Campaign, u: Unit, fieldsIn: number): number {
 }
 
 export function tiredWord(t: number): string {
-  return t >= 0.85 ? 'worn out' : t >= 0.6 ? 'tired' : t >= 0.3 ? 'weary' : 'fresh'
+  return t >= 0.85 ? '녹초' : t >= 0.6 ? '피곤함' : t >= 0.3 ? '지침' : '상쾌함'
 }
 
 export function moodWord(m: number): string {
-  return m >= 0.85 ? 'happy' : m >= 0.65 ? 'content' : m >= 0.45 ? 'fed up' : m >= 0.25 ? 'unhappy' : 'about to quit'
+  return m >= 0.85 ? '행복함' : m >= 0.65 ? '만족함' : m >= 0.45 ? '짜증 남' : m >= 0.25 ? '불만 있음' : '그만두기 직전'
 }
 
 // Puts days of a person's time at a kind of work into their experience; returns each level gained.

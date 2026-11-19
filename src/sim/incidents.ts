@@ -8,17 +8,17 @@ import type { Campaign, Incident, IncidentKind, Unit } from './types.ts'
 import { variety } from './varieties.ts'
 
 export const INCIDENT_TITLE: Record<IncidentKind, string> = {
-  applicant: 'Someone asks for work',
-  poach: 'A neighbor wants one of your people',
-  breakdown: 'A tractor has broken down',
-  buyer: 'A buyer stops in',
+  applicant: '일자리를 찾는 사람',
+  poach: '이웃이 우리 일꾼을 빼가려 합니다',
+  breakdown: '트랙터가 고장 났습니다',
+  buyer: '구매자가 들렀습니다',
 }
 
 export const CHOICE_LABEL: Record<string, string> = {
-  hire: 'Hire', pass: 'Not now',
-  match: 'Match the offer', let: 'Let them choose',
-  rush: 'Pay for a rush part', wait: 'Wait for the part',
-  take: 'Take the offer', refuse: 'Turn it down',
+  hire: '고용', pass: '다음에',
+  match: '같은 조건 제시', let: '본인이 정하게',
+  rush: '급송 부품 비용 지불', wait: '부품을 기다림',
+  take: '제안 수락', refuse: '거절',
 }
 
 // The situation in plain words.
@@ -28,17 +28,17 @@ export function incidentText(c: Campaign, inc: Incident): string {
     case 'applicant': {
       const a = inc.applicant!
       const best = bestSkill(a.skills)
-      return `${a.name} is looking for work at $${withCommas(a.ask)} a month. Their best skill is ${SKILL_LABEL[best]} (level ${a.skills[best]}), and their trait is ${P.TRAITS[a.trait].name.toLowerCase()}.`
+      return `${a.name} 님이 월 $${withCommas(a.ask)}에 일자리를 찾고 있습니다. 가장 뛰어난 기술은 ${SKILL_LABEL[best]}(레벨 ${a.skills[best]})이고, 성향은 ${P.TRAITS[a.trait].name}입니다.`
     }
     case 'poach': {
       const u = c.crew.find(x => x.id === inc.unit)
-      return u ? `A neighbor has offered ${u.name} $${withCommas(inc.wage!)} a month. You pay $${withCommas(u.wage)}.` : 'The neighbor\'s offer has expired.'
+      return u ? `이웃이 ${u.name}에게 월 $${withCommas(inc.wage!)}를 제시했습니다. 현재 당신은 $${withCommas(u.wage)}를 주고 있습니다.` : '이웃의 제안은 지났습니다.'
     }
     case 'breakdown':
-      return `If you wait for the part, the tractor will be back on ${day(inc.back!)}.`
+      return `부품을 기다리면 트랙터는 ${day(inc.back!)}에 돌아옵니다.`
     case 'buyer': {
       const lot = c.lots.find(l => l.id === inc.lot)
-      return lot ? `A buyer is offering 10% over the market price for all ${withCommas(lotCwt(lot))} cwt of your ${variety(lot.variety).name}, this week only.` : 'The buyer has left.'
+      return lot ? `구매자가 당신의 ${variety(lot.variety).name} ${withCommas(lotCwt(lot))} cwt 전량에 시세보다 10%를 얹어주겠다고 합니다. 이번 주뿐입니다.` : '구매자가 떠났습니다.'
     }
   }
 }
@@ -46,17 +46,17 @@ export function incidentText(c: Campaign, inc: Incident): string {
 // What a choice does, in one sentence.
 export function choiceDoes(c: Campaign, inc: Incident, choice: string): string {
   switch (choice) {
-    case 'hire': return `${inc.applicant!.name} starts at $${withCommas(inc.applicant!.ask)} a month, with their own skills and trait.`
-    case 'pass': return inc.kind === 'buyer' ? 'You keep the lot to sell or store later.' : 'They\'ll look for work elsewhere.'
-    case 'match': return `Their wage goes up ${Math.round(P.POACH_RAISE * 100)}% to $${withCommas(inc.wage!)} a month.`
+    case 'hire': return `${inc.applicant!.name} 님이 월 $${withCommas(inc.applicant!.ask)}로 시작합니다. 기술과 성향은 그 사람 고유의 것입니다.`
+    case 'pass': return inc.kind === 'buyer' ? '이 물량은 나중에 팔거나 저장할 수 있습니다.' : '그 사람은 다른 일자리를 찾을 겁니다.'
+    case 'match': return `월급이 ${Math.round(P.POACH_RAISE * 100)}% 올라 월 $${withCommas(inc.wage!)}가 됩니다.`
     case 'let': {
       const u = c.crew.find(x => x.id === inc.unit)
-      return u && u.mood < P.POACH_MOOD ? `${u.name} isn't happy here and will leave.` : `${u?.name ?? 'They'} will stay if they're happy enough here, but will leave if their mood is under ${P.POACH_MOOD}.`
+      return u && u.mood < P.POACH_MOOD ? `${u.name} 님은 이곳이 마음에 들지 않아 떠날 겁니다.` : `${u?.name ?? '그 사람'}은 이곳이 충분히 마음에 들면 남지만, 기분이 ${P.POACH_MOOD} 아래면 떠납니다.`
     }
-    case 'rush': return `It costs $${withCommas(P.RUSH_PART)}, and the tractor is back tomorrow.`
-    case 'wait': return `It's free, and the tractor is back on ${formatDay(c.year, inc.back!)}.`
-    case 'take': return 'You sell the whole lot now for 10% more than today\'s market price.'
-    case 'refuse': return 'You keep the lot to sell or store later.'
+    case 'rush': return `$${withCommas(P.RUSH_PART)}가 들고, 트랙터는 내일 돌아옵니다.`
+    case 'wait': return `비용은 없고, 트랙터는 ${formatDay(c.year, inc.back!)}에 돌아옵니다.`
+    case 'take': return '지금 물량 전부를 오늘 시세보다 10% 높게 팝니다.'
+    case 'refuse': return '이 물량은 나중에 팔거나 저장할 수 있습니다.'
   }
   return ''
 }

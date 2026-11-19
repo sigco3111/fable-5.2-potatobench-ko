@@ -4,7 +4,7 @@ import * as P from './params.ts'
 import { hallHire, hiredCount, housingLimit, newFarmer as farmer } from './people.ts'
 import type { Campaign, JobKind, Unit, UnitKind } from './types.ts'
 
-export const UNIT_LABEL: Record<UnitKind, string> = { farmer: 'the farmer', hand: 'a field hand', operator: 'the tractor operator' }
+export const UNIT_LABEL: Record<UnitKind, string> = { farmer: '농장주', hand: '밭일 일꾼', operator: '트랙터 기사' }
 
 // The work a hire of this kind is taken on for. What a person actually does is set by their priorities.
 export function canDo(kind: UnitKind, job: JobKind): boolean {
@@ -28,19 +28,19 @@ export function crewCount(c: Campaign, kind: UnitKind): number {
 
 // Why nobody more can be hired now, or '' when someone can.
 export function hireRoom(c: Campaign): string {
-  if (c.phase !== 'plan' && c.phase !== 'season') return 'You can hire in spring or during the season.'
-  if (c.phase === 'season' && (!c.season || c.season.frozen)) return 'The season is over.'
+  if (c.phase !== 'plan' && c.phase !== 'season') return '봄이나 시즌 중에 고용할 수 있습니다.'
+  if (c.phase === 'season' && (!c.season || c.season.frozen)) return '시즌이 끝났습니다.'
   const limit = housingLimit(c)
   if (hiredCount(c) >= limit) {
-    return limit <= P.HOUSED_OUT ? `Only ${P.HOUSED_OUT} hired people can live off the farm, and any more need a bed in a bunkhouse.` : `Every bunkhouse bed is taken, and your farm houses only ${limit} hired people.`
+    return limit <= P.HOUSED_OUT ? `외부에 살 수 있는 고용 인원은 ${P.HOUSED_OUT}명뿐이고, 그 이상은 숙소 침대가 필요합니다.` : `숙소 침대가 다 찼습니다. 이 농장은 고용 인원 ${limit}명까지만 수용합니다.`
   }
   return ''
 }
 
 // Why a unit of this kind cannot be hired now, or '' when it can.
 export function hireBlock(c: Campaign, kind: UnitKind): string {
-  if (kind === 'farmer') return 'There\'s only one farmer, and that\'s you.'
-  if (kind !== 'hand' && kind !== 'operator') return 'No such work on this farm.'
+  if (kind === 'farmer') return '농장주는 한 명, 바로 당신뿐입니다.'
+  if (kind !== 'hand' && kind !== 'operator') return '이 농장에는 그런 일이 없습니다.'
   return hireRoom(c)
 }
 

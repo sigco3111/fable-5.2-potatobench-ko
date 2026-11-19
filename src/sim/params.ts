@@ -95,14 +95,14 @@ export const JOB_COST: Record<JobKind, number> = {
   fell: 0, rocks: 0, brush: 0, build: 0, haul: 0,
 }
 export const UPGRADES: Record<UpgradeId, { name: string; cost: number; blurb: string }> = {
-  boom: { name: 'Boom sprayer', cost: 6000, blurb: 'Spraying a field takes a tenth of a day instead of a quarter.' },
-  harvester: { name: 'Two-row harvester', cost: 12000, blurb: 'Digging a field takes a day and a quarter instead of two days.' },
-  vent: { name: 'Cellar ventilation', cost: 7000, blurb: 'Your cellar holds more, the crop shrinks less in storage, and rot spreads more slowly.' },
-  reel: { name: 'Irrigation reel', cost: 30000, blurb: 'A pump, pipe and a traveling sprinkler. Watering a field takes half a day instead of a whole one, and it costs less.' },
-  tractor2: { name: 'Second tractor', cost: 6000, blurb: 'A second tractor with its own planter and hiller, so two people can do machine work at once. You need the machine shed first.' },
-  house2: { name: 'Second potato house', cost: 18000, blurb: 'A contractor builds a second potato house at home right away, which doubles your storage there. It costs less if your own crew builds it.' },
-  tractor3: { name: 'Third tractor', cost: 8000, blurb: 'A third tractor, so three people can do machine work at once. You need the machine shed and the second tractor first.' },
-  truck: { name: 'Truck', cost: 6000, blurb: 'Hauls the crop in twice as fast as a tractor, and frees the tractor for other work.' },
+  boom: { name: '붐 분무기', cost: 6000, blurb: '밭 하나의 살포가 ¼일에서 1/10일로 줄어듭니다.' },
+  harvester: { name: '2조식 수확기', cost: 12000, blurb: '밭 하나의 수확이 이틀에서 하루와 ¼일로 줄어듭니다.' },
+  vent: { name: '저장고 환기', cost: 7000, blurb: '저장고에 더 많이 넣을 수 있고, 저장 중 줄어드는 양이 적어지며, 썩음이 더 천천히 번집니다.' },
+  reel: { name: '관수 릴', cost: 30000, blurb: '펌프와 파이프, 이동식 스프링클러. 밭 하나의 물 주기가 하루에서 반나절로 줄고 비용도 적어집니다.' },
+  tractor2: { name: '두 번째 트랙터', cost: 6000, blurb: '파종기와 북주기를 단 두 번째 트랙터로, 두 사람이 동시에 기계 작업을 할 수 있습니다. 먼저 기계 창고가 필요합니다.' },
+  house2: { name: '두 번째 감자 저장고', cost: 18000, blurb: '업자가 곧바로 본가에 두 번째 감자 저장고를 지어 저장량이 두 배가 됩니다. 직접 지으면 비용이 더 적습니다.' },
+  tractor3: { name: '세 번째 트랙터', cost: 8000, blurb: '세 번째 트랙터로, 세 사람이 동시에 기계 작업을 할 수 있습니다. 기계 창고와 두 번째 트랙터가 먼저 필요합니다.' },
+  truck: { name: '트럭', cost: 6000, blurb: '수확물 운반이 트랙터보다 두 배 빠르고, 트랙터는 다른 일을 할 수 있게 됩니다.' },
 }
 
 // ---------------------------------------------------------------- the bigger farm (all invented: docs/MODEL.md section 9)
@@ -125,9 +125,9 @@ export const OPERATOR_WAGE = 550
 export const WAGE_DAYS = 30                    // wages are paid for this many days at a time, from the day hired
 export const MAX_HANDS = 4
 export const MAX_OPERATORS = 1
-export const FARMER_NAME = 'You'
-export const HAND_NAMES = ['Lucien', 'Marie', 'Gerald', 'Theresa', 'Roland', 'Dot']
-export const OPERATOR_NAMES = ['Wendell', 'Aurele']
+export const FARMER_NAME = '당신'
+export const HAND_NAMES = ['뤼시앵', '마리', '제럴드', '테레사', '롤랑', '닷']
+export const OPERATOR_NAMES = ['웬델', '오렐']
 
 // A dig hauls the crop to the nearest potato house the farm has. The home six are inside the haul the dig time
 // already allows for; beyond that each ground unit adds this share, so the longest haul (Spruce Lot) adds about 40%.
@@ -172,16 +172,16 @@ export const SPRAY_BASE = 0.84                 // a spray lays down 0.84 + 0.02 
 export const SPRAY_PER = 0.02
 
 export const TRAITS: Record<Trait, { name: string; text: string }> = {
-  strong: { name: 'Strong back', text: 'Does field and woods work 15% faster.' },
-  steady: { name: 'Steady hands', text: 'Does machine work as if two levels more skilled.' },
-  sharp: { name: 'Sharp-eyed', text: 'Spots more of the blighted plants when scouting.' },
-  early: { name: 'Early riser', text: 'Does all work 8% faster.' },
-  tireless: { name: 'Tireless', text: 'Gets tired 30% more slowly.' },
-  cheerful: { name: 'Cheerful', text: 'Mood never sinks below the middle, and lifts everyone else\'s a little.' },
-  hothead: { name: 'Hot-headed', text: 'Mood drops twice as fast when worn out.' },
-  careless: { name: 'Careless', text: 'Misses more blight when scouting, and bruises more potatoes at harvest.' },
-  slow: { name: 'Slow and sure', text: 'Works 10% slower, but never gets hurt.' },
-  homebody: { name: 'Homebody', text: 'Won\'t work winters.' },
+  strong: { name: '튼튼한 허리', text: '밭일과 임업 작업을 15% 더 빠르게 합니다.' },
+  steady: { name: '차분한 손', text: '기계 작업을 기술 레벨이 두 단계 높은 것처럼 합니다.' },
+  sharp: { name: '눈썰미', text: '순찰할 때 역병 걸린 포기를 더 많이 찾아냅니다.' },
+  early: { name: '부지런한 새벽형', text: '모든 작업을 8% 더 빠르게 합니다.' },
+  tireless: { name: '지치지 않음', text: '피로가 30% 더 천천히 쌓입니다.' },
+  cheerful: { name: '명랑함', text: '기분이 중간 아래로는 떨어지지 않고, 다른 사람들의 기분도 조금 올려 줍니다.' },
+  hothead: { name: '다혈질', text: '지쳤을 때 기분이 두 배 빨리 떨어집니다.' },
+  careless: { name: '덜렁거림', text: '순찰할 때 역병을 더 많이 놓치고, 수확 때 감자를 더 많이 상하게 합니다.' },
+  slow: { name: '느리지만 꼼꼼', text: '10% 느리게 일하지만 다치는 일이 없습니다.' },
+  homebody: { name: '집순이·집돌이', text: '겨울에는 일하지 않습니다.' },
 }
 export const TRAIT_LIST: Trait[] = ['strong', 'steady', 'sharp', 'early', 'tireless', 'cheerful', 'hothead', 'careless', 'slow', 'homebody']
 export const STRONG_SPEED = 1.15
@@ -221,10 +221,10 @@ export const WAGE_MAX = 4000
 export const HOUSED_OUT = 2                    // hired people who can live out; more need the bunkhouse
 export const PRIORITY_MAX = 4
 export const FOREMAN_PAY = 1.4
-export const FIRST_NAMES = ['Albert', 'Alcide', 'Arthur', 'Beatrice', 'Bernadette', 'Carl', 'Clement', 'Doris', 'Elmer', 'Evelyn', 'Fernand',
-  'Florence', 'Hazel', 'Hollis', 'Ingrid', 'Irene', 'Jeannette', 'Leon', 'Normand', 'Pauline', 'Rita', 'Ruth', 'Verna', 'Yvette']
-export const LAST_NAMES = ['Ouellette', 'Michaud', 'Thibodeau', 'Cyr', 'Pelletier', 'Dube', 'Bouchard', 'Levesque', 'Daigle', 'Theriault', 'Nadeau',
-  'Plourde', 'Hersey', 'Bubar', 'Anderson', 'Espling', 'Collins', 'Haines', 'McCrum', 'Kelley', 'Gagnon', 'Sirois']
+export const FIRST_NAMES = ['앨버트', '알시드', '아서', '비어트리스', '버나뎃', '칼', '클레망', '도리스', '엘머', '에블린', '페르낭',
+  '플로렌스', '헤이즐', '홀리스', '잉그리드', '아이린', '자넷', '레옹', '노르망', '폴린', '리타', '루스', '버나', '이벳']
+export const LAST_NAMES = ['웰렛', '미쇼', '티보도', '시르', '펠티에', '뒤베', '부샤르', '레베크', '데글', '테리오', '나도',
+  '플루르드', '허시', '부바', '앤더슨', '에스플링', '콜린스', '헤인스', '매크럼', '켈리', '가뇽', '시루아']
 
 // The harvest break: the schools close and a picking crew can be had by the day.
 export const PICKERS_FROM = { month: 8, dom: 20 }   // September 20
@@ -283,22 +283,22 @@ export const MORTGAGE_RATE = 0.06              // and 6% interest on what is sti
 export interface BuildingSpec { name: string; cash: number; logs: number; stone: number; days: number; dufour: boolean; does: string; catch: string }
 // dufour: whether one can stand at the Dufour yard too (one of each kind per yard).
 export const BUILDINGS: Record<BuildingKind, BuildingSpec> = {
-  house: { name: 'Potato house', cash: 7000, logs: 30, stone: 25, days: 30, dufour: true,
-    does: 'Stores 3,600 cwt at its yard (6,400 at home with ventilation).', catch: 'It costs about as much as growing a field, and takes a month to build.' },
-  shed: { name: 'Machine shed', cash: 4500, logs: 20, stone: 10, days: 16, dufour: false,
-    does: 'Machine work goes 15% faster, breakdowns are half as likely, and you can keep a second and third tractor.', catch: 'It takes money and materials that won\'t grow any potatoes.' },
-  bunk: { name: 'Bunkhouse', cash: 3500, logs: 16, stone: 8, days: 12, dufour: true,
-    does: 'Gives you beds for six hired people, who are happier with a bed.', catch: 'Beds only pay off with people in them, and every person is another wage.' },
-  packing: { name: 'Packing shed', cash: 8000, logs: 24, stone: 15, days: 24, dufour: false,
-    does: 'In winter, anyone you set to packing grades the stored crop. Packed No. 1 sells for 15% more, and packed B size sells for three quarters of the No. 1 price.', catch: 'Packing costs a fee per hundredweight, plus wages for someone kept on all winter.' },
-  pond: { name: 'Irrigation pond', cash: 6000, logs: 0, stone: 30, days: 20, dufour: false,
-    does: 'Holds six waterings. Watering a home or intervale field from it takes a third of a day and costs $60.', catch: 'When a month brings less than 1.6 inches (40 mm) of rain, the brook runs low and the pond goes dry, right when you need it.' },
-  stand: { name: 'Farm stand', cash: 600, logs: 4, stone: 0, days: 4, dufour: false,
-    does: 'From August 1, it sells about 6 cwt a day from your newest lot at twice the market price, and more for red, yellow and new potatoes.', catch: 'Someone has to run it, which takes a fifth of a working day every day it\'s open.' },
-  station: { name: 'Weather station', cash: 1000, logs: 0, stone: 0, days: 1, dufour: false,
-    does: 'Forecast errors are 40% smaller, and each field shows today\'s blight risk based on how long its own leaves stay wet.', catch: 'The forecast can still be wrong, and knowing the risk doesn\'t spray the field for you.' },
-  road: { name: 'Gravel road', cash: 1500, logs: 0, stone: 40, days: 12, dufour: false,
-    does: 'Travel and hauling are 30% faster.', catch: 'It takes 40 loads of stone, or $1,600 to buy that much from the quarry.' },
+  house: { name: '감자 저장고', cash: 7000, logs: 30, stone: 25, days: 30, dufour: true,
+    does: '마당에 3,600 cwt를 저장합니다(본가는 환기 장치를 갖추면 6,400).', catch: '밭 하나를 가꾸는 것만큼 비용이 들고, 짓는 데 한 달이 걸립니다.' },
+  shed: { name: '기계 창고', cash: 4500, logs: 20, stone: 10, days: 16, dufour: false,
+    does: '기계 작업이 15% 빨라지고 고장이 절반으로 줄며, 두 번째·세 번째 트랙터를 둘 수 있습니다.', catch: '감자를 키워 주지 않는 돈과 자재가 듭니다.' },
+  bunk: { name: '숙소', cash: 3500, logs: 16, stone: 8, days: 12, dufour: true,
+    does: '고용한 일꾼 여섯이 잘 수 있는 침대가 생기고, 침대가 있는 일꾼은 더 만족합니다.', catch: '침대는 쓰는 사람이 있어야 값을 하고, 사람 한 명마다 월급이 늘어납니다.' },
+  packing: { name: '포장 창고', cash: 8000, logs: 24, stone: 15, days: 24, dufour: false,
+    does: '겨울에 포장을 맡긴 사람이 저장한 감자를 선별합니다. 포장한 1등급은 15% 더 비싸게 팔리고, 포장한 B 사이즈는 1등급 가격의 4분의 3을 받습니다.', catch: '포장에는 무게당 수수료가 들고, 겨우내 두는 사람의 월급도 듭니다.' },
+  pond: { name: '관수 연못', cash: 6000, logs: 0, stone: 30, days: 20, dufour: false,
+    does: '여섯 번의 물 주기를 담아 둡니다. 본가나 저지대 밭에 여기서 물을 주면 하루의 3분의 1이 걸리고 $60가 듭니다.', catch: '한 달 비가 40 mm(1.6인치)보다 적으면 개울물이 말라 연못이 바닥납니다. 꼭 필요할 때요.' },
+  stand: { name: '농산물 직판장', cash: 600, logs: 4, stone: 0, days: 4, dufour: false,
+    does: '8월 1일부터 가장 최근 물량에서 하루 약 6 cwt를 시세의 두 배에 팝니다. 붉은 감자, 노란 감자, 햇감자는 더 받습니다.', catch: '누군가가 지켜야 해서, 문을 여는 날마다 작업일의 5분의 1이 듭니다.' },
+  station: { name: '기상 관측소', cash: 1000, logs: 0, stone: 0, days: 1, dufour: false,
+    does: '예보 오차가 40% 줄고, 밭마다 잎이 젖어 있는 시간을 바탕으로 오늘의 역병 위험을 보여 줍니다.', catch: '예보는 여전히 틀릴 수 있고, 위험을 아는 것만으로 밭에 약을 쳐 주지는 않습니다.' },
+  road: { name: '자갈길', cash: 1500, logs: 0, stone: 40, days: 12, dufour: false,
+    does: '이동과 운반이 30% 빨라집니다.', catch: '돌 40적이 필요하며, 채석장에서 사면 $1,600입니다.' },
 }
 export const BUILDING_KINDS: BuildingKind[] = ['house', 'shed', 'bunk', 'packing', 'pond', 'stand', 'station', 'road']
 export const HOUSE_CWT = 3600                  // a built potato house; at home with ventilation it holds CELLAR_CWT_VENT

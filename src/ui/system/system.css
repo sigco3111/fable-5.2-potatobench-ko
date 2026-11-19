@@ -42,9 +42,9 @@
   --st-ink: #1e1c19;       /* any other need: paper icon 15.1 */
 
   /* type */
-  --f-text: 'Caslon', Georgia, serif;
-  --f-gothic: 'Gothic', 'Arial Narrow', sans-serif;
-  --f-stencil: 'Stencil', 'Gothic', sans-serif;
+  --f-text: 'Caslon', 'Noto Serif KR', Georgia, serif;
+  --f-gothic: 'Gothic', 'Noto Sans KR', 'Arial Narrow', sans-serif;
+  --f-stencil: 'Stencil', 'Gothic', 'Noto Sans KR', sans-serif;
   --t-label: 13px;         /* gothic capitals, tracked; the smallest text anywhere */
   --t-caption: 14px;       /* italic captions */
   --t-body: 15px;

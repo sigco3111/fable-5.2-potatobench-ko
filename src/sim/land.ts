@@ -6,7 +6,7 @@ import { resultLevel } from './people.ts'
 import { withCommas } from './calendar.ts'
 import type { Campaign, Cover, Day, Unit } from './types.ts'
 
-export const COVER_WORD: Record<Cover, string> = { open: 'open ground', woods: 'standing woods', brush: 'brush', stumps: 'stumps' }
+export const COVER_WORD: Record<Cover, string> = { open: '빈 땅', woods: '수림', brush: '관목', stumps: '그루터기' }
 
 export function isOpen(c: Campaign, i: number): boolean {
   return c.fields[i].cover === 'open'
@@ -153,11 +153,11 @@ export function clearing(c: Campaign, i: number): { stage: ClearStage; next: str
   const fp = c.fields[i]
   const name = PARCELS[i].name
   if (standing(fp.cover)) {
-    return { stage: 'fell', next: `Fell the ${fp.cover === 'woods' ? 'woods' : 'brush'} on ${name}. It takes about ${Math.ceil(fellLeft(c, i))} crew-days of woods work and goes fastest in winter.` }
+    return { stage: 'fell', next: `${name}의 ${fp.cover === 'woods' ? '나무' : '관목'}를 베어 내세요. 임업 작업 약 ${Math.ceil(fellLeft(c, i))}인일이 걸리고 겨울에 가장 빠릅니다.` }
   }
   if (fp.cover === 'stumps') {
-    return { stage: 'stump', next: fp.works?.kind === 'stump' ? `The bulldozer is pulling stumps, with ${fp.works.left} more season ${fp.works.left === 1 ? 'day' : 'days'} to go.` : `Have a contractor pull the stumps. It costs $${withCommas(P.STUMP_FEE)} and takes about ${P.STUMP_DAYS} season days.` }
+    return { stage: 'stump', next: fp.works?.kind === 'stump' ? `불도저가 그루터기를 뽑는 중입니다. 시즌 ${fp.works.left}일 남았습니다.` : `업자를 불러 그루터기를 뽑으세요. $${withCommas(P.STUMP_FEE)}가 들고 시즌 약 ${P.STUMP_DAYS}일 걸립니다.` }
   }
-  if (fp.stones >= P.ROCKS_ADVISE) return { stage: 'rocks', next: `Pick the rocks off ${name} when no crop is growing, because new ground is stony.` }
+  if (fp.stones >= P.ROCKS_ADVISE) return { stage: 'rocks', next: `새 땅은 돌이 많으니, 작물이 없을 때 ${name}의 돌을 골라내세요.` }
   return { stage: 'done', next: '' }
 }

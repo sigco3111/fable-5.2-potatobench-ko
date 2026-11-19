@@ -2,7 +2,7 @@
 import { formatDay, monthDay, MONTHS, MONTHS_SHORT } from '../sim/index.ts'
 
 export type Units = 'us' | 'metric'
-let units: Units = 'us'
+let units: Units = 'metric'
 
 export function setUnits(u: Units): void { units = u }
 export function metric(): boolean { return units === 'metric' }
@@ -76,10 +76,10 @@ export function massParts(cwts: number[]): { parts: string[]; total: string } {
 
 // What the cellar charges, for a round weight in the units in use.
 export function storeRate(usdPerCwtMonth: number): string {
-  return metric() ? `${money(usdPerCwtMonth / T_PER_CWT * 10)} per 10 t a month` : `${money(usdPerCwtMonth * 100)} per 100 cwt a month`
+  return metric() ? `10 t당 한 달 ${money(usdPerCwtMonth / T_PER_CWT * 10)}` : `100 cwt당 한 달 ${money(usdPerCwtMonth * 100)}`
 }
 
-export function hundredweight(): string { return metric() ? 'tonne' : 'hundredweight' }
+export function hundredweight(): string { return metric() ? '톤(t)' : 'hundredweight(cwt)' }
 
 // What cwt means, said once on a screen that counts in it; nothing in metric.
 export function cwtNote(): string { return metric() ? '' : ' A cwt is a hundredweight (100 lb).' }
@@ -123,22 +123,22 @@ export function days(d: number): string {
   if (Math.abs(d * 4 - q) < 0.02 && q > 0) {
     const whole = Math.floor(q / 4), part = QUARTERS[q % 4]
     const n = whole ? `${whole}${part}` : part
-    return `${n} ${q <= 4 ? 'day' : 'days'}`
+    return `${n}일`
   }
   const tenth = Math.round(d * 10)
-  if (Math.abs(d * 10 - tenth) < 0.02 && (tenth === 1 || tenth === 2)) return `${tenth === 1 ? '⅒' : '⅕'} day`
-  if (d < 1) return `${num(Math.max(0.1, d), 1)} day`
-  return `${num(d, 1)} days`
+  if (Math.abs(d * 10 - tenth) < 0.02 && (tenth === 1 || tenth === 2)) return `${tenth === 1 ? '⅒' : '⅕'}일`
+  if (d < 1) return `${num(Math.max(0.1, d), 1)}일`
+  return `${num(d, 1)}일`
 }
 
 export function ago(n: number): string {
-  if (n <= 0) return 'today'
-  if (n === 1) return 'yesterday'
-  return `${n} days ago`
+  if (n <= 0) return '오늘'
+  if (n === 1) return '어제'
+  return `${n}일 전`
 }
 
 export function weekday(year: number, day: number, short = false): string {
-  const names = short ? ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] : ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+  const names = short ? ['일', '월', '화', '수', '목', '금', '토'] : ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일']
   return names[new Date(Date.UTC(year, 0, 1 + day)).getUTCDay()]
 }
 
@@ -147,7 +147,7 @@ export function date(year: number, day: number, short = false): string {
 }
 
 export function dateLong(year: number, day: number): string {
-  return `${weekday(year, day)}, ${formatDay(year, day)}`
+  return `${formatDay(year, day)} ${weekday(year, day)}`
 }
 
 export function monthName(m: number, short = false): string {
@@ -160,68 +160,58 @@ export function dayOfMonth(year: number, day: number): number {
 
 export function list(names: string[]): string {
   if (names.length <= 1) return names.join('')
-  if (names.length === 2) return `${names[0]} and ${names[1]}`
-  return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`
+  if (names.length === 2) return `${names[0]}, ${names[1]}`
+  return `${names.slice(0, -1).join(', ')}, ${names[names.length - 1]}`
 }
 
-export function plural(n: number, one: string, many = `${one}s`): string {
-  return `${num(n)} ${n === 1 ? one : many}`
+export function plural(n: number, one: string, many = ''): string {
+  return `${num(n)}${one}`
 }
 
-// "once", "twice", "3 times".
+// "한 번", "두 번", "3번".
 export function times(n: number): string {
-  return n === 1 ? 'once' : n === 2 ? 'twice' : plural(n, 'time')
+  return n === 1 ? '한 번' : n === 2 ? '두 번' : `${num(n)}번`
 }
 
-// "both" for two, "all 4" for more.
+// "둘 다" for two, "4개 모두" for more.
 export function allOf(n: number): string {
-  return n === 2 ? 'both' : `all ${n}`
+  return n === 2 ? '둘 다' : `${n}개 모두`
 }
 
 // A range that never reads "0–0": the two ends are rounded together, and a range too small to show says so.
 export function span(lo: number, hi: number, unit: string, digits = 0): string {
   const step = 10 ** -digits
-  if (hi < step / 2) return `under ${num(step, digits)} ${unit}`
+  if (hi < step / 2) return `${num(step, digits)}${unit} 미만`
   const a = num(lo, digits), b = num(hi, digits)
-  return a === b ? `about ${b} ${unit}` : `${a}–${b} ${unit}`
+  return a === b ? `약 ${b}${unit}` : `${a}~${b}${unit}`
 }
 
 export function perAreaSpan(loCwtAcre: number, hiCwtAcre: number): string {
   return span(perAreaValue(loCwtAcre), perAreaValue(hiCwtAcre), perAreaUnit(), metric() ? 1 : 0)
 }
 
-export function massSpan(loCwt: number, hiCwt: number): string {
-  return span(massValue(loCwt), massValue(hiCwt), massUnit(), metric() ? 1 : 0)
+export function massSpan(loCwt: number, hiCwtAcre: number): string {
+  return span(massValue(loCwt), massValue(hiCwtAcre), massUnit(), metric() ? 1 : 0)
 }
 
 export function gramsSpan(lo: number, hi: number): string {
-  if (metric()) return span(lo, hi, 'g')
+  if (metric()) return span(lo, hi, ' g')
   const a = lo / 28.3495, b = hi / 28.3495
-  return span(a, b, 'oz', b < 10 ? 1 : 0)
+  return span(a, b, ' oz', b < 10 ? 1 : 0)
 }
 
 export function upper(text: string): string {
-  return text ? text[0].toUpperCase() + text.slice(1) : text
+  return text
 }
 
-// "15% above" or "4% below", or "level with" when there is nothing in it.
-export function versus(ratio: number, over = 'above', under = 'below'): string {
+// "15% 높음" or "4% 낮음", or "비슷한 수준" when there is nothing in it.
+export function versus(ratio: number, over = '높음', under = '낮음'): string {
   const d = ratio - 1
-  return Math.abs(d) < 0.015 ? 'level with' : `about ${pct(Math.abs(d))} ${d > 0 ? over : under}`
+  return Math.abs(d) < 0.015 ? '비슷한 수준' : `약 ${pct(Math.abs(d))} ${d > 0 ? over : under}`
 }
 
-// The simulation writes its messages in US units with bare dollar figures; this rewrites them for display,
-// and keeps to the one name the interface uses for the farm next door.
+// The simulation writes its messages with bare dollar figures; this groups the digits for display.
 export function localize(text: string): string {
-  const t = text
-    .replace(/the neighbours are killing their vines/g, 'the neighbor is killing the vines')
-    .replace(/the neighbours are/g, 'the neighbor is').replace(/the neighbours have/g, 'the neighbor has')
-    .replace(/neighbour/g, 'neighbor').replace(/travelling/g, 'traveling')
+  return text
     .replace(/\$(\d{4,})\b/g, (_, d) => `$${group(Number(d))}`).replace(/\b(\d{4,}) cwt\b/g, (_, d) => `${group(Number(d))} cwt`)
-  if (!metric()) return t
-  return t
-    .replace(/(-?\d+)°F/g, (_, f) => `${Math.round((Number(f) - 32) * 5 / 9)}°C`)
-    .replace(/(\d+(?:\.\d+)?) lb\b/g, (_, lb) => `${num(Number(lb) * 0.453592, 2)} kg`)
-    .replace(/(\d[\d,]*) cwt\b/g, (_, c) => mass(Number(String(c).replace(/,/g, ''))))
-    .replace(/about an inch/g, 'about 25 mm')
 }

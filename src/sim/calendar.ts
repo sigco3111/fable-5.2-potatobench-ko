@@ -1,5 +1,5 @@
-export const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
-export const MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+export const MONTHS = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월']
+export const MONTHS_SHORT = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월']
 const CUM = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334]
 
 export function isLeap(year: number): boolean {
@@ -26,7 +26,7 @@ export function monthDay(year: number, day: number): { month: number; dom: numbe
   return { month, dom: day - start + 1 }
 }
 
-export const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+export const WEEKDAYS = ['월요일', '화요일', '수요일', '목요일', '금요일', '토요일', '일요일']
 export const SUNDAY = 6
 
 // Day of the week, 0 Monday to 6 Sunday, by counting days from Monday, January 1 of the year 1 (proleptic Gregorian).
@@ -47,5 +47,5 @@ export function withCommas(n: number): string {
 
 export function formatDay(year: number, day: number, short = false): string {
   const { month, dom } = monthDay(year, day)
-  return `${(short ? MONTHS_SHORT : MONTHS)[month]} ${dom}`
+  return `${(short ? MONTHS_SHORT : MONTHS)[month]} ${dom}일`
 }

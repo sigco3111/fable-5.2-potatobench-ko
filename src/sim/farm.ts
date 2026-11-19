@@ -5,7 +5,7 @@
 export type BlockId = 'home' | 'brook' | 'ridge' | 'dufour'
 
 export const BLOCKS: BlockId[] = ['home', 'brook', 'ridge', 'dufour']
-export const BLOCK_NAME: Record<BlockId, string> = { home: 'the home farm', brook: 'the intervale', ridge: 'the ridge lots', dufour: 'the Dufour place' }
+export const BLOCK_NAME: Record<BlockId, string> = { home: '본가 농장', brook: '저지대', ridge: '마루 땅', dufour: '뒤푸르 농장' }
 
 // How a parcel can be had: rented or bought like any field; a tract the farm owns from the start; a tract for sale;
 // or a tract for sale only while the farm holds Dufour land.
@@ -31,30 +31,30 @@ export interface Yard { name: string; block: BlockId; x: number; z: number; cell
 // The home farm's six, then the land that can be rented or bought. The land beyond the home farm has been
 // in hay or let go, so it starts rested with little early dying.
 export const PARCELS: Parcel[] = [
-  { name: 'North Ridge', block: 'home', elev: 2, x: -8.4, z: -14.2, rent: 0, price: 0, streak: 0, vert: 0.03, cover: 'open', stones: 0.3, holding: 'field' },
-  { name: 'South Ridge', block: 'home', elev: 2, x: 7.8, z: -14.2, rent: 0, price: 0, streak: 2, vert: 0.1, cover: 'open', stones: 0.35, holding: 'field' },
-  { name: 'Upper Middle', block: 'home', elev: 1, x: -8.4, z: -1, rent: 0, price: 0, streak: 1, vert: 0.05, cover: 'open', stones: 0.25, holding: 'field' },
-  { name: 'Lower Middle', block: 'home', elev: 1, x: 7.8, z: -1, rent: 0, price: 0, streak: 3, vert: 0.22, cover: 'open', stones: 0.25, holding: 'field' },
-  { name: 'Brook Field', block: 'home', elev: 0, x: -8.4, z: 12.2, rent: 0, price: 0, streak: 0, vert: 0.03, cover: 'open', stones: 0.2, holding: 'field' },
-  { name: 'Bottom Field', block: 'home', elev: 0, x: 7.8, z: 12.2, rent: 0, price: 0, streak: 1, vert: 0.08, cover: 'open', stones: 0.2, holding: 'field' },
+  { name: '북쪽 마루', block: 'home', elev: 2, x: -8.4, z: -14.2, rent: 0, price: 0, streak: 0, vert: 0.03, cover: 'open', stones: 0.3, holding: 'field' },
+  { name: '남쪽 마루', block: 'home', elev: 2, x: 7.8, z: -14.2, rent: 0, price: 0, streak: 2, vert: 0.1, cover: 'open', stones: 0.35, holding: 'field' },
+  { name: '윗가운데', block: 'home', elev: 1, x: -8.4, z: -1, rent: 0, price: 0, streak: 1, vert: 0.05, cover: 'open', stones: 0.25, holding: 'field' },
+  { name: '아랫가운데', block: 'home', elev: 1, x: 7.8, z: -1, rent: 0, price: 0, streak: 3, vert: 0.22, cover: 'open', stones: 0.25, holding: 'field' },
+  { name: '개울밭', block: 'home', elev: 0, x: -8.4, z: 12.2, rent: 0, price: 0, streak: 0, vert: 0.03, cover: 'open', stones: 0.2, holding: 'field' },
+  { name: '낮은밭', block: 'home', elev: 0, x: 7.8, z: 12.2, rent: 0, price: 0, streak: 1, vert: 0.08, cover: 'open', stones: 0.2, holding: 'field' },
   // Across the brook: deep wet bottom land, frosty, close to water.
-  { name: 'Intervale North', block: 'brook', elev: 0, x: -8.4, z: 38, rent: 3000, price: 30000, streak: 0, vert: 0.04, cover: 'open', stones: 0.3, holding: 'field' },
-  { name: 'Intervale South', block: 'brook', elev: 0, x: 7.8, z: 38, rent: 3000, price: 30000, streak: 0, vert: 0.05, cover: 'open', stones: 0.3, holding: 'field' },
+  { name: '저지대 북쪽', block: 'brook', elev: 0, x: -8.4, z: 38, rent: 3000, price: 30000, streak: 0, vert: 0.04, cover: 'open', stones: 0.3, holding: 'field' },
+  { name: '저지대 남쪽', block: 'brook', elev: 0, x: 7.8, z: 38, rent: 3000, price: 30000, streak: 0, vert: 0.05, cover: 'open', stones: 0.3, holding: 'field' },
   // North along the ridge: early, dry ground under the spruce.
-  { name: 'Spruce Lot', block: 'ridge', elev: 2, x: -44, z: -14.2, rent: 5500, price: 55000, streak: 0, vert: 0.02, cover: 'open', stones: 0.45, holding: 'field' },
-  { name: 'High Lot', block: 'ridge', elev: 2, x: -27.8, z: -14.2, rent: 5500, price: 55000, streak: 0, vert: 0.03, cover: 'open', stones: 0.4, holding: 'field' },
+  { name: '가문비 땅', block: 'ridge', elev: 2, x: -44, z: -14.2, rent: 5500, price: 55000, streak: 0, vert: 0.02, cover: 'open', stones: 0.45, holding: 'field' },
+  { name: '높은 땅', block: 'ridge', elev: 2, x: -27.8, z: -14.2, rent: 5500, price: 55000, streak: 0, vert: 0.03, cover: 'open', stones: 0.4, holding: 'field' },
   // The Dufour place, up the road to the south, with a potato house of its own. Old potato ground, so a little
   // more wilt in the soil than the lots that were never in potatoes.
-  { name: 'Dufour Upper', block: 'dufour', elev: 2, x: 58, z: -14.2, rent: 3500, price: 35000, streak: 0, vert: 0.06, cover: 'open', stones: 0.4, holding: 'field' },
-  { name: 'Dufour Flat', block: 'dufour', elev: 1, x: 74.2, z: -14.2, rent: 3500, price: 35000, streak: 0, vert: 0.05, cover: 'open', stones: 0.35, holding: 'field' },
-  { name: 'Dufour Middle', block: 'dufour', elev: 1, x: 58, z: -1, rent: 3500, price: 35000, streak: 0, vert: 0.04, cover: 'open', stones: 0.35, holding: 'field' },
-  { name: 'Dufour Lower', block: 'dufour', elev: 0, x: 74.2, z: -1, rent: 3500, price: 35000, streak: 0, vert: 0.08, cover: 'open', stones: 0.3, holding: 'field' },
+  { name: '뒤푸르 윗밭', block: 'dufour', elev: 2, x: 58, z: -14.2, rent: 3500, price: 35000, streak: 0, vert: 0.06, cover: 'open', stones: 0.4, holding: 'field' },
+  { name: '뒤푸르 평밭', block: 'dufour', elev: 1, x: 74.2, z: -14.2, rent: 3500, price: 35000, streak: 0, vert: 0.05, cover: 'open', stones: 0.35, holding: 'field' },
+  { name: '뒤푸르 가운데밭', block: 'dufour', elev: 1, x: 58, z: -1, rent: 3500, price: 35000, streak: 0, vert: 0.04, cover: 'open', stones: 0.35, holding: 'field' },
+  { name: '뒤푸르 아래밭', block: 'dufour', elev: 0, x: 74.2, z: -1, rent: 3500, price: 35000, streak: 0, vert: 0.08, cover: 'open', stones: 0.3, holding: 'field' },
   // Tracts to clear, each beside its block, a field's depth behind or beside the fields it shelters. Never in
   // potatoes, so almost free of early dying.
-  { name: 'Home Woodlot', block: 'home', elev: 2, x: -8.4, z: -27.4, rent: 0, price: 0, streak: 0, vert: 0.01, cover: 'woods', stones: 0.75, holding: 'owned' },
-  { name: 'Alder Swale', block: 'home', elev: 0, x: 24, z: 12.2, rent: 0, price: 0, streak: 0, vert: 0.01, cover: 'brush', stones: 0.75, holding: 'owned' },
-  { name: 'Burnt Hill', block: 'ridge', elev: 2, x: -27.8, z: -27.4, rent: 0, price: 5000, streak: 0, vert: 0.01, cover: 'woods', stones: 0.75, holding: 'sale' },
-  { name: 'Dufour Back Lot', block: 'dufour', elev: 1, x: 58, z: -27.4, rent: 0, price: 4000, streak: 0, vert: 0.01, cover: 'woods', stones: 0.75, holding: 'dufour' },
+  { name: '집 뒤 수림', block: 'home', elev: 2, x: -8.4, z: -27.4, rent: 0, price: 0, streak: 0, vert: 0.01, cover: 'woods', stones: 0.75, holding: 'owned' },
+  { name: '오리나무 습지', block: 'home', elev: 0, x: 24, z: 12.2, rent: 0, price: 0, streak: 0, vert: 0.01, cover: 'brush', stones: 0.75, holding: 'owned' },
+  { name: '불탄 언덕', block: 'ridge', elev: 2, x: -27.8, z: -27.4, rent: 0, price: 5000, streak: 0, vert: 0.01, cover: 'woods', stones: 0.75, holding: 'sale' },
+  { name: '뒤푸르 뒷땅', block: 'dufour', elev: 1, x: 58, z: -27.4, rent: 0, price: 4000, streak: 0, vert: 0.01, cover: 'woods', stones: 0.75, holding: 'dufour' },
 ]
 
 export const HOME_FIELDS = 6
@@ -66,8 +66,8 @@ export const DUFOUR_YARD = -2
 
 // Where crews start the season and crops are stored. The Dufour yard is the farm's only when Dufour land is held.
 export const YARDS: Yard[] = [
-  { name: 'Home yard', block: 'home', x: 26, z: -4, cellar: 3600 },
-  { name: 'Dufour yard', block: 'dufour', x: 90, z: -6, cellar: 2400 },
+  { name: '본가 마당', block: 'home', x: 26, z: -4, cellar: 3600 },
+  { name: '뒤푸르 마당', block: 'dufour', x: 90, z: -6, cellar: 2400 },
 ]
 
 // Whether the farm holds a Dufour field (rented or owned), and so the Dufour yard. The back lot does not count.
