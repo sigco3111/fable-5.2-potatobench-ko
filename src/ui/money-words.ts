@@ -10,10 +10,10 @@ export function dueSays(due: S.MoneyNow['due'], loan: number): { total: number; 
   const bills = Math.round(due.note + due.household)
   const lent = Math.round(loan)
   const mortgage = Math.round(due.mortgage)
-  const more = F.list([lent ? `this spring's ${F.money(lent)} loan` : '', mortgage ? `${F.money(mortgage)} for the land mortgage` : ''].filter(Boolean))
+  const more = F.list([lent ? `이번 봄 대출 ${F.money(lent)}` : '', mortgage ? `땅 대출 ${F.money(mortgage)}` : ''].filter(Boolean))
   return {
     total: bills + lent + mortgage, parts: [bills, lent, mortgage],
-    text: `That's the ${F.money(bills)} you owe the bank and your family every year${more ? `, plus ${more}` : ''}. You keep whatever's left.`,
+    text: `매년 은행과 가족에게 내는 ${F.money(bills)}입니다${more ? `, 거기에 ${more}` : ''}. 남는 것은 당신의 것입니다.`,
   }
 }
 
@@ -23,17 +23,17 @@ export function lowCashSays(c: S.Campaign, left: number): string {
   const month = S.monthCost(c)
   if (left < 0 || left >= month) return ''
   const cut = S.planCut(c)
-  return `That's less than a month of wages and field work (about ${F.money(Math.round(month / 100) * 100)}), so the season starts on the loan.${cut ? ` ${cut.what} would save about ${F.money(Math.round(cut.saves / 100) * 100)}.` : ''}`
+  return `한 달치 품값과 밭일 비용(약 ${F.money(Math.round(month / 100) * 100)})보다 적어 시즌이 대출로 시작됩니다.${cut ? ` ${cut.what}을(를) 하지 않으면 약 ${F.money(Math.round(cut.saves / 100) * 100)}을(를) 아낍니다.` : ''}`
 }
 
 // The key a cause's remedy is pressed by, a word each: the order that helps that field.
-export const REMEDY: Partial<Record<S.JobKind, string>> = { water: 'Water', spray: 'Spray' }
+export const REMEDY: Partial<Record<S.JobKind, string>> = { water: '물주기', spray: '살포' }
 
 // Why the year-end figure moved, as the board says it under the figure: "Brook Field dry: −$2,600"; with its remedy
 // in words where the line is itself what is pressed (an alert on a phone): "Brook Field dry: −$2,600. Water it". A sale
 // that left the figure where it was has no amount.
 export function causeLine(why: S.MoneyCause, remedy = false): string {
-  const fix = remedy && why.remedy && REMEDY[why.remedy] ? `. ${REMEDY[why.remedy]} it` : ''
+  const fix = remedy && why.remedy && REMEDY[why.remedy] ? `. ${REMEDY[why.remedy]}하세요` : ''
   return Math.abs(why.amount) < 0.5 ? why.text : `${why.text}: ${signedMoney(why.amount)}${fix}`
 }
 
@@ -54,12 +54,12 @@ export function sumLines(parts: S.MoneyPart[], figure: number): S.MoneyPart[] {
 
 // Where the year-end figure is likely to end, as a person reads a range.
 export function rangeSays(range: { lo: number; hi: number }): string {
-  return `Most years like this end between ${signedMoney(range.lo)} and ${signedMoney(range.hi)}.`
+  return `이런 해는 대부분 ${signedMoney(range.lo)}에서 ${signedMoney(range.hi)} 사이로 끝납니다.`
 }
 
 // The spring loan, said under the pointer on Borrowed, and once a season as a note the first time it grows.
-export const BORROWED_SAYS = `This is the bank's spring loan. Wages and field work go on it until the crop sells, it costs no interest until the end of the year, and the crop's sales pay it back. Whatever is still owed then carries at ${F.pct(S.CREDIT_RATE)}.`
-export const LOAN_NOTE = 'The bank pays your costs until the crop sells, and the crop pays the bank back.'
+export const BORROWED_SAYS = `은행의 봄 대출입니다. 작물이 팔릴 때까지 품값과 밭일 비용이 여기서 나가고, 연말까지 이자가 없으며 작물 판매로 갚습니다. 그때 남은 것은 ${F.pct(S.CREDIT_RATE)}의 이자가 붙습니다.`
+export const LOAN_NOTE = '작물이 팔릴 때까지 은행이 비용을 대고, 작물이 은행에 갚습니다.'
 
 // Whether the loan's note is due now: in the season, the first time this year that what is borrowed grows (not the
 // spring loan's own start).
@@ -71,22 +71,22 @@ export function loanNoteNow(c: S.Campaign, cashWas: number, saidIn: number): boo
 // what it takes to the year end: "about $3,300 to the year end".
 export function effectSays(d: number | null, hire = false): string {
   if (d === null || Math.abs(d) < 50) return ''
-  return hire && d < 0 ? `about ${F.money(-Math.round(d / 100) * 100)} to the year end` : `year end ${signedMoney(d)}`
+  return hire && d < 0 ? `연말까지 약 ${F.money(-Math.round(d / 100) * 100)}` : `연말 ${signedMoney(d)}`
 }
 
 // The spring plan's year-end figure past the bank's limit: one line, and the change that would bring it back most.
 export function limitSays(m: S.MoneyNow, rescue: { what: string; gains: number } | null): string {
   if (m.after >= S.CREDIT_LIMIT) return ''
-  return `That's past the bank's limit of ${F.money(S.CREDIT_LIMIT)}, so it would call in the loan.${rescue ? ` ${rescue.what} would bring it up about ${F.money(Math.round(rescue.gains / 100) * 100)}.` : ''}`
+  return `은행 한도인 ${F.money(S.CREDIT_LIMIT)}을(를) 넘어 대출 회수에 들어갑니다.${rescue ? ` ${rescue.what}을(를) 하면 약 ${F.money(Math.round(rescue.gains / 100) * 100)} 올라갑니다.` : ''}`
 }
 
 // The ledger's verdict, by the bank's own rule (campaign.ts, closeYear): in hand, or down but inside the limit.
 export function verdictSays(y: S.YearSummary, left: number, kept: boolean): string {
-  const more = left > 0 ? ` ${F.upper(F.plural(left, 'year'))} to go.` : ''
-  if (kept) return y.cashEnd >= 0 ? 'The farm is yours, and the bank is happy.' : `The farm is yours. You ended ${F.money(-y.cashEnd)} in debt, inside what the bank allows.`
-  if (y.cashEnd >= 0) return `You ended the year with ${F.money(y.cashEnd)} left, and the bank is satisfied.${more}`
+  const more = left > 0 ? ` ${left}년 남았습니다.` : ''
+  if (kept) return y.cashEnd >= 0 ? '농장은 당신의 것이고 은행도 만족합니다.' : `농장은 당신의 것입니다. ${F.money(-y.cashEnd)}의 빚으로 끝냈지만 은행이 허락하는 안쪽입니다.`
+  if (y.cashEnd >= 0) return `${F.money(y.cashEnd)}을(를) 남기고 해를 마쳐 은행이 만족합니다.${more}`
   // "In debt", not "down": the lines beside it use "down" for cash against the year's start, which is another figure.
-  return `You ended ${F.money(-y.cashEnd)} in debt, inside what the bank allows, so it carries you another year.${more}`
+  return `${F.money(-y.cashEnd)}의 빚으로 끝냈지만 은행이 허락하는 안쪽이라 또 한 해를 봐줍니다.${more}`
 }
 
 // The ledger's first line: from what was sold to what was kept.
@@ -94,12 +94,12 @@ export function yearWalk(y: S.YearSummary): string {
   const bills = y.note + y.living + y.interest
   const gap = Math.round(y.cashEnd - y.cashStart)
   const kept = (y.land ?? 0) + (y.building ?? 0) + (y.works ?? 0)
-  return `You sold ${F.money(y.revenue)}, spent ${F.money(y.costs)} on the farm and ${F.money(bills)} on the bank and your family, and ended with ${F.money(y.cashEnd)}, ${gap === 0 ? 'the same as you started' : `${F.money(Math.abs(gap))} ${gap < 0 ? 'less' : 'more'} than you started with`}.${kept && gap < 0 ? ` ${F.money(kept)} of it paid for land, buildings and clearing, which you keep.` : ''}`
+  return `${F.money(y.revenue)}을(를) 팔고 농장에 ${F.money(y.costs)}, 은행과 가족에 ${F.money(bills)}을(를) 써 ${F.money(y.cashEnd)}(으)로 끝냈습니다. 시작할 때보다 ${gap === 0 ? '같습니다' : `${F.money(Math.abs(gap))} ${gap < 0 ? '적습니다' : '많습니다'}`}.${kept && gap < 0 ? ` 그중 ${F.money(kept)}은(는) 당신이 지키는 땅, 건물, 개간에 들어갔습니다.` : ''}`
 }
 
 // How a purchase is paid in spring: the cash first, the rest on the spring loan. '' when the cash covers it.
 export function loanSays(cost: number, onLoan: number): string {
   if (onLoan < 0.5) return ''
-  if (onLoan >= cost - 0.5) return `+${F.money(cost)} on the loan`
-  return `${F.money(cost - onLoan)} from cash, +${F.money(onLoan)} on the loan`
+  if (onLoan >= cost - 0.5) return `대출로 +${F.money(cost)}`
+  return `현금에서 ${F.money(cost - onLoan)}, 대출로 +${F.money(onLoan)}`
 }

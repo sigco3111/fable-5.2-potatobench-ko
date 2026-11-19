@@ -14,5 +14,5 @@ export function ticketPlace(c: S.Campaign, lot: S.Lot): number {
 // What the yield looked like before the harvest, and from what. Test digs are often your crew's (the routine digs
 // them), so the line names the digs, not who ordered them.
 export function expectedFrom(digs: number): string {
-  return digs ? `${F.upper(F.plural(digs, 'test dig'))} pointed to` : 'By eye it looked like'
+  return digs ? `시험 캐기 ${digs}회로 보면` : '눈으로 보면'
 }

@@ -4,7 +4,7 @@ import type { Skill } from '../sim/index.ts'
 import { h } from './dom.ts'
 import { portrait } from './system/people.ts'
 
-export const SKILL_SHORT: Record<Skill, string> = { machine: 'Machines', field: 'Field', woods: 'Woods', build: 'Building', pack: 'Packing' }
+export const SKILL_SHORT: Record<Skill, string> = { machine: '기계', field: '밭일', woods: '임업', build: '건축', pack: '포장' }
 export const SKILL_ORDER: Skill[] = ['machine', 'field', 'woods', 'build', 'pack']
 
 export function face(look: PersonLook, size = 36, cls = ''): SVGElement {
