@@ -1,5 +1,5 @@
 // Browser-local saves. Every save carries a version; migrate() brings an old one forward.
-import { applicantsFor, HOME_FIELDS, PARCELS, SAVE_VERSION, upgradePerson, type Campaign } from '../sim/index.ts'
+import { applicantsFor, FARMER_NAME, HOME_FIELDS, PARCELS, SAVE_VERSION, upgradePerson, type Campaign } from '../sim/index.ts'
 
 const KEY = 'the-county/save'
 const SETTINGS_KEY = 'the-county/settings'
@@ -68,7 +68,7 @@ const MIGRATIONS: Record<number, Migration> = {
     for (let i = plans.length; i < V3_PARCELS; i++) plans.push({ crop: 'rest', variety: 'katahdin', seed: 'certified' })
     const upgrades = c.upgrades as Record<string, unknown> | undefined
     if (upgrades && typeof upgrades === 'object') { upgrades.tractor2 ??= false; upgrades.house2 ??= false }
-    c.crew ??= [{ id: 0, kind: 'farmer', name: 'You', at: -1, wage: 0, job: -1, to: -1, road: 0, paidTo: 0 }]
+    c.crew ??= [{ id: 0, kind: 'farmer', name: FARMER_NAME, at: -1, wage: 0, job: -1, to: -1, road: 0, paidTo: 0 }]
     c.nextUnit ??= 1
     c.offers ??= []
     c.contracts ??= []

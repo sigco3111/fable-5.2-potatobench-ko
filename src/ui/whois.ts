@@ -89,12 +89,12 @@ export function whois(ctx: Ctx, layer: HTMLElement): Whois {
 
   function body(c: S.Campaign, p: S.PersonInfo): Child {
     const farmer = p.kind === 'farmer'
-    const name = farmer ? 'You' : p.name
+    const name = farmer ? '당신' : p.name
     const ring = ringFor(c, p.id)
     const season = c.phase === 'season' && !!c.season
     // What they are at now, said as the time book says it (now.ts).
     const now = season ? personNow(c, p.id, S.jobWaits(app.world, c)) : null
-    const busy = !!now && !['Idle', 'Waiting', 'Sunday'].includes(now.word)
+    const busy = !!now && !['한가함', '기다림', '일요일'].includes(now.word)
     const lower = (t: string) => t.replace(/^./, x => x.toLowerCase())
     const detail = c.phase === 'cellar' ? lower(p.winterText) : !season ? 'waiting for the season to start' : now!.rest
     const sign = personSign(p, false)

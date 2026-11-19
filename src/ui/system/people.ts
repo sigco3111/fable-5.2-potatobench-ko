@@ -54,7 +54,7 @@ export function pin(who: { name: string } | string, state: PinState = 'rest', o:
     h('span', { class: 'head' }, portrait(look, 36)),
     o.count && o.count > 1 ? h('span', { class: 'badge count num', 'aria-hidden': 'true' }, icon('people', 'i'), String(o.count))
       : state === 'needs' || state === 'hurt' ? h('span', { class: 'badge', 'aria-hidden': 'true' }, state === 'hurt' ? '+' : '!') : null,
-    o.name ? h('span', { class: 'name' }, name === 'You' ? 'You' : name.split(' ')[0]) : null,
+    o.name ? h('span', { class: 'name' }, name === '당신' ? '당신' : name.split(' ')[0]) : null,
   ]
   const cls = `pin sys${PIN_CLASS[state]}${o.count && o.count > 1 ? ' is-many' : ''}`
   const style = `--c:${o.ring ?? look.shirt}`

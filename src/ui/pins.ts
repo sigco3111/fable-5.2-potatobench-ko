@@ -71,7 +71,7 @@ export function pins(ctx: Ctx, layer: HTMLElement, o: { covers: () => DOMRect[];
     const picked = app.unit === m.id
     patch(w, JSON.stringify([m, count, picked, many, ctx.touch(), near, count > 1 ? members.map(x => [x.id, x.label]) : 0]), () => pin(m.name, m.state, {
       ring: m.ring, name: picked || near, testid: `pin-${m.id}`, count,
-      label: count > 1 ? `${count} people are here. ${members.map(x => x.label).join('. ')}. Press to choose one.` : `${m.label}. Press to ${picked ? 'close' : 'open'} ${m.name === 'You' ? 'your' : 'their'} card.`,
+      label: count > 1 ? `${count}명이 여기 있습니다. ${members.map(x => x.label).join('. ')}. 눌러서 한 명을 고르세요.` : `${m.label}. 누르면 ${m.name === '당신' ? '내' : '이 사람의'} 카드를 ${picked ? '닫습니다' : '엽니다'}.`,
       pressed: count === 1 ? picked : undefined,
       // the pointer over a pin names them, as it does over their body
       onenter: (e: Event) => { if ((e as PointerEvent).pointerType === 'mouse') app.point({ x: 0, y: 0, unit: m.id, thing: null, field: -1, yard: 0, group: count > 1 ? members.map(x => x.id) : undefined }) },
@@ -88,9 +88,9 @@ export function pins(ctx: Ctx, layer: HTMLElement, o: { covers: () => DOMRect[];
   function drawList(members: Model[]): void {
     list.hidden = open < 0
     if (open < 0) return
-    list.replaceChildren(h('div', { class: 'pin-list sheet sys', role: 'group', 'aria-label': 'People here' },
+    list.replaceChildren(h('div', { class: 'pin-list sheet sys', role: 'group', 'aria-label': '여기 있는 사람들' },
       members.map(m => h('button', { class: `pl-row${app.unit === m.id ? ' is-picked' : ''}`, type: 'button', testid: `pin-pick-${m.id}`, onclick: () => pick(m.id) },
-        ringed(m.name, m.ring, 30), h('span', { class: 'pl-name' }, m.name === 'You' ? 'You' : firstName(m.name)), h('span', { class: 't-label' }, m.label.split(', ').slice(1).join(', '))))))
+        ringed(m.name, m.ring, 30), h('span', { class: 'pl-name' }, m.name === '당신' ? '당신' : firstName(m.name)), h('span', { class: 't-label' }, m.label.split(', ').slice(1).join(', '))))))
   }
 
   function frame(): void {

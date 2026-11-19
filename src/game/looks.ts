@@ -44,7 +44,7 @@ export const FARMER_LOOK: PersonLook = { shirt: SHIRTS[0], hat: HATS[0], skin: S
 
 // key: the person's name ('You' for the farmer), or 0 for the farmer.
 export function personLook(key: number | string): PersonLook {
-  if (key === 0 || key === 'You') return FARMER_LOOK
+  if (key === 0 || key === 'You' || key === '당신') return FARMER_LOOK
   const id = seedOf(key)
   const cut = CUTS[mix(id, 5) % CUTS.length]
   return {
