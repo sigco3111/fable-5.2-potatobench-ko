@@ -8,7 +8,7 @@ import { ageLot, gradeHill, newLot, finishLot, lotCwt } from './harvest.ts'
 import { brushedNow, COVER_WORD, envTmin, fell, fellLeft, fieldEnv, isField, isOpen, standing, stoneBruise, stoneSpeed, stumped } from './land.ts'
 import * as P from './params.ts'
 import { breakdownChance, CHOICE_LABEL, defaultChoice, hurtChance, INCIDENT_TITLE, incidentText } from './incidents.ts'
-import { applicantsFor, gainXp, hurt, jobSkill, moodTarget, payOf, resting, scoutChance, SKILL_LABEL, speed, sprayCover, subject, willDo, zeroSkills } from './people.ts'
+import { applicantsFor, gainXp, hurt, iga, jobSkill, moodTarget, payOf, resting, scoutChance, SKILL_LABEL, speed, sprayCover, subject, willDo, zeroSkills } from './people.ts'
 import { hashUnit, nextInt, nextUnit } from './rng.ts'
 import {
   H_DECAYED, H_DUG, H_EMERGED, H_KNOWN, H_ROGUED, H_SAMPLED, H_SEEDBLIGHT, H_VIRUS, H_WILT,
@@ -189,75 +189,75 @@ export function jobBlock(c: Campaign, kind: JobKind, field: number): string {
 // The same, for an order already on the list (self), which does not count as its own duplicate.
 function block(c: Campaign, kind: JobKind, field: number, self: Job | null): string {
   const s = c.season
-  if (!s || c.phase !== 'season') return 'The season isn\'t under way.'
-  if (s.frozen) return 'The ground has frozen.'
+  if (!s || c.phase !== 'season') return '시즌이 아직 시작되지 않았습니다.'
+  if (s.frozen) return '땅이 얼었습니다.'
   // Hauling and building go on the list by themselves; the player cannot order them.
   if (kind === 'build') {
-    if (!self) return 'Building goes on the work list when you order a building.'
+    if (!self) return '건축은 건물을 주문하면 작업 목록에 오릅니다.'
     const b = c.buildings.find(x => x.id === self.building)
-    return b && buildable(c, b) ? '' : 'There\'s nothing left to build.'
+    return b && buildable(c, b) ? '' : '더 지을 것이 없습니다.'
   }
   if (kind === 'haul') {
     const h = s.fields[field]
     const barrels = !!h && !h.weighed && (h.status === 'digging' || h.status === 'dug') && h.inField >= 0.5
     if (!self) {
-      if (s.jobs.some(j => j.kind === 'haul' && j.field === field)) return 'Already on the work list.'
-      if (!barrels) return standingBy(c, 'haul', field) ? 'Hauling goes on the work list automatically as the digger lifts the crop.' : 'There\'s nothing in barrels to haul.'
+      if (s.jobs.some(j => j.kind === 'haul' && j.field === field)) return '이미 작업 목록에 있습니다.'
+      if (!barrels) return standingBy(c, 'haul', field) ? '운반은 수확기가 작물을 들어올리는 대로 작업 목록에 자동으로 오릅니다.' : '운반할 통이 없습니다.'
       return ''
     }
-    return h && !h.weighed && (h.status === 'digging' || h.status === 'dug') ? '' : 'There\'s nothing left to haul.'
+    return h && !h.weighed && (h.status === 'digging' || h.status === 'dug') ? '' : '남은 운반 물량이 없습니다.'
   }
   const f = s.fields[field]
-  if (!f) return 'No such field.'
+  if (!f) return '그런 밭이 없습니다.'
   if (kind === 'fell' || kind === 'rocks' || kind === 'brush') return landBlock(c, s, kind, field, self)
   if (f.status === 'off') {
-    if (c.fields[field].tenure === 'none') return 'This field isn\'t yours.'
+    if (c.fields[field].tenure === 'none') return '당신의 밭이 아닙니다.'
     return isOpen(c, field) ? '이번 시즌에 개간됐으니 다음 봄에 심을 수 있습니다.' : `${FIELD_NAMES[field]}은(는) 아직 ${COVER_WORD[c.fields[field].cover]}입니다. 먼저 개간하세요.`
   }
-  if (f.status === 'rest') return 'This field is resting in oats and clover.'
-  if (f.status === 'dug') return 'This field is already dug.'
-  if (f.status === 'lost') return 'This crop is lost.'
-  if (s.jobs.some(j => j !== self && j.kind === kind && j.field === field)) return 'Already on the work list.'
+  if (f.status === 'rest') return '이 밭은 귀리와 클로버로 쉬는 중입니다.'
+  if (f.status === 'dug') return '이 밭은 이미 수확했습니다.'
+  if (f.status === 'lost') return '이 작물은 잃었습니다.'
+  if (s.jobs.some(j => j !== self && j.kind === kind && j.field === field)) return '이미 작업 목록에 있습니다.'
   const up = f.emergeDay >= 0
   const alive = f.deadDay < 0
   switch (kind) {
     case 'plant':
       if (c.fields[field].works) return `업자가 ${FIELD_NAMES[field]}에서 작업 중입니다.`
-      return f.status === 'idle' ? '' : 'Already planted.'
+      return f.status === 'idle' ? '' : '이미 심었습니다.'
     case 'hill':
-      if (f.status === 'idle') return 'Nothing planted yet.'
-      if (!up) return 'Wait until the plants are up.'
-      if (!alive) return 'The vines are dead.'
-      if (f.hillPasses >= 2) return 'Already hilled twice.'
-      if (f.canopy >= P.CLOSURE) return 'The rows have closed, so hilling now would tear up the plants.'
+      if (f.status === 'idle') return '아직 심은 것이 없습니다.'
+      if (!up) return '싹이 나올 때까지 기다리세요.'
+      if (!alive) return '줄기가 이미 죽었습니다.'
+      if (f.hillPasses >= 2) return '이미 두 번 북을 주었습니다.'
+      if (f.canopy >= P.CLOSURE) return '이미 열이 닫혀 지금 북을 주면 식물이 상합니다.'
       return ''
     case 'scout':
-      if (f.status === 'idle') return 'Nothing planted yet.'
-      if (!up) return 'Nothing is up yet.'
-      if (!alive) return 'The vines are dead.'
+      if (f.status === 'idle') return '아직 심은 것이 없습니다.'
+      if (!up) return '아직 나온 것이 없습니다.'
+      if (!alive) return '줄기가 이미 죽었습니다.'
       return ''
     case 'spray':
-      if (f.status === 'idle') return 'Nothing planted yet.'
-      if (!up) return 'Nothing is up yet, so there\'s nothing to protect.'
-      if (!alive) return 'The vines are dead.'
+      if (f.status === 'idle') return '아직 심은 것이 없습니다.'
+      if (!up) return '아직 나온 것이 없어 지킬 것도 없습니다.'
+      if (!alive) return '줄기가 이미 죽었습니다.'
       return ''
     case 'water':
-      if (f.status === 'idle') return 'Nothing planted yet.'
-      if (!alive) return 'The vines are dead.'
-      if (f.wet >= P.WORKABLE_WET_MM) return 'The ground is already wet.'
+      if (f.status === 'idle') return '아직 심은 것이 없습니다.'
+      if (!alive) return '줄기가 이미 죽었습니다.'
+      if (f.wet >= P.WORKABLE_WET_MM) return '땅이 이미 젖어 있습니다.'
       return ''
     case 'rogue':
-      if (!alive || f.status === 'idle') return 'There are no living plants to pull.'
-      return knownHills(f) > 0 ? '' : 'No blighted plants have been found here yet. Scout the field first.'
+      if (!alive || f.status === 'idle') return '뽑을 살아 있는 식물이 없습니다.'
+      return knownHills(f) > 0 ? '' : '여기서 아직 역병 식물이 발견되지 않았습니다. 먼저 밭을 순찰하세요.'
     case 'sample':
-      if (f.tiDay < 0) return 'No potatoes have formed yet.'
-      if (f.status === 'digging') return 'Already being dug.'
+      if (f.tiDay < 0) return '아직 감자가 맺히지 않았습니다.'
+      if (f.status === 'digging') return '이미 수확 중입니다.'
       return ''
     case 'kill':
-      if (f.tiDay < 0) return 'No potatoes have formed yet.'
-      return alive ? '' : 'The vines are already dead.'
+      if (f.tiDay < 0) return '아직 감자가 맺히지 않았습니다.'
+      return alive ? '' : '줄기가 이미 죽어 있습니다.'
     case 'dig':
-      if (f.tiDay < 0) return 'No potatoes have formed yet.'
+      if (f.tiDay < 0) return '아직 감자가 맺히지 않았습니다.'
       return ''
   }
   return ''
@@ -267,24 +267,24 @@ function block(c: Campaign, kind: JobKind, field: number, self: Job | null): str
 function landBlock(c: Campaign, s: Season, kind: JobKind, field: number, self: Job | null): string {
   const fp = c.fields[field]
   const name = FIELD_NAMES[field]
-  if (fp.tenure === 'none') return 'This field isn\'t yours.'
-  if (s.jobs.some(j => j !== self && j.kind === kind && j.field === field)) return 'Already on the work list.'
+  if (fp.tenure === 'none') return '당신의 밭이 아닙니다.'
+  if (s.jobs.some(j => j !== self && j.kind === kind && j.field === field)) return '이미 작업 목록에 있습니다.'
   switch (kind) {
     case 'fell':
-      if (!standing(fp.cover)) return `There's nothing to fell on ${name}.`
+      if (!standing(fp.cover)) return `${name}에는 벨 나무가 없습니다.`
       return ''
     case 'rocks': {
-      if (fp.cover !== 'open') return `${name} is still ${COVER_WORD[fp.cover]}. Fell it and have the stumps pulled first.`
-      if (fp.works) return `The contractor is working in ${name}.`
+      if (fp.cover !== 'open') return `${name}은(는) 아직 ${COVER_WORD[fp.cover]}입니다. 먼저 벌목하고 그루터기를 뽑으세요.`
+      if (fp.works) return `업자가 ${name}에서 작업 중입니다.`
       const st = s.fields[field].status
-      if (st === 'planted' || st === 'growing' || st === 'dead' || st === 'digging') return 'You can pick rocks only when no crop is in the ground: before planting, after harvest, or in a rest year.'
-      if (fp.stones < P.ROCKS_MIN) return 'There are hardly any stones left to pick.'
+      if (st === 'planted' || st === 'growing' || st === 'dead' || st === 'digging') return '돌 고르기는 작물이 없을 때만 할 수 있습니다: 심기 전, 수확 후, 또는 휴경년에.'
+      if (fp.stones < P.ROCKS_MIN) return '고를 돌이 거의 남지 않았습니다.'
       return ''
     }
     case 'brush':
-      if (fp.cover !== 'open') return `${name} is still ${COVER_WORD[fp.cover]}. Clear it first.`
-      if (fp.elev === 2) return 'The ridge has no hedgerows trapping cold air. Only bottom land and the mid slope do.'
-      if (brushedNow(c, field)) return `It's already cut back. Brush grows back ${P.BRUSH_YEARS} years after it's cut.`
+      if (fp.cover !== 'open') return `${name}은(는) 아직 ${COVER_WORD[fp.cover]}입니다. 먼저 개간하세요.`
+      if (fp.elev === 2) return '마루에는 찬 공기를 가두는 산울타리가 없습니다. 골짜기와 중턱뿐입니다.'
+      if (brushedNow(c, field)) return `이미 잘라 냈습니다. 관목은 자른 지 ${P.BRUSH_YEARS}년 후에 다시 자랍니다.`
       return ''
   }
   return ''
@@ -318,12 +318,12 @@ export function jobWait(kind: JobKind, f: FieldSeason, d: Day, windMax = P.SPRAY
 export function unitBlock(c: Campaign, kind: JobKind, unit: number): string {
   if (unit === -1) return ''
   const u = c.crew.find(x => x.id === unit)
-  if (!u) return 'No such crew.'
-  if (u.foreman) return `${u.name} is a foreman and doesn't do field work.`
+  if (!u) return '그런 일꾼이 없습니다.'
+  if (u.foreman) return `${u.name}은(는) 작업반장이라 밭일을 하지 않습니다.`
   const skill = jobSkill(kind)
   if (u.prio[skill] <= 0) {
-    const as = u.kind === 'hand' && skill === 'machine' ? 'is a field hand and is' : u.kind === 'operator' && skill === 'field' ? 'drives the second tractor and is' : ''
-    return `${subject(u, as || 'is', 'You\'re')} set to never do ${SKILL_LABEL[skill]}.`
+    const as = u.kind === 'hand' && skill === 'machine' ? '밭일꾼이라 ' : u.kind === 'operator' && skill === 'field' ? '두 번째 트랙터 운전자라 ' : ''
+    return `${subject(u, `${as}${SKILL_LABEL[skill]}을(를) 하지 않기로 되어 있습니다`)}.`
   }
   return ''
 }
@@ -412,7 +412,7 @@ function standingHills(f: FieldSeason): number {
 function completeJob(world: World, c: Campaign, s: Season, job: Job, d: Day, out: GameEvent[], u: Unit): void {
   if (job.kind === 'build') {
     const b = c.buildings.find(x => x.id === job.building)
-    if (b) push(s, out, 'built', job.field, 'good', `The ${P.BUILDINGS[b.kind].name.toLowerCase()} in ${YARD_NAME[b.yard]} is built. ${P.BUILDINGS[b.kind].does}`, { building: b.id })
+    if (b) push(s, out, 'built', job.field, 'good', `${YARD_NAME[b.yard]}에 ${P.BUILDINGS[b.kind].name}이(가) 완성됐습니다. ${P.BUILDINGS[b.kind].does}`, { building: b.id })
     return
   }
   const f = s.fields[job.field]
@@ -421,13 +421,13 @@ function completeJob(world: World, c: Campaign, s: Season, job: Job, d: Day, out
   switch (job.kind) {
     case 'plant':
       plantField(c, s, f, c.fields[job.field].vert)
-      push(s, out, 'planted', job.field, 'info', `${name} is planted with ${variety(f.variety).name}.`)
+      push(s, out, 'planted', job.field, 'info', `${name}에 ${variety(f.variety).name}을(를) 심었습니다.`)
       break
     case 'hill':
       f.hillPasses++
       f.cover = Math.max(f.cover, P.COVER_BY_PASSES[f.hillPasses])
       f.weeded = true
-      push(s, out, 'hilled', job.field, 'info', `${name} has been hilled${f.hillPasses === 2 ? ' a second time' : ''}.`)
+      push(s, out, 'hilled', job.field, 'info', `${name}에 ${f.hillPasses === 2 ? '두 번째 ' : ''}북주기를 했습니다.`)
       break
     case 'scout': {
       f.lastScout = s.day
@@ -445,7 +445,7 @@ function completeJob(world: World, c: Campaign, s: Season, job: Job, d: Day, out
       if (found) f.blightFound ??= s.day
       const virus = f.hState.filter(st => (st & H_VIRUS) && (st & H_EMERGED) && !(st & GONE)).length
       push(s, out, 'scout', job.field, found ? 'bad' : 'good',
-        found ? `Walked ${name} and found blight on ${found} ${found === 1 ? 'hill' : 'hills'}.` : `Walked ${name} and found no blight.`,
+        found ? `${name}을(를) 둘러보고 ${found}개 포기에서 역병을 찾았습니다.` : `${name}을(를) 둘러봤지만 역병은 없었습니다.`,
         { found, virus })
       break
     }
@@ -453,12 +453,12 @@ function completeJob(world: World, c: Campaign, s: Season, job: Job, d: Day, out
       f.residue = sprayCover(u)
       f.lastSpray = s.day
       f.sprays = (f.sprays ?? 0) + 1
-      push(s, out, 'sprayed', job.field, 'info', `${name} has been sprayed against blight.`)
+      push(s, out, 'sprayed', job.field, 'info', `${name}에 역병 약을 쳤습니다.`)
       break
     case 'water':
       f.dr = Math.max(0, f.dr - P.IRRIGATION_MM)
       f.wateredDay = s.day
-      push(s, out, 'watered', job.field, 'info', `${name} got about an inch of water${job.pond ? ' from the pond' : ''}.`)
+      push(s, out, 'watered', job.field, 'info', `${name}에 약 25mm의 물을 줬습니다${job.pond ? '(연못 물)' : ''}.`)
       break
     case 'rogue': {
       let pulled = 0
@@ -474,7 +474,7 @@ function completeJob(world: World, c: Campaign, s: Season, job: Job, d: Day, out
       f.knownSev = 0
       f.blightPulled = (f.blightPulled ?? 0) + pulled
       if (standing > 0) f.eye *= 1 - pulled / standing
-      push(s, out, 'rogued', job.field, 'info', `Pulled and bagged ${pulled} blighted ${pulled === 1 ? 'hill' : 'hills'} in ${name}.`, { pulled })
+      push(s, out, 'rogued', job.field, 'info', `${name}에서 병든 포기 ${pulled}개를 뽑아 봉했습니다.`, { pulled })
       break
     }
     case 'sample': {
@@ -496,7 +496,7 @@ function completeJob(world: World, c: Campaign, s: Season, job: Job, d: Day, out
       const grams = Math.round(f.hMass[i])
       f.hC[i] = 0; f.hLes[i] = 0; f.hLat[i] = 0
       push(s, out, 'sample', job.field, 'info',
-        `Test dig in ${name} found ${tubers.length} ${tubers.length === 1 ? 'potato' : 'potatoes'} under one hill, ${(grams / 453.6).toFixed(1)} lb in all.`,
+        `${name} 시험 캐기: 한 포기에서 감자 ${tubers.length}개, 모두 ${(grams / 1000).toFixed(1)} kg이 나왔습니다.`,
         { hill: i, grams, weights: tubers.map(t => Math.round(t.w)), marks: tubers.map(t => t.mark) })
       break
     }
@@ -507,23 +507,23 @@ function completeJob(world: World, c: Campaign, s: Season, job: Job, d: Day, out
       f.deadDay = s.day
       f.status = 'dead'
       for (let i = 0; i < P.HILLS; i++) f.hC[i] *= 0.08
-      push(s, out, 'killed', job.field, 'info', `The vines in ${name} have been killed. The skins will set in about two weeks.`, lost && lost.cwtPerAcre > 0 ? { lost: lost.cwtPerAcre, early: lost.days } : undefined)
+      push(s, out, 'killed', job.field, 'info', `${name}의 줄기를 죽였습니다. 껍질은 약 2주 후에 굳습니다.`, lost && lost.cwtPerAcre > 0 ? { lost: lost.cwtPerAcre, early: lost.days } : undefined)
       break
     }
     case 'fell':
-      push(s, out, 'felled', job.field, 'good', `${name} is felled. The stumps are still there, and a contractor can pull them.${sheltering(c, job.field)}`, { logs: Math.round(c.logs) })
+      push(s, out, 'felled', job.field, 'good', `${name}의 나무를 베었습니다. 그루터기는 남아 있고 업자가 뽑을 수 있습니다.${sheltering(c, job.field)}`, { logs: Math.round(c.logs) })
       break
     case 'rocks': {
       const fp = c.fields[job.field]
       const take = Math.min(fp.stones, P.ROCKS_TAKE)
       fp.stones -= take
       c.stone += P.ROCKS_LOADS * take
-      push(s, out, 'rocks', job.field, 'info', `The rocks have been picked off ${name}, and ${Math.round(P.ROCKS_LOADS * take * 10) / 10} loads of fieldstone went to the yard.`, { stones: Math.round(fp.stones * 100) / 100 })
+      push(s, out, 'rocks', job.field, 'info', `${name}의 돌을 골라냈고, 돌 ${Math.round(P.ROCKS_LOADS * take * 10) / 10}트럭이 마당으로 갔습니다.`, { stones: Math.round(fp.stones * 100) / 100 })
       break
     }
     case 'brush':
       c.fields[job.field].brushed = c.year
-      push(s, out, 'brushed', job.field, 'info', `The hedgerows along ${name} are cut back, so cold air drains away but the wind dries the field more. They'll grow back in ${P.BRUSH_YEARS} years.`)
+      push(s, out, 'brushed', job.field, 'info', `${name}의 산울타리를 잘라 냈습니다. 찬 공기는 빠지지만 바람에 밭이 더 마릅니다. ${P.BRUSH_YEARS}년 후면 다시 자랍니다.`)
       break
     case 'dig': {
       const lot = c.lots.find(l => l.id === f.lotId)!
@@ -531,7 +531,7 @@ function completeJob(world: World, c: Campaign, s: Season, job: Job, d: Day, out
       f.dugDay = s.day
       finishLot(c, f, lot)
       const total = lot.grades.no1 + lot.grades.chef + lot.grades.b + lot.grades.no2 + lot.skinned
-      push(s, out, 'dug', job.field, 'good', `${name} is dug, with ${withCommas(total)} cwt to sell and ${withCommas(lot.grades.cull)} cwt culled. ${f.inField >= 0.5 ? `${withCommas(f.inField)} cwt is still in barrels in the field.` : 'It\'s all hauled in.'}`, { lot: lot.id })
+      push(s, out, 'dug', job.field, 'good', `${name} 수확 완료: 팔 수 있는 것 ${withCommas(total)} cwt, 버린 것 ${withCommas(lot.grades.cull)} cwt. ${f.inField >= 0.5 ? `${withCommas(f.inField)} cwt가 아직 밭의 통에 있습니다.` : '모두 실어 들였습니다.'}`, { lot: lot.id })
       if (f.inField < 0.5) weigh(s, f, job.field, lot, out)
       break
     }
@@ -856,11 +856,11 @@ const WAITABLE: JobKind[] = ['fell', 'rocks', 'brush', 'build']
 export function pressingWhy(c: Campaign, s: Season, job: Job): string {
   const f = job.field >= 0 ? s.fields[job.field] : null
   switch (job.kind) {
-    case 'spray': return s.watchDay >= 0 && f && f.deadDay < 0 ? 'blight weather won\'t wait' : ''
-    case 'plant': return 'the planting season is short'
-    case 'haul': return s.frostHaul === s.day ? 'frost is coming for the crop in barrels' : ''
-    case 'dig': return s.day >= dayIndex(s.year, P.PICKERS_FROM.month, P.PICKERS_FROM.dom) ? 'the ground will freeze before long' : ''
-    case 'kill': return f && f.deadDay < 0 ? 'the vines are due to be killed' : ''
+    case 'spray': return s.watchDay >= 0 && f && f.deadDay < 0 ? '역병 날씨가 기다려 주지 않기' : ''
+    case 'plant': return '파종 시기가 짧기'
+    case 'haul': return s.frostHaul === s.day ? '통 속 작물에 서리가 다가오기' : ''
+    case 'dig': return s.day >= dayIndex(s.year, P.PICKERS_FROM.month, P.PICKERS_FROM.dom) ? '머잖아 땅이 얼기' : ''
+    case 'kill': return f && f.deadDay < 0 ? '줄기를 죽일 때가 됐기' : ''
   }
   return ''
 }
@@ -1107,7 +1107,7 @@ function standSales(world: World, c: Campaign, s: Season): void {
 function pondDay(world: World, c: Campaign, s: Season, d: Day, out: GameEvent[]): void {
   if (!hasBuilt(c, 'pond')) return
   if (rain30(world, s.year, s.day) < P.POND_DRY_MM) {
-    if (c.pond > 0) push(s, out, 'pondDry', -1, 'warn', 'The brook is low after a dry month, and the pond has gone dry.')
+    if (c.pond > 0) push(s, out, 'pondDry', -1, 'warn', '한 달 가뭄에 개울물이 줄어 연못이 말랐습니다.')
     c.pond = 0
   } else {
     c.pond = Math.min(P.POND_CAP, c.pond + P.POND_FILL + d.prcp / P.POND_RAIN_MM)
@@ -1241,7 +1241,7 @@ function dayStart(c: Campaign, s: Season, out: GameEvent[]): void {
   // The picking crew goes back to school when the harvest break ends; while it is on it is paid for each day worked.
   if (s.pickers && s.day > dayIndex(s.year, P.PICKERS_TO.month, P.PICKERS_TO.dom)) {
     s.pickers = false
-    push(s, out, 'pickers', -1, 'info', 'The harvest break is over and the pickers are back in school.')
+    push(s, out, 'pickers', -1, 'info', '수확 방학이 끝나 학생 일꾼들이 학교로 돌아갔습니다.')
   }
   if (s.pickers && workday(c, s)) {
     charge(c, P.PICKER_DAY)
@@ -1291,8 +1291,8 @@ function idleWatch(c: Campaign, s: Season, u: Unit, used: number, out: GameEvent
   s.idleSaid = [...(s.idleSaid ?? []), u.id]
   const skill = jobSkill(never.kind)
   const first = u.name.split(' ')[0]
-  const does: Record<Skill, string> = { machine: 'drive', field: 'do field work', woods: 'work in the woods', build: 'build', pack: 'pack' }
-  push(s, out, 'idleNever', never.field, 'warn', `${first} has had nothing to do for ${IDLE_SAY} days. Let ${first} ${does[skill]}?`, { unit: u.id, work: skill })
+  const does: Record<Skill, string> = { machine: '트랙터 운전', field: '밭일', woods: '숲일', build: '건축', pack: '포장' }
+  push(s, out, 'idleNever', never.field, 'warn', `${first}이(가) ${IDLE_SAY}일째 할 일이 없습니다. ${first}에게 ${does[skill]}을(를) 맡길까요?`, { unit: u.id, work: skill })
 }
 
 function peopleDay(c: Campaign, s: Season, turns: Turn[], out: GameEvent[]): void {
@@ -1306,7 +1306,7 @@ function peopleDay(c: Campaign, s: Season, turns: Turn[], out: GameEvent[]): voi
     if (t) idleWatch(c, s, u, used, out)
     if (t) {
       for (const k of P.SKILLS) {
-        for (const level of gainXp(u, k, t.spent[k])) push(s, out, 'skillUp', -1, 'good', `${subject(u, 'is', 'You are')} better at ${SKILL_LABEL[k]}: level ${level}.`, { unit: u.id, level })
+        for (const level of gainXp(u, k, t.spent[k])) push(s, out, 'skillUp', -1, 'good', `${subject(u, `${SKILL_LABEL[k]}이(가) 늘었습니다: ${level}레벨`)}.`, { unit: u.id, level })
       }
     }
     const tire = P.TIRE_PER_DAY * (u.trait === 'tireless' ? P.TIRELESS : 1)
