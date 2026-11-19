@@ -113,22 +113,22 @@ export type AppEvent =
 // the speed the player set: a notice that asks nothing (frost forecast on the barrels, which the crew hauls ahead of
 // by itself, a job the crew handles, news) is a toast. Every cause, and the decision it waits on:
 export const SELF_PAUSES = {
-  plantAsk: 'The word to plant: the crew stands ready, and starts on its own three days after the game resumes.',
-  killCall: 'A vine kill that is the player\'s to give: they keep these vines up, or the crew does not kill them by itself.',
-  spray: 'The season\'s spraying question, at the first blight weather (asked by the season screen).',
-  weighed: 'A crop weighed in: sell it now or store it.',
-  incident: 'A telegram that needs a reply.',
-  over: 'The season is over (the crop is in, or the ground froze): no days are left to run until it is closed out.',
-  alerts: 'Only for a player who turned on "Pause on alerts": anything new that needs doing.',
+  plantAsk: '파종 신호: 일꾼들이 준비돼 있고, 게임 재개 후 사흘 뒤면 알아서 시작합니다.',
+  killCall: '플레이어가 결정할 줄기 죽이기: 계속 키우도록 했으니 일꾼들이 알아서 죽이지 않습니다.',
+  spray: '시즌의 살포 물음, 첫 역병 날씨에 (시즌 화면에서 묻습니다).',
+  weighed: '계근된 작물: 지금 팔거나 저장하세요.',
+  incident: '답이 필요한 전보.',
+  over: '시즌 종료(작물 입고 또는 동결): 마무리할 때까지 진행할 날이 없습니다.',
+  alerts: '"알림에 일시 정지"를 켠 플레이어만: 새로 할 일이 생긴 모든 경우.',
 } as const
 export type PauseCause = keyof typeof SELF_PAUSES
 // The events of a day that pause the game, and the cause each one is.
 const STOP_FOR: Record<string, PauseCause> = { weighed: 'weighed', incident: 'incident', freeze: 'over', plantAsk: 'plantAsk', killCall: 'killCall' }
 // Why the game paused for a decision made on the land, read after "Paused: ". Resuming is an answer too.
-export const PLANT_PAUSE = `the soil is ready. Click Plant on a field and your crew goes to work. (Left alone, they start in ${PLANT_WORD_DAYS} days.)`
+export const PLANT_PAUSE = `흙이 준비됐습니다. 밭에서 파종을 누르면 일꾼들이 일을 시작합니다. (가만히 두면 ${PLANT_WORD_DAYS}일 후에 알아서 시작합니다.)`
 function killPause(e: GameEvent): string {
   const first = e.text.slice(0, e.text.indexOf('. ') + 1) || e.text
-  return `${first.charAt(0).toLowerCase()}${first.slice(1)} Click Kill vines on a field, or resume and they stay up.`
+  return `${first} 밭에서 줄기 죽이기를 누르거나, 계속 진행하면 줄기가 그대로 있습니다.`
 }
 // How long after the game sets the days going by itself a press on pause is read as "go on" (round nine: players
 // pressed play 0.5 to 1 s after an answer had already resumed the game, and so paused it).
@@ -350,7 +350,7 @@ export class App {
 
   do(cmd: Cmd): Result {
     const c = this.campaign
-    if (!c) return { ok: false, err: 'No game in progress.', events: [] }
+    if (!c) return { ok: false, err: '진행 중인 게임이 없습니다.', events: [] }
     // An order given part way through a day is given to a farm that has done the day's work up to that moment: it
     // is worked in what is left of the day.
     const before = NO_WORK.has(cmd.t) ? [] : this.upToNow()
@@ -426,7 +426,7 @@ export class App {
       else if (e.type === 'killCall') this.owed = { cause: 'killCall', why: killPause(e), fields: Array.isArray(e.data?.fields) ? e.data.fields : [e.field] }
     }
     const decision = events.find(e => STOP_FOR[e.type] && e.type !== 'plantAsk' && e.type !== 'killCall')
-    if (seasonDone(c)) this.halt('over', 'The season is over.')
+    if (seasonDone(c)) this.halt('over', '시즌이 끝났습니다.')
     else if (decision) this.halt(STOP_FOR[decision.type], decision.text)
     else if (this.owed) this.pauseOwed(c)
     else if (this.settings.pauseOnAlerts) {
@@ -642,7 +642,7 @@ export class App {
     const picked = this.unit >= 0 && !!c?.season
     if (!need || need.act === 'sell' || need.act === 'close' || need.act === 'wait') {
       if (picked) return this.sendTo(field, this.unit)
-      return { field, ok: false, err: need ? need.text : this.needs()[field]?.hold?.why ?? 'Nothing needs doing here right now.' }
+      return { field, ok: false, err: need ? need.text : this.needs()[field]?.hold?.why ?? '지금 여기서 할 일이 없습니다.' }
     }
     const kind = need.act
     const instead = picked && unitBlock(c!, kind, this.unit) ? this.unit : -1
@@ -665,7 +665,7 @@ export class App {
     const r = picked ? this.sendTo(field, this.unit) : this.smartOrder(field)
     if (r.ok) return r
     const err = this.tooEarly(field) || r.err
-    return { ...r, err: picked || this.campaign?.phase !== 'season' ? err : `${err} To send someone here, select them first.` }
+    return { ...r, err: picked || this.campaign?.phase !== 'season' ? err : `${err} 여기에 사람을 내려면 먼저 선택하세요.` }
   }
 
   // Why a field that is to grow potatoes cannot be planted yet, or '': the season has not begun, or the soil is cold.
@@ -673,11 +673,11 @@ export class App {
     const c = this.campaign
     if (!c || c.plans[field]?.crop !== 'potato' || !held(c, field)) return ''
     const name = FIELD_NAMES[field]
-    if (c.phase === 'plan') return `It's too early to plant ${name}. Planting starts once the season does.`
+    if (c.phase === 'plan') return `${name}에 심기엔 아직 이릅니다. 시즌이 시작되면 파종할 수 있습니다.`
     if (c.phase !== 'season' || fieldInfo(c, field).status !== 'idle') return ''
     const pr = plantReady(this.world, c, field)
     if (pr.ok) return ''
-    return `It's too early to plant ${name}. ${pr.why.startsWith('It\'s too early.') ? 'Seed just sits and rots in cold ground.' : pr.why}`
+    return `${name}에 심기엔 아직 이릅니다. ${pr.why.startsWith('아직 이릅니다.') ? '종자는 찬 땅에서 그냥 썩습니다.' : pr.why}`
   }
 
   // The most useful work a field has now that this person can do, given to them: the suggested order, then work on the
@@ -703,9 +703,9 @@ export class App {
     }
     const named = s.jobs.find(j => j.field === field && j.unit >= 0 && j.kind !== 'build')
     const who = named ? c.crew.find(u => u.id === named.unit) : undefined
-    const has = !who ? '' : who.kind === 'farmer' ? 'You already have' : who.id === unit ? 'They already have' : `${who.name.split(' ')[0]} already has`
-    if (!err && has) err = `${has} this field's work on the work list.`
-    return { field, ok: false, err: err || (need ? need.text : hold?.why ?? 'Nothing needs doing here right now.') }
+    const has = !who ? '' : who.kind === 'farmer' ? '당신이 이미' : who.id === unit ? '그 사람이 이미' : `${who.name.split(' ')[0]}이(가) 이미`
+    if (!err && has) err = `${has} 이 밭의 일을 작업 목록에 올렸습니다.`
+    return { field, ok: false, err: err || (need ? need.text : hold?.why ?? '지금 여기서 할 일이 없습니다.') }
   }
 
   // ---------------------------------------------------------------- the clock
