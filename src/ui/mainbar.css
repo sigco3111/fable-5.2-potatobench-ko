@@ -23,7 +23,8 @@
 .mb-go { color: var(--ink-2); white-space: nowrap; }
 .mb-none, .mb-next { margin: 0; }
 .mb-table { width: 100%; border-collapse: collapse; font-size: 15px; }
-.mb-table th, .mb-table td { padding: 6px 10px 6px 0; text-align: left; border-bottom: 1px solid var(--hair); vertical-align: baseline; }
+.mb-table th, .mb-table td { padding: 6px 10px 6px 0; text-align: left; border-bottom: 1px solid var(--hair); vertical-align: baseline; word-break: keep-all; }
+.mb-table thead th { white-space: nowrap; }
 .mb-table td.num { font-variant-numeric: tabular-nums; }
 .mb-table .mb-name { font: 600 16px/1.2 var(--f-text); text-decoration: underline; text-underline-offset: 3px; min-height: 32px; }
 

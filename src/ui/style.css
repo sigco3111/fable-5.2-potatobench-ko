@@ -77,6 +77,8 @@
 .reduce-motion .hud *, .reduce-motion .hud *::before, .reduce-motion .hud *::after { animation-duration: 120ms !important; animation-delay: 0ms !important; }
 
 html, body { margin: 0; height: 100%; overflow: hidden; background: #20242a; }
+/* Korean edition: break lines between words, never inside a word. */
+body { word-break: keep-all; overflow-wrap: break-word; }
 
 /* The whole interface is scaled up on a window with room to spare (src/ui/scale.ts sets --z). What is drawn on the
    land in screen pixels (a selected field's outline) keeps to them. */
