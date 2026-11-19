@@ -20,17 +20,20 @@ import { firstSight } from './first-sight.ts'
 import { nextGoal } from '../game/goals.ts'
 import { agentSpeaking, springSlot } from './tutorial.ts'
 
+// 숙기의 표시말. 데이터는 영문 키 그대로 둔다.
+const MATURITY_KO: Record<S.Variety['maturity'], string> = { early: '조생', mid: '중생', late: '만생', 'very late': '극만생' }
+
 function varietyTraits(v: S.Variety, c: S.Campaign, world: S.World): string[] {
   return [
-    `${v.maturity} maturing`,
-    v.market.toLowerCase(),
-    `yield: ${R.yieldWord(v)}`,
+    `${MATURITY_KO[v.maturity]}종`,
+    v.market,
+    `수량: ${R.yieldWord(v)}`,
     ...(R.setWord(v) ? [R.setWord(v)] : []),
     R.blightWord(v), R.scabWord(v), R.droughtWord(v),
-    `keeps until ${R.keepsUntil(c.year, v.id, c.upgrades.vent)}`,
+    `${R.keepsUntil(c.year, v.id, c.upgrades.vent)}까지 저장`,
     R.seedWord(v),
-    v.contract ? `${F.price(v.price)} on a chip plant's contract and ${R.offContract()} that without one` : `${F.price(v.price)} in a usual year`,
-    `large potatoes ${R.largeRule(world, c, v.id)}`,
+    v.contract ? `공장 계약 시 ${F.price(v.price)}, 계약 없으면 그의 ${R.offContract()}` : `평년에 ${F.price(v.price)}`,
+    `대구: ${R.largeRule(world, c, v.id)}`,
   ]
 }
 
@@ -46,31 +49,31 @@ function openCompare(ctx: Ctx): void {
   ctx.dirty()
   const vs = S.availableVarieties(c.year)
   const cols: [string, (v: S.Variety) => string][] = [
-    ['Matures', v => F.upper(v.maturity)],
-    ['Yield', v => `${F.upper(R.yieldWord(v))}${R.setWord(v) ? `. ${F.upper(R.setWord(v))}` : ''}`],
-    ['Leaf blight', v => F.upper(R.blightWord(v, true))],
-    ['Scab', v => F.upper(R.scabWord(v, true))],
-    ['Dry spell', v => F.upper(R.droughtWord(v, true))],
-    ['Keeps until', v => R.keepsUntil(c.year, v.id, c.upgrades.vent)],
-    ['Saved seed', v => F.upper(R.seedWord(v, true))],
-    ['Price', v => v.contract ? `${F.price(v.price)} on contract, but only ${F.price(v.price * S.PROCESSING_PRICE)} without one` : F.price(v.price)],
-    ['Large potatoes', v => F.upper(R.largeRule(app.world, c, v.id, true))],
+    ['숙기', v => MATURITY_KO[v.maturity]],
+    ['수량', v => `${F.upper(R.yieldWord(v))}${R.setWord(v) ? `. ${F.upper(R.setWord(v))}` : ''}`],
+    ['잎 역병', v => F.upper(R.blightWord(v, true))],
+    ['더부룩병', v => F.upper(R.scabWord(v, true))],
+    ['가뭄', v => F.upper(R.droughtWord(v, true))],
+    ['저장 기한', v => R.keepsUntil(c.year, v.id, c.upgrades.vent)],
+    ['자가 종자', v => F.upper(R.seedWord(v, true))],
+    ['가격', v => v.contract ? `계약 시 ${F.price(v.price)}, 없으면 ${F.price(v.price * S.PROCESSING_PRICE)}뿐` : F.price(v.price)],
+    ['대구', v => F.upper(R.largeRule(app.world, c, v.id, true))],
   ]
   ctx.papers.open({
-    title: `Varieties for ${R.yearWord(c.year)}`,
-    kicker: 'From the seed catalogue',
+    title: `${R.yearWord(c.year)}의 품종`,
+    kicker: '종자 카탈로그에서',
     testid: 'compare',
     size: 'wide',
     body: () => [
-      h('p', { class: 'dlg-lead' }, 'Here\'s how each variety behaves, using the same numbers the game grows your fields with. No single variety wins every year.'),
-      h('div', { class: 'table-scroll', tabindex: '0', role: 'group', 'aria-label': 'Varieties side by side' }, h('table', { class: 'compare-t' },
-        h('thead', null, h('tr', null, h('th', { scope: 'col', class: 't-label' }, 'Variety'), cols.map(([label]) => h('th', { scope: 'col', class: 't-label' }, label)))),
+      h('p', { class: 'dlg-lead' }, '각 품종의 특성을, 게임이 밭을 키우는 그 숫자 그대로 비교합니다. 매년 이기는 만능 품종은 없습니다.'),
+      h('div', { class: 'table-scroll', tabindex: '0', role: 'group', 'aria-label': '품종 비교' }, h('table', { class: 'compare-t' },
+        h('thead', null, h('tr', null, h('th', { scope: 'col', class: 't-label' }, '품종'), cols.map(([label]) => h('th', { scope: 'col', class: 't-label' }, label)))),
         h('tbody', null, vs.map(v => h('tr', null,
           h('th', { scope: 'row' }, h('b', null, v.name), h('span', { class: 't-caption' }, v.market)),
-          cols.map(([label, text]) => h('td', { 'data-label': label, class: label === 'Price' && v.contract ? 'c-ochre' : null }, text(v)))))))),
-      h('p', { class: 't-caption' }, `Price is for US No. 1 in a usual year, averaged over the season. Harvest prices run lower and spring prices higher, but a contract price stays the same all season. Without a contract the chipping variety only gets a processing price, ${R.offContract()} its usual price. Large potatoes, over ${F.grams(S.SIZE_CHEF)}, sell for more or less than the No. 1 price, depending on the variety. "Keeps until" is the last cellar month before a crop dug around September 25 starts to sprout${c.upgrades.vent ? ', with the ventilation' : ''}. Yield is what a full season can produce before weather, blight and the kill date cut into it.${F.cwtNote()}`),
+          cols.map(([label, text]) => h('td', { 'data-label': label, class: label === '가격' && v.contract ? 'c-ochre' : null }, text(v)))))))),
+      h('p', { class: 't-caption' }, `가격은 평년의 US No. 1을 시즌 평균한 값입니다. 수확기에는 낮고 봄에는 높지만, 계약가는 시즌 내내 같습니다. 계약이 없으면 칩용 품종은 가공가만 받아 평소 가격의 ${R.offContract()}입니다. ${F.grams(S.SIZE_CHEF)}를 넘는 대구는 품종에 따라 No. 1 가격보다 더 받거나 덜 받습니다. "저장 기한"은 9월 25일쯤 캔 작물이 싹트기 전 마지막 저장 달입니다${c.upgrades.vent ? '(환기 장치 기준)' : ''}. 수량은 날씨, 역병, 줄기 죽이기 전 온전한 시즌의 양입니다.${F.cwtNote()}`),
     ],
-    foot: close => h('button', { class: 'btn go', type: 'button', testid: 'compare-close', autofocus: true, onclick: close }, 'Back to the plan', icon('arrow', 'i')),
+    foot: close => h('button', { class: 'btn go', type: 'button', testid: 'compare-close', autofocus: true, onclick: close }, '계획으로 돌아가기', icon('arrow', 'i')),
   })
 }
 
@@ -98,54 +101,54 @@ function openMoney(ctx: Ctx): void {
   const nb = y ? app.world.neighbor[String(y.year)] : undefined
   const growing = y ? y.costs - y.wages - y.rent - y.land - y.penalties - y.storage - y.mortgage - y.works - y.building - y.packing : 0
   ctx.papers.open({
-    title: `The money, ${R.yearName(c.year)}`,
-    kicker: 'Your spring plan in full',
+    title: `돈, ${R.yearName(c.year)}`,
+    kicker: '봄 계획 전체 내역',
     testid: 'money',
     size: 'medium',
     body: () => [
       h('div', { class: 'ledger-lines' },
-        line(c.cash < 0 ? 'Owed from last year' : 'Cash on hand', c.cash),
-        line(`${F.upper(F.plural(potato, 'potato field'))} at ${F.money(S.FIELD_COST)}`, -potato * S.FIELD_COST),
-        cert ? line(`Certified seed for ${F.plural(cert, 'field')}`, -cert * S.SEED_CWT_PER_FIELD * S.CERT_SEED_PER_CWT) : null,
-        rest ? line(`${F.upper(F.plural(rest, 'resting field'))} at ${F.money(S.REST_COST)}`, -rest * S.REST_COST) : null,
-        pc.rent ? line(`Rent for ${F.plural(rented, 'field')}`, -pc.rent) : null,
-        pc.wages ? line(`First month's wages for ${F.plural(paid, 'person', 'people')}`, -pc.wages) : null,
-        line(h('b', null, 'This plan'), -pc.total, { testid: 'plan-cost', cls: 'sub-total' }),
-        line(h('b', null, 'After planting'), after, { testid: 'plan-after', cls: 'total' })),
+        line(c.cash < 0 ? '작년부터의 빚' : '보유 현금', c.cash),
+        line(`감자밭 ${potato}곳, 각 ${F.money(S.FIELD_COST)}`, -potato * S.FIELD_COST),
+        cert ? line(`인증 종자, 밭 ${cert}곳`, -cert * S.SEED_CWT_PER_FIELD * S.CERT_SEED_PER_CWT) : null,
+        rest ? line(`휴경 밭 ${rest}곳, 각 ${F.money(S.REST_COST)}`, -rest * S.REST_COST) : null,
+        pc.rent ? line(`임차료, 밭 ${rented}곳`, -pc.rent) : null,
+        pc.wages ? line(`첫 달 임금, ${paid}명`, -pc.wages) : null,
+        line(h('b', null, '이 계획'), -pc.total, { testid: 'plan-cost', cls: 'sub-total' }),
+        line(h('b', null, '파종 후'), after, { testid: 'plan-after', cls: 'total' })),
       h('p', { class: 't-caption' }, after < S.OPERATING_LIMIT
-        ? `The bank only lends up to ${F.money(-S.OPERATING_LIMIT)} for the spring, so rest a field or plant saved seed. Saved seed is free, but it carries virus.`
-        : after < 0 ? `The bank's spring loan covers ${F.money(-after)} at no interest, and you repay it from the crop.` : 'You don\'t need to borrow this spring.',
-      pc.wages ? ` After that, wages are ${F.money(pc.wages)} every month until the season ends, and you keep paying anyone you keep on over the winter.` : ''),
-      h('p', { class: 't-label dlg-sub' }, 'Due at the end of the year'),
+        ? `은행은 봄에 ${F.money(-S.OPERATING_LIMIT)}까지만 빌려주니 밭을 쉬게 하거나 자가 종자를 심으세요. 자가 종자는 무료지만 바이러스를 옮깁니다.`
+        : after < 0 ? `은행의 봄 융자가 무이자로 ${F.money(-after)}를 대고, 작물로 갚습니다.` : '이번 봄에는 빌릴 필요가 없습니다.',
+      pc.wages ? ` 그 뒤로는 시즌이 끝날 때까지 매달 임금이 ${F.money(pc.wages)}이고, 겨울에 데리고 있는 사람에게도 계속 줍니다.` : ''),
+      h('p', { class: 't-label dlg-sub' }, '연말에 낼 돈'),
       h('div', { class: 'ledger-lines' },
-        after < 0 && after >= S.OPERATING_LIMIT ? line('Spring loan repayment', -after) : null,
-        line(term('The yearly bank payment', 'the note'), S.NOTE_PAYMENT),
-        line(term('Your family\'s living costs', 'the household'), S.LIVING),
-        m.owed > 0 ? line(`The land mortgage, ${F.money(m.owed)} owed`, Math.round(m.principal + m.interest)) : null,
-        line(h('b', null, 'Due'), (after < 0 && after >= S.OPERATING_LIMIT ? -after : 0) + S.NOTE_PAYMENT + S.LIVING + Math.round(m.principal + m.interest), { cls: 'total' })),
-      h('p', { class: 't-caption' }, `Any debt left after that carries into next year at ${F.pct(S.CREDIT_RATE)} interest, and if it's more than ${F.money(-S.CREDIT_LIMIT)} the bank calls in the loan and you lose the farm. Land, buildings and equipment have to be paid for in cash.`),
+        after < 0 && after >= S.OPERATING_LIMIT ? line('봄 융자 상환', -after) : null,
+        line(term('매년 은행에 내는 돈', 'the note'), S.NOTE_PAYMENT),
+        line(term('가족 생활비', 'the household'), S.LIVING),
+        m.owed > 0 ? line(`땅 모기지, ${F.money(m.owed)} 남음`, Math.round(m.principal + m.interest)) : null,
+        line(h('b', null, '합계'), (after < 0 && after >= S.OPERATING_LIMIT ? -after : 0) + S.NOTE_PAYMENT + S.LIVING + Math.round(m.principal + m.interest), { cls: 'total' })),
+      h('p', { class: 't-caption' }, `그 뒤에도 남은 빚은 ${F.pct(S.CREDIT_RATE)}의 이자로 이듬해로 넘어가고, ${F.money(-S.CREDIT_LIMIT)}을 넘으면 은행이 융자를 회수해 농장을 잃습니다. 땅, 건물, 장비는 현금으로만 살 수 있습니다.`),
       y ? [
-        h('p', { class: 't-label dlg-sub' }, `Last year, ${R.yearWord(y.year)}`),
+        h('p', { class: 't-label dlg-sub' }, `작년, ${R.yearWord(y.year)}`),
         h('div', { class: 'ledger-lines' },
-          line('Potato sales', y.revenue - y.restIncome - y.contracts - y.logs - y.stand),
-          y.contracts ? line('Delivered on contract', y.contracts) : null,
-          y.stand ? line('The farm stand', y.stand) : null,
-          y.logs ? line('Logs sold to the mill', y.logs) : null,
-          y.restIncome ? line('Oats and clover', y.restIncome) : null,
-          line('Growing and storage', -(growing + y.storage + y.packing)),
-          y.wages ? line('Wages', -y.wages) : null,
-          y.rent ? line('Rent', -y.rent) : null,
-          y.land ? line('Land, down payments', -y.land) : null,
-          y.mortgage ? line('The land mortgage', -y.mortgage) : null,
-          y.building ? line('Buildings', -y.building) : null,
-          y.works ? line('Contractors', -y.works) : null,
-          y.penalties ? line('Contract penalties', -y.penalties) : null,
-          line('Bank payment, living costs and interest', -(y.note + y.living + y.interest)),
-          line(h('b', null, 'Cash at year end'), y.cashEnd, { cls: 'total' })),
-        h('p', { class: 't-caption' }, `${y.potatoFields ? `You sold ${F.perArea(y.yieldCwtAcre)}.` : 'You didn\'t grow potatoes.'}${nb ? ` Your neighbor sold ${F.perArea(nb.yieldCwtAcre)}.` : ''}`),
+          line('감자 판매', y.revenue - y.restIncome - y.contracts - y.logs - y.stand),
+          y.contracts ? line('계약 납품', y.contracts) : null,
+          y.stand ? line('직판장', y.stand) : null,
+          y.logs ? line('제재소에 판 통나무', y.logs) : null,
+          y.restIncome ? line('오트와 클로버', y.restIncome) : null,
+          line('재배와 저장', -(growing + y.storage + y.packing)),
+          y.wages ? line('임금', -y.wages) : null,
+          y.rent ? line('임차료', -y.rent) : null,
+          y.land ? line('땅, 계약금', -y.land) : null,
+          y.mortgage ? line('땅 모기지', -y.mortgage) : null,
+          y.building ? line('건물', -y.building) : null,
+          y.works ? line('도급', -y.works) : null,
+          y.penalties ? line('계약 위약금', -y.penalties) : null,
+          line('은행 납부, 생활비와 이자', -(y.note + y.living + y.interest)),
+          line(h('b', null, '연말 현금'), y.cashEnd, { cls: 'total' })),
+        h('p', { class: 't-caption' }, `${y.potatoFields ? `당신은 ${F.perArea(y.yieldCwtAcre)}을(를) 팔았습니다.` : '감자를 기르지 않았습니다.'}${nb ? ` 이웃은 ${F.perArea(nb.yieldCwtAcre)}을(를) 팔았습니다.` : ''}`),
       ] : null,
     ],
-    foot: close => h('button', { class: 'btn go', type: 'button', testid: 'money-close', autofocus: true, onclick: close }, 'Back to the plan', icon('arrow', 'i')),
+    foot: close => h('button', { class: 'btn go', type: 'button', testid: 'money-close', autofocus: true, onclick: close }, '계획으로 돌아가기', icon('arrow', 'i')),
   })
 }
 
@@ -180,14 +183,14 @@ export function planScreen(ctx: Ctx, plateLayer: HTMLElement, o: { onMenu: () =>
   })
   // A field, a lot or a tract picked on the land: its card, beside the point clicked and tied to it (tie.ts), on the
   // land the catalogue leaves free. On a phone it fills the land over the order blank.
-  const card = h('section', { class: 'command docked-left spring-card sheet sys', 'aria-label': 'The selected field', testid: 'plan-card', hidden: true })
+  const card = h('section', { class: 'command docked-left spring-card sheet sys', 'aria-label': '선택한 밭', testid: 'plan-card', hidden: true })
   // The contracts signed stand under the folds: they are money promised.
   const track = tracker(ctx)
   const mast = h('header', { class: 'masthead' })
   const rows = h('div', { class: 'cat-folds' })
   const foot = h('footer', { class: 'order-blank' })
   const body = h('div', { class: 'cat-body', 'data-scroll': 'spring' }, rows, track.el)
-  const sheet = h('section', { class: 'catalogue sheet sys', 'aria-label': 'The spring plan', testid: 'spring' }, mast, body, springSlot(), foot)
+  const sheet = h('section', { class: 'catalogue sheet sys', 'aria-label': '봄 계획', testid: 'spring' }, mast, body, springSlot(), foot)
   const notesSlot = h('div', { class: 'notes-slot' })
   const tied = anchored(ctx, card)
   const el = h('main', { class: 'spring-screen sys' }, top.el, notesSlot, tied.parts, card, sheet)
@@ -257,14 +260,14 @@ export function planScreen(ctx: Ctx, plateLayer: HTMLElement, o: { onMenu: () =>
     const c = app.campaign!
     if (!S.held(c, i)) {
       const l = S.landInfo(c).find(x => x.field === i)
-      return l ? { name: l.name, glyph: S.standing(l.cover) ? 'woods' : 'land', marks: [], queue: [], badge: null, land: true, said: `${l.name}, ${l.block === 'home' ? 'by the home farm' : 'beyond the home farm'}. You can ${l.rentable ? `rent it for ${F.money(l.rent)} a year or ` : ''}buy it for ${F.money(l.price)}.` } : null
+      return l ? { name: l.name, glyph: S.standing(l.cover) ? 'woods' : 'land', marks: [], queue: [], badge: null, land: true, said: `${l.name}, ${l.block === 'home' ? '집 농장 옆' : '집 농장 너머'}. ${l.rentable ? `1년 ${F.money(l.rent)}에 빌리거나 ` : ''}${F.money(l.price)}에 살 수 있습니다.` } : null
     }
     const key = digitFor(c, i)
     const fp = c.fields[i]
     if (fp.cover !== 'open') {
       return {
-        name: S.FIELD_NAMES[i], glyph: TRACT_GLYPH[fp.cover], sub: F.upper(fp.cover === 'stumps' ? 'stumps' : fp.cover), marks: [], queue: [], badge: null, key,
-        said: `${S.FIELD_NAMES[i]}, ${S.COVER_WORD[fp.cover]}. A tract you can clear into a field.`,
+        name: S.FIELD_NAMES[i], glyph: TRACT_GLYPH[fp.cover], sub: S.COVER_WORD[fp.cover], marks: [], queue: [], badge: null, key,
+        said: `${S.FIELD_NAMES[i]}, ${S.COVER_WORD[fp.cover]}. 개간해 밭으로 만들 수 있는 구획입니다.`,
       }
     }
     const p = c.plans[i]
@@ -274,16 +277,16 @@ export function planScreen(ctx: Ctx, plateLayer: HTMLElement, o: { onMenu: () =>
     return {
       name: S.FIELD_NAMES[i],
       glyph: potato ? 'planted' : 'rest',
-      sub: potato ? v.name : 'Resting',
+      sub: potato ? v.name : '휴경',
       marks: [...(potato && p.seed === 'saved' ? [{ glyph: 'sprout', cls: 'warn' }] : []), ...(rented ? [{ glyph: 'land', cls: '' }] : [])],
       queue: [], badge: null, key,
-      said: `${S.FIELD_NAMES[i]}. ${potato ? `${v.name} on ${p.seed} seed` : 'Rest year in oats and clover'}${rented ? ', rented' : ''}, ${F.money(fieldCost(p))}.${key ? ` Press ${key} to select it.` : ''}`,
+      said: `${S.FIELD_NAMES[i]}. ${potato ? `${p.seed === 'certified' ? '인증' : '자가'} 종자의 ${v.name}` : '오트와 클로버 휴경'}${rented ? ', 임차' : ''}, ${F.money(fieldCost(p))}.${key ? ` ${key}를 눌러 선택합니다.` : ''}`,
     }
   }
   const P = plates(ctx, plateLayer, { model: plateModel, onBadge: () => {}, covers: () => card.hidden ? [] : [card.getBoundingClientRect()] })
 
   // The box's word for leaf blight, which names what it is about ("prone" alone was not understood).
-  const BOX_BLIGHT = ['resists blight', 'some blight resistance', 'prone to blight', 'very prone to blight']
+  const BOX_BLIGHT = ['역병에 강함', '역병 저항 약간', '역병에 약함', '역병에 매우 약함']
 
   // A variety as a printed box to tick: its name, how it matures and yields, its price; what else it is like is said
   // to a screen reader, and in full on the comparison sheet.
@@ -292,8 +295,8 @@ export function planScreen(ctx: Ctx, plateLayer: HTMLElement, o: { onMenu: () =>
       h('input', { type: 'radio', name: 'variety', value: v.id, checked: on, testid: `plan-variety-${v.id}`, k: `v-${v.id}`, 'aria-describedby': `v-more-${v.id}`, onchange: () => setPlan({ variety: v.id }) }),
       h('span', { class: 'vbox-in' },
         h('b', null, v.name),
-        h('span', { class: 'it' }, `${v.maturity}, ${R.yieldWord(v).split(',')[0]}`),
-        h('span', { class: v.contract ? 'c-ochre' : null, title: v.contract ? GLOSSARY['contract only'] : undefined }, v.contract ? 'contract only' : BOX_BLIGHT[R.blightMark(v)]),
+        h('span', { class: 'it' }, `${MATURITY_KO[v.maturity]}, ${R.yieldWord(v).split(',')[0]}`),
+        h('span', { class: v.contract ? 'c-ochre' : null, title: v.contract ? GLOSSARY['contract only'] : undefined }, v.contract ? '계약 전용' : BOX_BLIGHT[R.blightMark(v)]),
         h('span', { class: 'num' }, F.price(v.price))),
       h('span', { class: 'sr', id: `v-more-${v.id}` }, varietyTraits(v, c, app.world).join(', ')))
   }
@@ -321,32 +324,32 @@ export function planScreen(ctx: Ctx, plateLayer: HTMLElement, o: { onMenu: () =>
     const cost = sel.reduce((a, j) => a + fieldCost(c.plans[j]), 0)
     // Saved seed's warning stands with the seed choice; how to save some is read with the varieties.
     const seedNote = h('p', { class: `t-caption${p.seed === 'saved' ? ' c-ochre' : ''}`, testid: 'seed-note' }, saved > 0 || p.seed === 'saved' ? R.savedSeedText(stock)
-      : [`You have no saved ${v.name} seed in the cellar. To save some, `, term('hold some back', 'hold back seed'), ' from a stored crop over the winter. It\'s free to plant next spring, but it carries virus.'])
+      : [`저장고에 자가 ${v.name} 종자가 없습니다. 겨울에 저장한 작물에서 `, term('종자를 남겨 두면', 'hold back seed'), ' 됩니다. 다음 봄 파종은 무료지만 바이러스를 옮깁니다.'])
     // Head and seed stay in view; where the land leaves the card too little room, the crop and the varieties scroll
     // between them.
     return [
-      cardHead(ctx, one ? 'Field record' : 'Fields', one ? info.name : `${sel.length} fields`, one
-        ? [`${R.POSITION_NOTE[info.elev]} ${info.streak > 1 ? `Potatoes ${info.streak} years in a row` : info.streak ? 'Potatoes last year' : 'No potatoes last year'}. The soil is ${R.soilWord(info.soil)} and `, term('early dying'), ` hits ${F.pct(info.vert)} of plants.${info.raw ? ' It\'s new ground, so a first crop will be smaller unless it rests a year.' : ''}`]
+      cardHead(ctx, one ? '밭 기록' : '밭들', one ? info.name : `밭 ${sel.length}곳`, one
+        ? [`${R.POSITION_NOTE[info.elev]} ${info.streak > 1 ? `${info.streak}년 연속 감자` : info.streak ? '작년에 감자' : '작년에는 감자 아님'}. 흙은 ${R.soilWord(info.soil)}이고 `, term('조기 고사병'), `이(가) 포기의 ${F.pct(info.vert)}에 옵니다.${info.raw ? ' 새 땅이라 1년 쉬지 않으면 첫 작물이 적습니다.' : ''}`]
         : F.list(sel.map(j => S.FIELD_NAMES[j]))),
       h('div', { class: 'card-scroll', 'data-scroll': 'record', testid: 'record-scroll' },
         h('div', { class: 'card-crop' },
-          choice('crop', 'Crop', [['potato', 'Potatoes', same('crop') && potato, () => setPlan({ crop: 'potato' })], ['rest', 'Rest year', same('crop') && !potato, () => setPlan({ crop: 'rest' })]]),
-          h('p', { class: 'card-cost' }, h('span', { class: 't-label' }, sel.length > 1 ? 'Together' : 'Costs'), h('b', { class: 'num', testid: 'field-cost' }, F.money(cost)))),
+          choice('crop', '작물', [['potato', '감자', same('crop') && potato, () => setPlan({ crop: 'potato' })], ['rest', '휴경', same('crop') && !potato, () => setPlan({ crop: 'rest' })]]),
+          h('p', { class: 'card-cost' }, h('span', { class: 't-label' }, sel.length > 1 ? '합계' : '비용'), h('b', { class: 'num', testid: 'field-cost' }, F.money(cost)))),
         potato ? [
-          h('div', { class: `vgrid${vs.length < all.length ? ' few' : ''}`, role: 'radiogroup', 'aria-label': 'Variety' }, vs.map(x => varietyBox(c, x, same('variety') && x.id === p.variety))),
-          h('p', { class: 'note card-note' }, same('variety') ? `${v.blurb}${v.contract ? ` Without a contract it sells ${R.offContract()} its usual price.` : ''}` : 'These fields are planted with different varieties.',
-            ' ', h('button', { class: 'btn quiet', type: 'button', testid: 'compare-open', onclick: () => openCompare(ctx) }, vs.length < all.length ? `Compare all ${all.length}` : 'Compare them all')),
+          h('div', { class: `vgrid${vs.length < all.length ? ' few' : ''}`, role: 'radiogroup', 'aria-label': '품종' }, vs.map(x => varietyBox(c, x, same('variety') && x.id === p.variety))),
+          h('p', { class: 'note card-note' }, same('variety') ? `${v.blurb}${v.contract ? ` 계약이 없으면 평소 가격의 ${R.offContract()}에 팔립니다.` : ''}` : '이 밭들은 서로 다른 품종을 심습니다.',
+            ' ', h('button', { class: 'btn quiet', type: 'button', testid: 'compare-open', onclick: () => openCompare(ctx) }, vs.length < all.length ? `모두 ${all.length}개 비교` : '모두 비교하기')),
           p.seed === 'saved' ? null : h('div', { class: 'card-seed-note' }, seedNote),
-        ] : h('p', { class: 'note card-note' }, `Oats and clover cost ${F.money(S.REST_COST)} and earn ${F.money(S.REST_INCOME)} in the fall. A rest year restores the soil right away and slowly reduces early dying.`)),
+        ] : h('p', { class: 'note card-note' }, `오트와 클로버는 ${F.money(S.REST_COST)}가 들고 가을에 ${F.money(S.REST_INCOME)}을(를) 법니다. 휴경은 흙을 바로 회복시키고 조기 고사병을 서서히 줄입니다.`)),
       h('div', { class: 'card-foot', testid: 'record-foot' },
         potato ? [
           // Where the seed comes from is always on the card: saved seed is free once some is held back in the cellar.
           h('div', { class: 'card-seed' },
-            h('p', { class: 't-label' }, 'Seed'),
-            choice('seed', 'Seed', [
-              ['certified', `Certified, ${F.money(S.SEED_CWT_PER_FIELD * S.CERT_SEED_PER_CWT)}`, same('seed') && p.seed === 'certified', () => setPlan({ seed: 'certified' })],
-              ['saved', saved > 0 ? `Saved, free (enough for ${saved})` : 'Saved, free', same('seed') && p.seed === 'saved', () => setPlan({ seed: 'saved' }),
-                saved > 0 || p.seed === 'saved' ? '' : `You have no saved ${v.name} seed in the cellar`]]),
+            h('p', { class: 't-label' }, '종자'),
+            choice('seed', '종자', [
+              ['certified', `인증, ${F.money(S.SEED_CWT_PER_FIELD * S.CERT_SEED_PER_CWT)}`, same('seed') && p.seed === 'certified', () => setPlan({ seed: 'certified' })],
+              ['saved', saved > 0 ? `자가, 무료 (${saved}곳 분량)` : '자가, 무료', same('seed') && p.seed === 'saved', () => setPlan({ seed: 'saved' }),
+                saved > 0 || p.seed === 'saved' ? '' : `저장고에 자가 ${v.name} 종자가 없습니다`]]),
             p.seed === 'saved' ? seedNote : null),
         ] : null,
         one ? tenureRow(ctx, c, i, onTry) : null,
@@ -355,7 +358,7 @@ export function planScreen(ctx: Ctx, plateLayer: HTMLElement, o: { onMenu: () =>
   }
 
   function drawMast(c: S.Campaign): Child {
-    return [h('h1', null, 'Spring'), h('span', { class: 't-label' }, R.seasonCount(c))]
+    return [h('h1', null, '봄'), h('span', { class: 't-label' }, R.seasonCount(c))]
   }
 
   function drawRows(c: S.Campaign): Child {
@@ -368,13 +371,13 @@ export function planScreen(ctx: Ctx, plateLayer: HTMLElement, o: { onMenu: () =>
     // On a phone the folds after the people stand as one row of buttons until one is opened (design/spring.phone.html).
     // While a fold is open every other one stands in that row above it, so the open one has the sheet's room.
     const later = open ? folds.filter(f => f.id !== open) : phone ? folds.filter(f => f.id !== 'fields' && f.id !== 'people') : []
-    const strip = later.length ? h('div', { class: `fold more${open ? ` strip${later.length > 4 ? ' many' : ''}` : ''}`, role: 'group', 'aria-label': 'More sections', k: 'fold-more' },
+    const strip = later.length ? h('div', { class: `fold more${open ? ` strip${later.length > 4 ? ' many' : ''}` : ''}`, role: 'group', 'aria-label': '더 많은 항목', k: 'fold-more' },
       later.map(f => h('button', { class: `btn${goalAt === f.id ? ' goal-ring' : ''}`, type: 'button', testid: f.open, 'aria-expanded': 'false', onclick: () => toggle(f.id) }, icon(f.glyph, 'i'), h('span', { class: 'nm' }, f.name)))) : null
     return [
       open ? strip : null,
       folds.filter(f => !later.includes(f)).map(f => {
         const on = open === f.id
-        const el = fold({ icon: f.glyph, name: f.name, state: goalAt === f.id && !on ? `${g!.title} here` : phone ? f.short ?? f.state : f.state, figure: f.figure, open: on, controls: on ? `fold-${f.id}` : undefined, testid: f.open, onclick: () => toggle(f.id) })
+        const el = fold({ icon: f.glyph, name: f.name, state: goalAt === f.id && !on ? `여기서: ${g!.title}` : phone ? f.short ?? f.state : f.state, figure: f.figure, open: on, controls: on ? `fold-${f.id}` : undefined, testid: f.open, onclick: () => toggle(f.id) })
         if (goalAt === f.id && !on) el.classList.add('goal-ring')
         return h('div', { class: 'cat-fold', k: `fold-${f.id}` }, el,
           on ? h('div', { class: 'cat-open', id: `fold-${f.id}`, testid: f.testid, 'data-scroll': `fold-${f.id}` }, f.body()) : null)
@@ -392,7 +395,7 @@ export function planScreen(ctx: Ctx, plateLayer: HTMLElement, o: { onMenu: () =>
     // mortgage. Whatever raises the loan (a field, a hand, a machine bought from cash) raises what is due by as much.
     const mn = S.moneyNow(app.world, c)
     const loan = over ? 0 : mn.loan
-    const what = pc.rent || pc.wages ? `with ${F.list([pc.rent ? `rent ${F.money(pc.rent)}` : '', pc.wages ? `the first month's wages ${F.money(pc.wages)}` : ''].filter(Boolean))}` : ''
+    const what = pc.rent || pc.wages ? `(${F.list([pc.rent ? `임차료 ${F.money(pc.rent)}` : '', pc.wages ? `첫 달 임금 ${F.money(pc.wages)}` : ''].filter(Boolean))} 포함)` : ''
     const due = dueSays(mn.due, loan)
     const low = over ? '' : lowCashSays(c, after)
     // The year-end figure the season will open with (S.moneyPlan: this plan begun on a copy of the farm), with where it
@@ -402,30 +405,30 @@ export function planScreen(ctx: Ctx, plateLayer: HTMLElement, o: { onMenu: () =>
     const past = over ? '' : limitSays(year, year.after < S.CREDIT_LIMIT ? S.planRescue(app.world, c) : null)
     return [
       h('div', { class: `plan-money${over ? ' over' : ''}${moneyMore ? ' more' : ''}`, testid: 'plan-money' },
-        h('p', { class: 'lead quiet pm-cash' }, h('span', { class: 'it' }, c.cash < 0 ? 'Owed from last year' : 'You have'), h('span', { class: 'dots' }),
+        h('p', { class: 'lead quiet pm-cash' }, h('span', { class: 'it' }, c.cash < 0 ? '작년부터의 빚' : '보유액'), h('span', { class: 'dots' }),
           h('span', { class: `num${c.cash < 0 ? ' c-red' : ''}`, testid: 'plan-cash' }, F.money(c.cash))),
-        h('p', { class: 'lead' }, h('span', null, 'This plan', what ? h('span', { class: 'it quiet', testid: 'plan-rent' }, ` ${what}`) : null), h('span', { class: 'dots' }),
+        h('p', { class: 'lead' }, h('span', null, '이 계획', what ? h('span', { class: 'it quiet', testid: 'plan-rent' }, ` ${what}`) : null), h('span', { class: 'dots' }),
           h('b', { class: 'num big' }, F.money(pc.total))),
-        h('p', { class: 'lead quiet pm-loan' }, h('span', { class: 'it' }, over ? 'More than the bank will lend' : after < 0 ? term('The bank\'s spring loan', 'spring loan') : 'Left in cash'), h('span', { class: 'dots' }),
+        h('p', { class: 'lead quiet pm-loan' }, h('span', { class: 'it' }, over ? '은행이 빌려줄 수 있는 금액 초과' : after < 0 ? term('은행 봄 융자', 'spring loan') : '남는 현금'), h('span', { class: 'dots' }),
           over ? null : h('span', { class: `num${low ? ' c-ochre' : ''}`, testid: 'plan-loan' }, F.money(Math.abs(after)))),
         low ? h('p', { class: 't-caption c-ochre', testid: 'plan-low', role: 'status' }, low) : null,
         over ? null : [
-          h('p', { class: 'lead pm-after' }, h('span', { class: 'it' }, 'After year-end bills'), h('span', { class: 'dots' }),
+          h('p', { class: 'lead pm-after' }, h('span', { class: 'it' }, '연말 결산 후'), h('span', { class: 'dots' }),
             h('span', { class: `num${year.callRisk === 'likely' ? ' c-red' : year.callRisk === 'possible' ? ' c-ochre' : ''}`, testid: 'plan-year-end' }, F.money(fig))),
           h('p', { class: 't-caption pm-range', testid: 'plan-year-range' }, rangeSays(year.range)),
           past ? h('p', { class: 't-caption c-red', testid: 'plan-past-limit', role: 'status' }, past) : null,
         ],
-        h('p', { class: 'lead quiet' }, h('span', { class: 'it' }, term('Due at the end of the year', 'due at the year end'), ctx.layout() === 'narrow' ? null : ', from your crop'), h('span', { class: 'dots' }),
+        h('p', { class: 'lead quiet' }, h('span', { class: 'it' }, term('연말에 낼 돈', 'due at the year end'), ctx.layout() === 'narrow' ? null : ', 작물에서'), h('span', { class: 'dots' }),
           h('span', { class: 'num c-red', testid: 'plan-due' }, F.money(due.total))),
         h('p', { class: 't-caption pm-parts' }, due.text),
         c.history.length ? null : h('p', { class: 't-caption pm-usual', testid: 'plan-usual' }, usualFirstYear(mn.due.note + mn.due.household).short)),
-      over ? h('p', { class: 't-caption c-red', role: 'alert' }, 'Rest a field or plant saved seed, because the bank won\'t lend any more this spring.') : null,
+      over ? h('p', { class: 't-caption c-red', role: 'alert' }, '은행이 이번 봄에 더 빌려주지 않으니 밭을 쉬게 하거나 자가 종자를 심으세요.') : null,
       h('div', { class: 'blank-go' },
-        h('button', { class: 'btn go wide', type: 'button', testid: 'begin-season', onclick: begin }, 'Start the season', icon('arrow', 'i')),
+        h('button', { class: 'btn go wide', type: 'button', testid: 'begin-season', onclick: begin }, '시즌 시작하기', icon('arrow', 'i')),
         // At a glance the blank says three things: what you have, what the plan costs, where the year will end. The
         // loan, the range and what falls due are one press away.
-        over ? null : h('button', { class: 'btn quiet', type: 'button', testid: 'plan-more', 'aria-expanded': String(moneyMore), onclick: () => { moneyMore = !moneyMore; ctx.dirty() } }, moneyMore ? 'Less' : 'Details'),
-        h('button', { class: 'btn quiet', type: 'button', testid: 'money-open', onclick: () => openMoney(ctx) }, 'See the money')),
+        over ? null : h('button', { class: 'btn quiet', type: 'button', testid: 'plan-more', 'aria-expanded': String(moneyMore), onclick: () => { moneyMore = !moneyMore; ctx.dirty() } }, moneyMore ? '접기' : '자세히'),
+        h('button', { class: 'btn quiet', type: 'button', testid: 'money-open', onclick: () => openMoney(ctx) }, '돈 내역 보기')),
     ]
   }
 
