@@ -34,29 +34,29 @@ export interface Whois {
 
 // What a thing is, in a name and a line.
 function thingWords(c: S.Campaign, t: Thing, touch = false): { name: string; line: string; glyph: string } {
-  const who = (id: number) => { const u = c.crew.find(x => x.id === id); return u ? (u.kind === 'farmer' ? 'You\'re' : `${firstName(u.name)} is`) : '' }
+  const who = (id: number) => { const u = c.crew.find(x => x.id === id); return u ? (u.kind === 'farmer' ? '당신이' : S.iga(firstName(u.name))) : '' }
   switch (t.kind) {
     case 'tractor': case 'truck': {
-      const name = t.kind === 'tractor' ? (t.k ? `Your ${t.k === 1 ? 'second' : 'third'} tractor` : 'Your tractor') : 'Your truck'
+      const name = t.kind === 'tractor' ? (t.k ? `당신의 ${t.k === 1 ? '두 번째' : '세 번째'} 트랙터` : '당신의 트랙터') : '당신의 트럭'
       const holder = t.holder >= 0 ? who(t.holder) : ''
       const job = holder && c.season ? c.season.jobs.find(j => c.crew.find(u => u.id === t.holder)?.job === j.id) : undefined
-      return { name, glyph: t.kind === 'tractor' ? 'machine' : 'haul', line: holder ? `${holder} using it${job ? `, ${jobText(job, c, job.building).replace(/^./, x => x.toLowerCase())}` : ''}.` : c.phase === 'season' ? 'Nobody is using it. It\'s parked where it was left, free for whoever needs it next.' : 'In the shed until the season starts.' }
+      return { name, glyph: t.kind === 'tractor' ? 'machine' : 'haul', line: holder ? `${holder} 쓰는 중${job ? `, ${jobText(job, c, job.building)}` : ''}.` : c.phase === 'season' ? '아무도 쓰지 않습니다. 세워둔 곳에 있고, 다음에 필요한 사람이 쓸 수 있습니다.' : '시즌이 시작될 때까지 창고에 있습니다.' }
     }
     case 'asking': {
       const a = c.applicants[t.k]
-      return { name: a ? a.name : 'Someone at the gate', glyph: 'hire', line: a ? `Looking for work at ${F.money(a.ask)} a month.` : 'Looking for work.' }
+      return { name: a ? a.name : '문 앞의 누군가', glyph: 'hire', line: a ? `월 ${F.money(a.ask)}에 일자리를 찾고 있습니다.` : '일자리를 찾고 있습니다.' }
     }
-    case 'neighbour': return { name: t.k ? 'The neighbor\'s truck' : 'A neighbor', glyph: 'ask', line: 'Here to offer one of your people more pay. The telegram says how much.' }
-    case 'buyer': return { name: t.k ? 'The buyer\'s car' : 'A produce buyer', glyph: 'sell', line: 'Here to buy a whole lot for more than the market price. The telegram has the offer.' }
-    case 'picker': return { name: 'A picker', glyph: 'pickers', line: 'Hired by the day to help while the crop is being dug.' }
-    case 'cow': return { name: 'The neighbor\'s cows', glyph: 'rest', line: 'Grazing in his pasture by the home yard. They aren\'t yours.' }
-    case 'deer': return { name: 'A deer', glyph: 'woods', line: 'At the edge of the woods. It slips into the trees when anyone gets close.' }
+    case 'neighbour': return { name: t.k ? '이웃의 트럭' : '이웃', glyph: 'ask', line: '당신의 사람에게 더 많은 품값을 제안하러 왔습니다. 전보에 액수가 있습니다.' }
+    case 'buyer': return { name: t.k ? '구매자의 차' : '청과 구매자', glyph: 'sell', line: '시세보다 비싸게 한 더미를 통째로 사러 왔습니다. 전보에 제안이 있습니다.' }
+    case 'picker': return { name: '학생 일꾼', glyph: 'pickers', line: '작물을 캐는 동안 하루 단위로 고용된 도우미입니다.' }
+    case 'cow': return { name: '이웃의 소들', glyph: 'rest', line: '집 마당 옆 목초지에서 풀을 뜯고 있습니다. 당신의 소가 아닙니다.' }
+    case 'deer': return { name: '사슴', glyph: 'woods', line: '숲 가장자리에 있습니다. 누가 가까이 가면 나무 사이로 사라집니다.' }
     case 'yard': {
-      const built = c.buildings.filter(b => b.yard === t.k && b.built).map(b => S.BUILDINGS[b.kind].name.toLowerCase())
-      const stands = t.k === S.HOME_YARD ? ['the farmhouse', 'the potato house', ...built] : built
+      const built = c.buildings.filter(b => b.yard === t.k && b.built).map(b => S.BUILDINGS[b.kind].name)
+      const stands = t.k === S.HOME_YARD ? ['농가', '감자 저장고', ...built] : built
       return {
-        name: t.k === S.HOME_YARD ? 'The home yard' : 'The Dufour yard', glyph: 'house',
-        line: `${stands.length ? `${F.upper(F.list(stands))}.` : 'Nothing is built here yet.'} You can build here during the season${touch ? ' by tapping the yard' : '. Press Y, or click the yard'}.`,
+        name: t.k === S.HOME_YARD ? '집 마당' : '두푸르 마당', glyph: 'house',
+        line: `${stands.length ? `${F.list(stands)}.` : '아직 지어진 것이 없습니다.'} 시즌 중에 여기에 지을 수 있습니다${touch ? '. 마당을 탭하세요' : '. Y를 누르거나 마당을 클릭하세요'}.`,
       }
     }
   }
@@ -107,54 +107,54 @@ export function whois(ctx: Ctx, layer: HTMLElement): Whois {
         ringed(p, ring, 46),
         h('div', null,
           h('h2', { class: 't-head', id: 'whois-name', testid: 'whois-name' }, name),
-          h('p', { class: 't-caption' }, farmer ? 'The farmer · every job, no wage' : `${KIND_NAME[p.kind]}${p.traitName ? ` · ${p.traitName.toLowerCase()}` : ''}`)),
+          h('p', { class: 't-caption' }, farmer ? '농장주 · 모든 일, 품값 없음' : `${KIND_NAME[p.kind]}${p.traitName ? ` · ${p.traitName}` : ''}`)),
         h('button', { class: 'close', type: 'button', testid: 'whois-close', 'aria-label': `Close${keys ? ' (Escape)' : ''}`, onclick: () => app.selectUnit(-1) }, icon('close', 'i'))),
       h('div', { class: 'card-body', 'data-scroll': 'whois' },
       h('p', { class: 'whois-now', testid: 'whois-now' }, icon(now ? now.glyph : c.phase === 'cellar' ? 'winter' : 'idle', 'i'),
-        h('span', null, h('b', null, now ? now.word : c.phase === 'cellar' ? 'This winter' : 'Spring'), ' ', h('span', { class: busy ? '' : 'quiet' }, detail))),
+        h('span', null, h('b', null, now ? now.word : c.phase === 'cellar' ? '이번 겨울' : '봄'), ' ', h('span', { class: busy ? '' : 'quiet' }, detail))),
       // Where to look for them: on a machine they are its driver; off the land, indoors in the yard. Not said of
       // someone the line has at work in a field, which is where they are between days.
-      place === 'machine' ? h('p', { class: 'whois-where quiet', testid: 'whois-where' }, icon('machine', 'i'), 'Driving, so look for the tractor.')
-        : place === 'away' && c.phase !== 'cellar' && !(now && now.place >= 0 && busy) ? h('p', { class: 'whois-where quiet', testid: 'whois-where' }, icon('house', 'i'), 'Indoors in the yard, out of sight.') : null,
+      place === 'machine' ? h('p', { class: 'whois-where quiet', testid: 'whois-where' }, icon('machine', 'i'), '운전 중이니 트랙터를 찾으세요.')
+        : place === 'away' && c.phase !== 'cellar' && !(now && now.place >= 0 && busy) ? h('p', { class: 'whois-where quiet', testid: 'whois-where' }, icon('house', 'i'), '마당 실내에 있어 보이지 않습니다.') : null,
       h('dl', { class: 'whois-state' },
         h('div', null, h('dt', { class: p.tired >= S.HURT_TIRED ? 'c-red' : p.tired >= S.TIRED_SLOW_FROM ? 'c-ochre' : '' }, F.upper(p.tiredWord)),
-          h('dd', null, sign?.glyph === 'hurt' ? `hurt, back on ${F.date(c.year, p.hurtUntil, true)}` : restWords(c, p))),
+          h('dd', null, sign?.glyph === 'hurt' ? `부상, ${F.date(c.year, p.hurtUntil, true)}에 복귀` : restWords(c, p))),
         h('div', null, h('dt', { class: p.quitIn >= 0 ? 'c-red' : p.mood < 0.45 ? 'c-ochre' : '' }, F.upper(p.moodWord)),
-          h('dd', null, p.quitIn >= 0 ? `will quit in ${F.plural(p.quitIn, 'day')} unless their mood improves` : pulls.length ? moodSaid(pulls.slice(0, 2)) : 'no strong reasons either way')),
-        h('div', null, h('dt', null, 'Best at'), h('dd', null, `${SKILL_NAME[best].toLowerCase()}, ${p.skills[best]} out of 10`)),
-        h('div', null, h('dt', null, 'Pay'), h('dd', { class: 'num' }, farmer ? 'none. Your family\'s living costs come out at the end of the year.' : `${F.money(p.pay)} a month${p.foreman ? ' as foreman' : ''}`))),
+          h('dd', null, p.quitIn >= 0 ? `기분이 좋아지지 않으면 ${p.quitIn}일 후 그만둠` : pulls.length ? moodSaid(pulls.slice(0, 2)) : '뚜렷한 이유가 없음')),
+        h('div', null, h('dt', null, '가장 잘함'), h('dd', null, `${SKILL_NAME[best]}, 10 중 ${p.skills[best]}`)),
+        h('div', null, h('dt', null, '품값'), h('dd', { class: 'num' }, farmer ? '없음. 가족의 생활비는 연말에 나갑니다.' : `월 ${F.money(p.pay)}${p.foreman ? ', 작업반장' : ''}`))),
       // The work they take first: one press puts a kind of work first for them.
       c.phase === 'cellar' ? h('div', { class: 'whois-first', role: 'group', 'aria-label': `${name} this winter` },
-        h('span', { class: 't-label' }, 'This winter'),
+        h('span', { class: 't-label' }, '이번 겨울'),
         S.winterInfo(c).people.find(x => x.id === p.id)?.choices.map(ch => h('button', {
           class: `btn${p.winter === ch.work ? ' is-on' : ''}`, type: 'button', testid: `whois-winter-${ch.work}`, 'aria-pressed': String(p.winter === ch.work), disabled: !ch.ok && p.winter !== ch.work, title: ch.why || undefined,
-          onclick: () => run({ t: 'winter', unit: p.id, work: ch.work, field: ch.work === 'woods' ? S.timberTracts(c)[0] : undefined }, `${name}: ${WINTER_WORDS[ch.work].toLowerCase()} this winter.`),
-        }, WINTER_WORDS[ch.work]))) : p.foreman ? null : h('div', { class: 'whois-first prio-first', role: 'group', 'aria-label': `The work ${farmer ? 'you do' : `${name} does`} first` },
-        h('span', { class: 't-label', title: keys ? `The work ${farmer ? 'you' : 'they'} do before anything else. Click one to put it first.` : undefined }, 'First priority'),
+          onclick: () => run({ t: 'winter', unit: p.id, work: ch.work, field: ch.work === 'woods' ? S.timberTracts(c)[0] : undefined }, `${name}: 이번 겨울 ${WINTER_WORDS[ch.work]}.`),
+        }, WINTER_WORDS[ch.work]))) : p.foreman ? null : h('div', { class: 'whois-first prio-first', role: 'group', 'aria-label': `${farmer ? '당신이' : S.iga(name)} 가장 먼저 하는 일` },
+        h('span', { class: 't-label', title: keys ? `다른 무엇보다 먼저 하는 일입니다. 하나를 클릭해 가장 먼저 하게 하세요.` : undefined }, '최우선 일'),
         S.SKILLS.map(k => h('button', {
           class: `key-btn${p.prio[k] === 1 ? ' is-on' : ''}${p.prio[k] === 0 ? ' never' : ''}`, type: 'button', testid: `whois-first-${k}`, 'aria-pressed': String(p.prio[k] === 1),
-          title: `${SKILL_NAME[k]} work first: ${skillCovers(k).toLowerCase()}`,
-          onclick: () => run({ t: 'priority', unit: p.id, work: k, level: 1 }, `${name}: ${SKILL_NAME[k].toLowerCase()} work first.`),
-        }, icon(SKILL_CUT[k], 'i'), h('span', { class: 'key-name' }, SKILL_SHORT[k]), h('span', { class: 'sr' }, ' work first')))),
+          title: `${SKILL_NAME[k]} 먼저: ${skillCovers(k)}`,
+          onclick: () => run({ t: 'priority', unit: p.id, work: k, level: 1 }, `${name}: ${SKILL_NAME[k]} 먼저.`),
+        }, icon(SKILL_CUT[k], 'i'), h('span', { class: 'key-name' }, SKILL_SHORT[k]), h('span', { class: 'sr' }, ' 먼저')))),
       ),
       h('div', { class: 'card-foot' },
       restControl(ctx, c, p.id, 'whois-rest'),
       h('div', { class: 'whois-acts' },
         h('button', {
           class: `btn${ctx.view.followed() === p.id ? ' is-on' : ''}`, type: 'button', testid: 'whois-follow', 'aria-pressed': String(ctx.view.followed() === p.id),
-          title: keys ? `The camera stays centered on ${farmer ? 'you' : 'them'} until you move it` : undefined,
-          onclick: () => { const on = ctx.view.followed() === p.id; ctx.view.follow(on ? -1 : p.id); ctx.announce(on ? 'Stopped following.' : `Following ${farmer ? 'you' : name}. The camera stays centered on ${farmer ? 'you' : 'them'} until you move it.`); ctx.dirty() },
-        }, icon('scout', 'i'), ctx.view.followed() === p.id ? 'Following' : 'Follow'),
-        c.phase === 'season' && c.crew.length > 1 ? h('button', { class: 'btn', type: 'button', testid: 'whois-more', onclick: () => app.selectUnit(p.id, 'list') }, icon('people', 'i'), 'Details') : null,
+          title: keys ? `카메라가 움직일 때까지 ${farmer ? '당신을' : '그 사람을'} 따라갑니다` : undefined,
+          onclick: () => { const on = ctx.view.followed() === p.id; ctx.view.follow(on ? -1 : p.id); ctx.announce(on ? '따라가기를 멈췄습니다.' : `${farmer ? '당신을' : S.eulreul(name)} 따라갑니다. 카메라가 움직일 때까지 중심에 둡니다.`); ctx.dirty() },
+        }, icon('scout', 'i'), ctx.view.followed() === p.id ? '따라가는 중' : '따라가기'),
+        c.phase === 'season' && c.crew.length > 1 ? h('button', { class: 'btn', type: 'button', testid: 'whois-more', onclick: () => app.selectUnit(p.id, 'list') }, icon('people', 'i'), '자세히') : null,
         farmer ? null : h('button', {
           class: 'btn hazard', type: 'button', testid: 'whois-letgo',
           onclick: async () => {
-            const yes = await confirmPaper(ctx, { title: `Let ${firstName(p.name)} go?`, text: LET_GO_TEXT, yes: 'Let them go', danger: true })
+            const yes = await confirmPaper(ctx, { title: `${firstName(p.name)}을(를) 내보낼까요?`, text: LET_GO_TEXT, yes: '내보내기', danger: true })
             if (!yes) return
             const r = ctx.run({ t: 'dismiss', unit: p.id })
-            if (r.ok) { app.selectUnit(-1); ctx.announce(`You let ${p.name} go.`) }
+            if (r.ok) { app.selectUnit(-1); ctx.announce(`${p.name}을(를) 내보냈습니다.`) }
           },
-        }, icon('letgo', 'i'), 'Let go'))),
+        }, icon('letgo', 'i'), '내보내기'))),
     ]
   }
 
@@ -186,8 +186,8 @@ export function whois(ctx: Ctx, layer: HTMLElement): Whois {
           h('span', { class: 'thing-ic' }, icon(w.glyph, 'i')),
           h('div', null, h('h2', { class: 't-head', id: 'thing-name', testid: 'thing-name' }, w.name), h('p', { class: 't-caption' }, w.line)),
           h('button', { class: 'close', type: 'button', testid: 'thing-close', 'aria-label': `Close${ctx.touch() ? '' : ' (Escape)'}`, onclick: () => app.inspect(null) }, icon('close', 'i'))),
-        t.thing.kind === 'asking' && c.phase === 'plan' ? h('div', { class: 'whois-acts' }, h('button', { class: 'btn', type: 'button', testid: 'thing-hire', onclick: () => { app.inspect(null); openCrew(ctx) } }, icon('hire', 'i'), 'Hiring')) : null,
-        t.thing.holder >= 0 ? h('div', { class: 'whois-acts' }, h('button', { class: 'btn', type: 'button', testid: 'thing-holder', onclick: () => app.selectUnit(t.thing.holder, 'land') }, icon('people', 'i'), 'See who has it')) : null,
+        t.thing.kind === 'asking' && c.phase === 'plan' ? h('div', { class: 'whois-acts' }, h('button', { class: 'btn', type: 'button', testid: 'thing-hire', onclick: () => { app.inspect(null); openCrew(ctx) } }, icon('hire', 'i'), '고용하기')) : null,
+        t.thing.holder >= 0 ? h('div', { class: 'whois-acts' }, h('button', { class: 'btn', type: 'button', testid: 'thing-holder', onclick: () => app.selectUnit(t.thing.holder, 'land') }, icon('people', 'i'), '누가 쓰는지 보기')) : null,
       ])
     }
     tied.thing.update(tcard.hidden ? null : ties().thing())
