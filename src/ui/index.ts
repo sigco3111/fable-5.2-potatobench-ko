@@ -37,9 +37,9 @@ import { mountScale, toLocal, toScreen, type ScalePref } from './scale.ts'
 
 // What someone sent to a field by a right-click is going to do there: "Ruth will scout North Ridge."
 const SENT: Record<S.JobKind, string> = {
-  plant: 'plant', hill: 'hill', scout: 'scout', spray: 'spray', water: 'water', rogue: 'rogue', sample: 'do a test dig in',
-  kill: 'kill the vines in', dig: 'dig', fell: 'fell the trees in', rocks: 'pick rocks in', brush: 'cut brush around',
-  build: 'build in', haul: 'haul the crop in from',
+  plant: '심을', hill: '북을 올릴', scout: '살펴볼', spray: '살포할', water: '물을 줄', rogue: '병든 포기를 뽑을', sample: '시험 캐기를 할',
+  kill: '줄기를 죽일', dig: '캐낼', fell: '나무를 벨', rocks: '돌을 주울', brush: '덤불을 자를',
+  build: '지을', haul: '작물을 들일',
 }
 
 // The answer to a stamp or a right-click: who will do what where, or that it's on the work list and why not the one picked.
@@ -49,15 +49,15 @@ function sentText(c: S.Campaign, e: { field: number; kind: S.JobKind; unit: numb
   // many Plant stamps are pressed after it.
   const word = e.kind === 'plant' ? c.season?.log.find(x => x.type === 'plantWord' && x.day === c.season!.day && c.season!.plantWordBy === 'you') : undefined
   if (word) return word.text
-  const where = fields > 1 ? `${fields} fields` : S.placeName(e.field)
+  const where = fields > 1 ? `${fields}개 밭` : S.placeName(e.field)
   const u = c.crew.find(x => x.id === e.unit)
-  if (u) return `${u.kind === 'farmer' ? 'You\'ll' : `${firstName(u.name)} will`} ${SENT[e.kind]} ${where}.`
-  const what = fields > 1 ? `${JOB_DOING[e.kind]} ${where}` : jobText(e)
+  if (u) return `${u.kind === 'farmer' ? '당신은' : S.iga(firstName(u.name))} ${where}에서 ${SENT[e.kind]} 겁니다.`
+  const what = fields > 1 ? `${where} ${JOB_DOING[e.kind]}` : jobText(e)
   const not = c.crew.find(x => x.id === e.instead)
-  if (!not) return `${what} is on the work list.`
-  const why = not.foreman ? `${firstName(not.name)} is a foreman` : `${not.kind === 'farmer' ? 'You don\'t' : `${firstName(not.name)} doesn't`} do ${S.SKILL_LABEL[S.jobSkill(e.kind)]}`
+  if (!not) return `${what}이(가) 작업 목록에 올랐습니다.`
+  const why = not.foreman ? `${firstName(not.name)}은(는) 작업반장이라` : `${not.kind === 'farmer' ? '당신은' : `${firstName(not.name)}은(는)`} ${S.SKILL_LABEL[S.jobSkill(e.kind)]}을(를) 하지 않아`
   const other = c.crew.some(x => x.id !== not.id && !x.foreman && S.willDo(x, e.kind))
-  return `${why}, so ${what.replace(/^./, x => x.toLowerCase())} is on the work list ${other ? 'for someone else' : 'until someone on the farm does'}.`
+  return `${why} ${what}이(가) ${other ? '다른 사람이 하도록' : '농장의 누군가가 할 때까지'} 작업 목록에 올랐습니다.`
 }
 
 // How close together presses of the same order come to be answered by one line.
