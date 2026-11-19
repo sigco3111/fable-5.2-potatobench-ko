@@ -66,7 +66,7 @@ const JOIN_MS = 2500
 const ANSWER_MS = 15000
 
 // The alerts whose one remedy is a press, and the words on its key.
-const KEYED: Partial<Record<string, string>> = { frostBarrels: 'Haul it in now', barrelsOut: 'Haul them in now', idleNever: 'Let them help' }
+const KEYED: Partial<Record<string, string>> = { frostBarrels: '지금 들이기', barrelsOut: '지금 모두 들이기', idleNever: '돕게 하기' }
 
 export const mountHud: MountHud = (root, app, view, sound) => {
   mountSprites()
@@ -306,7 +306,7 @@ export const mountHud: MountHud = (root, app, view, sound) => {
         answer(e.text)
         break
       case 'saved':
-        if (!e.ok) notes.push({ text: 'This browser couldn\'t save your game. Export it from the menu to keep it.', level: 'warn', ttl: 12000 })
+        if (!e.ok) notes.push({ text: '이 브라우저가 게임을 저장하지 못했습니다. 메뉴에서 내보내기로 보관하세요.', level: 'warn', ttl: 12000 })
         break
       case 'speed': {
         // The clock stopped itself for something nothing on screen has said: say what. A card that needs an answer
@@ -375,7 +375,7 @@ export const mountHud: MountHud = (root, app, view, sound) => {
         // (a paper already on its way out takes no second Escape: that one goes to the card under it)
         () => { if (!papers.isUp()) return false; papers.closeTop(); return true },
         () => who.escape() || (screen?.escapes ? screen.escapes.card() : !!screen?.key?.(e)),
-        () => { if (app.screen !== 'season' || view.followed() < 0) return false; view.follow(-1); ctx.announce('Stopped following.'); return true },
+        () => { if (app.screen !== 'season' || view.followed() < 0) return false; view.follow(-1); ctx.announce('따라가기를 멈췄습니다.'); return true },
       ]
       if (steps.some(step => step())) { e.preventDefault(); return }
       if (performance.now() - papers.closedAt < 1500) { e.preventDefault(); return }

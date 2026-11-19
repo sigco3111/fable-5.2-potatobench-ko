@@ -321,7 +321,7 @@ export function confirmPaper(ctx: Ctx, o: { title: string; text: Child; yes: str
     let answered = false
     ctx.papers.open({
       title: o.title,
-      kicker: o.danger ? 'This can\'t be undone' : undefined,
+      kicker: o.danger ? '되돌릴 수 없습니다' : undefined,
       testid: 'confirm',
       size: 'small',
       cls: 'confirm',
@@ -414,7 +414,7 @@ export class Notes {
     if (this.pinned?.key === o.key) return
     const el = h('div', { class: `alert hint${o.onClose ? ' closable' : ''}`, role: 'note', testid: o.onClose ? 'hint' : 'idle-note' },
       icon(o.glyph, 'i'), h('span', null, o.text),
-      o.onClose ? h('button', { class: 'close', type: 'button', 'aria-label': 'Dismiss this tip', testid: 'hint-close', onclick: o.onClose }, icon('close', 'i')) : null)
+      o.onClose ? h('button', { class: 'close', type: 'button', 'aria-label': '이 팁 닫기', testid: 'hint-close', onclick: o.onClose }, icon('close', 'i')) : null)
     this.pinned = { key: o.key, el }
     this.draw()
   }
@@ -484,7 +484,7 @@ export class Notes {
     const row = n.key && n.go
       ? h('div', { class: `alert${kind} lv-${n.level} has-key`, testid: 'alert' }, inner, h('button', { class: 'btn alert-key', type: 'button', testid: 'alert-key', onclick: () => n.go!() }, n.key))
       : n.go || n.field >= 0
-      ? h('button', { class: `alert${kind} lv-${n.level}`, type: 'button', testid: 'alert', onclick: () => (n.go ? n.go() : this.onGo(n.field)) }, inner, h('span', { class: 'sr' }, /[.?!]$/.test(n.text) ? ' Go there.' : '. Go there.'))
+      ? h('button', { class: `alert${kind} lv-${n.level}`, type: 'button', testid: 'alert', onclick: () => (n.go ? n.go() : this.onGo(n.field)) }, inner, h('span', { class: 'sr' }, ' 그곳으로 가기.'))
       : h('div', { class: `alert${kind} lv-${n.level}`, testid: 'notice' }, inner)
     row.dataset.id = n.id
     return row
