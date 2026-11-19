@@ -23,12 +23,16 @@ const HOLD_MS = 1400
 const FLASH_MS = 5000
 
 // The stage as the record's caption says it.
-const SHORT_STAGE: Record<string, string> = { 'Planted, not up': 'planted', 'Vines dead, skins setting': 'vines dead', 'Vines dead, skins set': 'vines dead', 'In bloom': 'in bloom' }
+const SHORT_STAGE: Record<string, string> = { '심음, 아직 안 나옴': '심음', '줄기 죽음, 껍질 굳는 중': '줄기 죽음', '줄기 죽음, 껍질 굳음': '줄기 죽음', '꽃피는 중': '꽃핌' }
+
+// 흙 수분 키(sim의 영어 키)를 화면에 보일 말로.
+const MOIST_WORD: Record<string, string> = { 'standing water': '물에 잠김', wet: '젖음', good: '적당함', drying: '마르는 중', dry: '마름', wilting: '시듦' }
+const moistWord = (k: string) => MOIST_WORD[k] ?? k
 
 // What a card's head says the thing is, over its name: "Potato field / North Ridge", "Woods to clear / Home Woodlot".
-const TRACT_KIND: Record<S.Cover, string> = { woods: 'Woods to clear', brush: 'Brush to clear', stumps: 'Stumps to pull', open: 'Cleared ground' }
+const TRACT_KIND: Record<S.Cover, string> = { woods: '베어낼 수림', brush: '베어낼 관목', stumps: '뽑을 그루터기', open: '개간한 땅' }
 function fieldKind(f: S.FieldInfo): string {
-  return f.status === 'rest' ? 'Resting field' : 'Potato field'
+  return f.status === 'rest' ? '쉬는 밭' : '감자밭'
 }
 
 interface Offer { kind: S.JobKind; fields: number[]; days: number; cost: number; score: number; given?: boolean }
@@ -84,7 +88,7 @@ function costText(days: number, cost: number): string {
 
 export function commandCard(ctx: Ctx, o: { onTray: (field: number) => void; onTicket: (lot: number) => void }): Card {
   const app = ctx.app
-  const el = h('section', { class: 'command sheet sys card', 'aria-label': 'Selected', testid: 'card', hidden: true })
+  const el = h('section', { class: 'command sheet sys card', 'aria-label': '선택됨', testid: 'card', hidden: true })
   let page = 0
   let shownFor = ''
   let flashed: { text: string; level: Level; until: number } | null = null
@@ -133,10 +137,10 @@ export function commandCard(ctx: Ctx, o: { onTray: (field: number) => void; onTi
   function give(kind: S.JobKind, first: boolean): void {
     const c = app.campaign
     if (!c || !c.season) return
-    if (!app.selection.length) { ctx.say(ctx.touch() ? 'Pick a field first. Tap one, then give it an order.' : 'Pick a field first. Click one, or press its number key.'); return }
+    if (!app.selection.length) { ctx.say(ctx.touch() ? '먼저 밭을 고르세요. 하나를 누르고 지시하세요.' : '먼저 밭을 고르세요. 누르거나 번호 키를 누르세요.'); return }
     const u = picked(c)
     const busy = u ? S.unitBlock(c, kind, u.id) : ''
-    if (u && busy) { refuse(kind, `${busy} Close their card so anyone can take the order.`); return }
+    if (u && busy) { refuse(kind, `${busy} 그 사람의 카드를 닫으면 아무나 지시를 받을 수 있습니다.`); return }
     const before = shown(offers(c, app.selection)).map(x => x.kind)
     const cold = kind === 'plant' && !!coldSoil(c, app.selection)
     const early = kind === 'kill' ? killSoon(c, app.selection) : null
@@ -150,8 +154,8 @@ export function commandCard(ctx: Ctx, o: { onTray: (field: number) => void; onTi
     refused = null
     held = { until: performance.now() + HOLD_MS, kinds: held && performance.now() < held.until ? held.kinds : before, given: [...(held?.given ?? []), kind] }
     setTimeout(() => ctx.dirty(), HOLD_MS + 50)
-    ctx.announce(`${JOB_VERB[kind]} is ${first ? 'first on the work list' : 'on the work list'} for ${F.list(took.map(r => S.FIELD_NAMES[r.field]))}${u ? `, assigned to ${u.name === S.FARMER_NAME ? 'you' : u.name}` : ''}.`)
-    if (cold) flash(`You're planting ${F.list(took.map(r => S.FIELD_NAMES[r.field]))} in cold soil, so some seed may rot before it comes up.`, 'info')
+    ctx.announce(`${F.list(took.map(r => S.FIELD_NAMES[r.field]))}의 ${JOB_VERB[kind]}이(가) 작업 목록${first ? ' 맨 앞' : ''}에 올랐습니다${u ? `, ${u.name === S.FARMER_NAME ? '당신' : u.name}에게 배정됩니다` : ''}.`)
+    if (cold) flash(`${F.list(took.map(r => S.FIELD_NAMES[r.field]))}을(를) 차가운 흙에 심어 종자 일부가 싹트기 전에 썩을 수 있습니다.`, 'info')
     else if (early && took.some(r => r.field === early.field)) flash(early.did, 'info')
   }
 
@@ -170,7 +174,7 @@ export function commandCard(ctx: Ctx, o: { onTray: (field: number) => void; onTi
   function suggested(): void {
     const c = app.campaign
     if (!c || !c.season) return
-    if (!app.selection.length) { ctx.say(ctx.touch() ? 'Pick a field first by tapping it.' : 'Pick a field first. Click one, or press its number key.'); return }
+    if (!app.selection.length) { ctx.say(ctx.touch() ? '먼저 밭을 눌러 고르세요.' : '먼저 밭을 고르세요. 누르거나 번호 키를 누르세요.'); return }
     const fails: string[] = []
     const took: number[] = []
     for (const i of [...app.selection]) {
@@ -178,7 +182,7 @@ export function commandCard(ctx: Ctx, o: { onTray: (field: number) => void; onTi
       if (r.ok) took.push(i)
       else fails.push(app.selection.length > 1 ? `${S.FIELD_NAMES[i]}. ${r.err}` : r.err)
     }
-    if (took.length) ctx.announce(`The suggested order is on the work list for ${F.list(took.map(i => S.FIELD_NAMES[i]))}.`)
+    if (took.length) ctx.announce(`권하는 지시가 ${F.list(took.map(i => S.FIELD_NAMES[i]))}의 작업 목록에 올랐습니다.`)
     else flash(fails.join(' '), 'info')
   }
 
@@ -195,17 +199,17 @@ export function commandCard(ctx: Ctx, o: { onTray: (field: number) => void; onTi
     if (!f) return jobWhat(kind)
     switch (kind) {
       case 'plant': { const hold = app.needs()[f.index]?.hold; return F.localize(hold ? hold.why : S.plantReady(app.world, c, f.index).why) }
-      case 'hill': return f.hillPasses > 0 ? `Hilled ${hillWord(f.hillPasses)}.` : 'Not hilled yet.'
-      case 'scout': return f.scoutAge < 0 ? 'Not scouted yet.' : `Last scouted ${F.ago(f.scoutAge)}.`
-      case 'spray': return f.protect > 0.02 ? `${F.pct(f.protect)} of the spray protection is left.` : 'No spray protection on the leaves.'
-      case 'water': return `The soil is ${f.moistureLabel}.`
-      case 'rogue': return f.blightHills > 0 ? `Blight seen on ${F.plural(f.blightHills, 'plant')}.` : jobWhat(kind)
-      case 'sample': return 'It\'s your only look at the crop.'
-      case 'kill': return c.season!.fields[f.index].matureDay < 0 && f.blightKnown < 0.05 ? 'Too soon. Killing the vines stops the crop growing.' : `Growth stops and skins set in ${S.SKIN_DAYS} days.`
-      case 'dig': return f.skin >= 1 ? 'Skins are set.' : `Skins are only ${F.pct(f.skin)} set, so they'll bruise.`
-      case 'fell': return c.phase === 'season' ? 'Half speed during the season, and full speed for anyone you keep on over the winter.' : jobWhat(kind)
+      case 'hill': return f.hillPasses > 0 ? `북주기 ${hillWord(f.hillPasses)}.` : '아직 북주기 전입니다.'
+      case 'scout': return f.scoutAge < 0 ? '아직 살펴보지 않았습니다.' : `마지막 살펴보기: ${F.ago(f.scoutAge)}.`
+      case 'spray': return f.protect > 0.02 ? `살포 보호가 ${F.pct(f.protect)} 남았습니다.` : '잎에 살포 보호가 없습니다.'
+      case 'water': return `흙은 ${moistWord(f.moistureLabel)}입니다.`
+      case 'rogue': return f.blightHills > 0 ? `포기 ${f.blightHills}개에 역병이 보입니다.` : jobWhat(kind)
+      case 'sample': return '작물을 볼 수 있는 유일한 방법입니다.'
+      case 'kill': return c.season!.fields[f.index].matureDay < 0 && f.blightKnown < 0.05 ? '너무 이릅니다. 줄기를 죽이면 작물이 자라는 것이 멈춥니다.' : `생장이 멈추고 ${S.SKIN_DAYS}일이면 껍질이 굳습니다.`
+      case 'dig': return f.skin >= 1 ? '껍질이 굳었습니다.' : `껍질이 ${F.pct(f.skin)}만 굳어 멍이 듭니다.`
+      case 'fell': return c.phase === 'season' ? '시즌에는 절반 속도이고, 겨울에 남겨둔 사람은 온전한 속도입니다.' : jobWhat(kind)
       case 'rocks': return f.stones > 0.05 ? `${F.upper(stonesText(f.stones))}.` : jobWhat(kind)
-      case 'brush': return 'Less blight weather and frost, but it grows back.'
+      case 'brush': return '역병 날씨와 서리가 줄지만 다시 자랍니다.'
       default: return jobWhat(kind)
     }
   }
@@ -225,24 +229,24 @@ export function commandCard(ctx: Ctx, o: { onTray: (field: number) => void; onTi
       if (!x || given) {
         return order({ key: touch ? '' : JOB_KEY[kind], icon: kind, name: JOB_VERB[kind], given: true, catch: catchFor(c, kind, f, ''), testid: `order-${kind}-given`, attrs: { 'data-k': `order-${kind}`, tabindex: '-1', 'aria-disabled': 'true' } })
       }
-      const part = x.fields.length < sel.length ? ` ${x.fields.length} of ${sel.length}` : ''
+      const part = x.fields.length < sel.length ? ` ${sel.length}개 중 ${x.fields.length}개` : ''
       const no = refused?.kind === kind
       return order({
         key: touch ? '' : JOB_KEY[kind], icon: kind, name: [JOB_VERB[kind], part ? h('span', { class: 'order-part num' }, part) : null],
-        cost: kind === 'fell' || kind === 'rocks' || kind === 'brush' ? `${F.num(Math.ceil(x.days))} crew-days${x.cost ? ` · ${F.money(x.cost)}` : ''}` : costText(x.days, x.cost), catch: no ? refused!.why : catchFor(c, kind, f, kind === suggestedKind ? why : ''), suggested: kind === suggestedKind, refused: no,
+        cost: kind === 'fell' || kind === 'rocks' || kind === 'brush' ? `${F.num(Math.ceil(x.days))}인일${x.cost ? ` · ${F.money(x.cost)}` : ''}` : costText(x.days, x.cost), catch: no ? refused!.why : catchFor(c, kind, f, kind === suggestedKind ? why : ''), suggested: kind === suggestedKind, refused: no,
         testid: `order-${kind}`, title: touch ? undefined : jobWhat(kind), said: jobWhat(kind),
         onclick: (e: Event) => give(kind, (e as MouseEvent).ctrlKey || (e as MouseEvent).metaKey),
         attrs: { 'data-k': `order-${kind}`, oncontextmenu: (e: Event) => { e.preventDefault(); give(kind, true) } },
       })
     })
     const u = picked(c)
-    const who = u ? h('p', { class: 'order-who' }, ringed(u, ringFor(c, u.id), 26), h('span', null, 'Orders go to ', h('b', null, u.kind === 'farmer' ? 'you' : firstName(u.name)))) : null
+    const who = u ? h('p', { class: 'order-who' }, ringed(u, ringFor(c, u.id), 26), h('span', null, '지시는 ', h('b', null, u.kind === 'farmer' ? '당신에게' : `${firstName(u.name)}에게`))) : null
     const more = all.length > MAX_ORDERS && !held ? h('button', {
       class: 'btn quiet order-more', type: 'button', testid: 'order-more', 'aria-pressed': String(page === 1),
       onclick: () => { page = page === 0 ? 1 : 0; ctx.dirty() },
-    }, icon(page === 0 ? 'more' : 'back', 'i'), page === 0 ? `${all.length - MAX_ORDERS} more orders` : 'Back to the first orders') : null
+    }, icon(page === 0 ? 'more' : 'back', 'i'), page === 0 ? `지시 ${all.length - MAX_ORDERS}개 더` : '앞의 지시로') : null
     const room = extra.slice(0, Math.max(0, MAX_ORDERS - cells.length))
-    return cells.length || more || room.length || who ? h('div', { class: 'orders', role: 'group', 'aria-label': u ? `Orders for ${u.name === S.FARMER_NAME ? 'you' : u.name}` : 'Orders' }, who, cells, room, more) : null
+    return cells.length || more || room.length || who ? h('div', { class: 'orders', role: 'group', 'aria-label': u ? `지시 대상: ${u.name === S.FARMER_NAME ? '당신' : u.name}` : '지시' }, who, cells, room, more) : null
   }
 
   // The crop's nine orders in fixed places: one that can be given, one on the list (stamped), or one that cannot be
@@ -273,14 +277,14 @@ export function commandCard(ctx: Ctx, o: { onTray: (field: number) => void; onTi
       } else if (!can.length) {
         text = busy || F.localize(mine.find(x => !x.ok)?.why ?? '') || jobWhat(kind)
         el = order({
-          key, icon: kind, name: JOB_VERB[kind], catch: '', said: `Can't be given right now. ${text}`, testid: `order-${kind}-off`, title: touch ? undefined : text,
+          key, icon: kind, name: JOB_VERB[kind], catch: '', said: `지금은 지시할 수 없습니다. ${text}`, testid: `order-${kind}-off`, title: touch ? undefined : text,
           attrs: attrs(' is-off'), onclick: () => refuse(kind, text),
         })
       } else {
         canAny = true
         const days = can.reduce((t, i) => t + mine[sel.indexOf(i)].days, 0)
         const cost = can.reduce((t, i) => t + mine[sel.indexOf(i)].cost, 0)
-        const part = can.length < sel.length ? ` ${can.length} of ${sel.length}` : ''
+        const part = can.length < sel.length ? ` ${sel.length}개 중 ${can.length}개` : ''
         const no = refused?.kind === kind
         // Planting in cold ground and killing vines before they are due can be ordered, and the stamp says plainly
         // what each risks.
@@ -290,7 +294,7 @@ export function commandCard(ctx: Ctx, o: { onTray: (field: number) => void; onTi
         text = no ? refused!.why : risk || catchFor(c, kind, f, kind === suggestedKind ? why : '')
         el = order({
           key, icon: kind, name: [JOB_VERB[kind], part ? h('span', { class: 'order-part num' }, part) : null],
-          cost: cold ? `Too cold${cost ? ` · ${F.money(cost)}` : ''}` : early ? early.short : costText(days, cost), catch: '',
+          cost: cold ? `너무 추움${cost ? ` · ${F.money(cost)}` : ''}` : early ? early.short : costText(days, cost), catch: '',
           suggested: kind === suggestedKind, refused: no, testid: `order-${kind}`, title: touch ? undefined : risk ? `${risk} ${costText(days, cost)}.` : jobWhat(kind), said: `${jobWhat(kind)} ${text}`,
           onclick: (e: Event) => give(kind, (e as MouseEvent).ctrlKey || (e as MouseEvent).metaKey),
           attrs: { ...attrs(), class: `slot${risk ? ' is-risk' : ''}`, oncontextmenu: (e: Event) => { e.preventDefault(); give(kind, true) } },
@@ -299,8 +303,8 @@ export function commandCard(ctx: Ctx, o: { onTray: (field: number) => void; onTi
       tell.push({ el, text })
       return el
     })
-    const who = u ? h('p', { class: 'order-who' }, ringed(u, ringFor(c, u.id), 26), h('span', null, 'Orders go to ', h('b', null, u.kind === 'farmer' ? 'you' : firstName(u.name)))) : null
-    const el = h('div', { class: 'orders slots', role: 'group', 'aria-label': u ? `Orders for ${u.name === S.FARMER_NAME ? 'you' : u.name}` : 'Orders' }, who, cells)
+    const who = u ? h('p', { class: 'order-who' }, ringed(u, ringFor(c, u.id), 26), h('span', null, '지시는 ', h('b', null, u.kind === 'farmer' ? '당신에게' : `${firstName(u.name)}에게`))) : null
+    const el = h('div', { class: 'orders slots', role: 'group', 'aria-label': u ? `지시 대상: ${u.name === S.FARMER_NAME ? '당신' : u.name}` : '지시' }, who, cells)
     return {
       el, canAny,
       wire(say: HTMLElement) {
@@ -322,7 +326,7 @@ export function commandCard(ctx: Ctx, o: { onTray: (field: number) => void; onTi
     const s = c.season!
     const early = s.day < S.dayIndex(s.year, S.PLANT_FROM.month, S.PLANT_FROM.dom)
     const cold = fields.map(i => S.plantReady(app.world, c, i)).find(pr => !pr.ok && (early || pr.soilT < pr.need))
-    return cold ? `${F.localize(cold.why)} Planting now is up to you.` : ''
+    return cold ? `${F.localize(cold.why)} 지금 심을지는 당신이 정합니다.` : ''
   }
 
   // Killing the vines before they are due, for the fields where the coach is not asking for it (blight winning): the
@@ -342,14 +346,14 @@ export function commandCard(ctx: Ctx, o: { onTray: (field: number) => void; onTi
       const a = acts.find(x => x.kind === kind)!
       const ok = a.ok && !(u && S.unitBlock(c, kind, u.id))
       return order({
-        key: touch ? '' : JOB_KEY[kind], icon: kind, name: JOB_VERB[kind], cost: ok ? `${F.num(Math.ceil(a.days))} crew-days${a.cost ? ` · ${F.money(a.cost)}` : ''}` : undefined,
+        key: touch ? '' : JOB_KEY[kind], icon: kind, name: JOB_VERB[kind], cost: ok ? `${F.num(Math.ceil(a.days))}인일${a.cost ? ` · ${F.money(a.cost)}` : ''}` : undefined,
         catch: ok ? catchFor(c, kind, f, '') : F.localize(a.why), title: touch ? undefined : ok ? catchFor(c, kind, f, '') : F.localize(a.why), testid: ok ? `order-${kind}` : `order-${kind}-off`,
         attrs: { 'data-k': `order-${kind}`, class: ok ? '' : 'is-off', 'aria-disabled': ok ? null : 'true' },
         onclick: () => (ok ? give(kind, false) : refuse(kind, F.localize(a.why))),
       })
     })
     if (c.history.length > 0) { const t = contractor(c, i, 'tile'); if (t) cells.push(t) }
-    return cells.length ? h('div', { class: 'orders land-orders', role: 'group', 'aria-label': 'The land' }, cells) : null
+    return cells.length ? h('div', { class: 'orders land-orders', role: 'group', 'aria-label': '땅' }, cells) : null
   }
 
   // A contractor's job, ordered and paid for at once: stumps pulled, tile laid.
@@ -359,10 +363,10 @@ export function commandCard(ctx: Ctx, o: { onTray: (field: number) => void; onTi
     const days = kind === 'stump' ? S.STUMP_DAYS : S.TILE_DAYS
     // Stumps the tract is ready for are always on its bar: ordered, or with why not, never missing.
     if (why) return kind === 'stump' && S.tractInfo(c).find(t => t.field === i)?.stage === 'stump'
-      ? order({ key: '', icon: kind, name: 'Pull stumps', cost: `${F.money(fee)} · ${days} days`, catch: F.localize(why), refused: true, disabled: true, testid: 'order-stump' }) : null
+      ? order({ key: '', icon: kind, name: '그루터기 뽑기', cost: `${F.money(fee)} · ${days}일`, catch: F.localize(why), refused: true, disabled: true, testid: 'order-stump' }) : null
     return order({
-      key: '', icon: kind, name: kind === 'stump' ? 'Pull stumps' : 'Tile drains', cost: `${F.money(fee)} · ${days} days`,
-      catch: kind === 'stump' ? 'A contractor with a bulldozer pulls them.' : 'The field drains like a slope, but holds a little less water in a drought.', testid: `order-${kind}`,
+      key: '', icon: kind, name: kind === 'stump' ? '그루터기 뽑기' : '암거 배수관', cost: `${F.money(fee)} · ${days}일`,
+      catch: kind === 'stump' ? '불도저를 가진 전문 업자가 뽑습니다.' : '밭이 비탈처럼 물이 빠지지만 가뭄에 수분을 조금 덜 머금습니다.', testid: `order-${kind}`,
       onclick: () => { const r = ctx.run({ t: kind, field: i }); if (r.ok) ctx.announce(F.localize(r.events[0]?.text ?? '')) },
     })
   }
@@ -374,26 +378,26 @@ export function commandCard(ctx: Ctx, o: { onTray: (field: number) => void; onTi
     if (haul) {
       const who = haul.hauler >= 0 ? c.crew.find(u => u.id === haul.hauler) : undefined
       parts.push(h('p', { class: haul.frostChance >= 30 ? 'c-red' : '', testid: 'barrels' }, icon('haul', 'i'),
-        h('span', null, F.metric() ? F.mass(haul.cwt) : term(F.mass(haul.cwt), 'cwt'), ` in barrels${who ? `, and ${who.kind === 'farmer' ? 'you\'re' : `${firstName(who.name)} is`} hauling them in` : haul.digging ? '' : ', waiting to be hauled in'}${haul.frostChance >= 30 ? `. ${haul.frostChance}% chance of frost tonight` : ''}`)))
+        h('span', null, F.metric() ? F.mass(haul.cwt) : term(F.mass(haul.cwt), 'cwt'), `을(를) 광주리에 담음${who ? `, ${who.kind === 'farmer' ? '당신이' : `${firstName(who.name)}이(가)`} 날라오는 중` : haul.digging ? '' : ', 날라오길 기다리는 중'}${haul.frostChance >= 30 ? `. 오늘 밤 서리 확률 ${haul.frostChance}%` : ''}`)))
     }
-    if (f.works) parts.push(h('p', null, icon(f.works.kind, 'i'), h('span', null, `${f.works.kind === 'stump' ? 'Pulling stumps' : 'Laying tile drains'}, ${F.plural(f.works.left, 'day')} to go`)))
+    if (f.works) parts.push(h('p', null, icon(f.works.kind, 'i'), h('span', null, `${f.works.kind === 'stump' ? '그루터기 뽑는 중' : '암거 배수관 묻는 중'}, ${f.works.left}일 남음`)))
     if (f.stones >= 0.4 || (c.history.length > 0 && f.stones >= 0.3)) parts.push(h('p', { class: 'quiet', testid: 'stones' }, icon('rocks', 'i'), h('span', null, `${F.upper(stonesWord(f.stones))}: ${stonesText(f.stones)}`)))
-    if (f.sheltered && f.status !== 'dug') parts.push(h('p', { class: 'quiet', testid: 'shelter' }, icon('woods', 'i'), h('span', null, `Sheltered by ${f.shelteredBy}, so less wind but more blight weather`)))
-    if (f.brushed > 0) parts.push(h('p', { class: 'quiet' }, icon('brush', 'i'), h('span', null, `Hedgerows cut back, and they regrow in ${F.plural(f.brushed, 'year')}`)))
-    if (f.raw && f.status !== 'off') parts.push(h('p', { class: 'quiet' }, icon('idle', 'i'), h('span', null, 'New ground, so its first potato crop will yield less')))
+    if (f.sheltered && f.status !== 'dug') parts.push(h('p', { class: 'quiet', testid: 'shelter' }, icon('woods', 'i'), h('span', null, `${f.shelteredBy}이(가) 가려줘 바람은 적지만 역병 날씨는 많습니다`)))
+    if (f.brushed > 0) parts.push(h('p', { class: 'quiet' }, icon('brush', 'i'), h('span', null, `산울타리를 잘랐고 ${f.brushed}년이면 다시 자랍니다`)))
+    if (f.raw && f.status !== 'off') parts.push(h('p', { class: 'quiet' }, icon('idle', 'i'), h('span', null, '새 땅이라 첫 감자 수확이 적습니다')))
     return parts
   }
 
   function headWith(label: string, title: string, sub: Child): HTMLElement {
     return h('header', { class: 'command-head' },
       h('div', null, h('p', { class: 't-label' }, label), h('h2', { class: 't-title', testid: 'card-title' }, title), h('p', { class: 't-caption' }, sub)),
-      h('button', { class: 'close', type: 'button', testid: 'card-close', 'data-k': 'close', 'aria-label': `Deselect${ctx.touch() ? '' : ' (Escape)'}`, onclick: () => app.select(-1) }, icon('close', 'i')))
+      h('button', { class: 'close', type: 'button', testid: 'card-close', 'data-k': 'close', 'aria-label': `선택 해제${ctx.touch() ? '' : ' (Esc)'}`, onclick: () => app.select(-1) }, icon('close', 'i')))
   }
 
   function head(label: string, title: string, sub: string): HTMLElement {
     return h('header', { class: 'command-head' },
       h('div', null, h('p', { class: 't-label' }, label), h('h2', { class: 't-title', testid: 'card-title' }, title), sub ? h('p', { class: 't-caption' }, sub) : null),
-      h('button', { class: 'close', type: 'button', testid: 'card-close', 'data-k': 'close', 'aria-label': `Deselect${ctx.touch() ? '' : ' (Escape)'}`, onclick: () => app.select(-1) }, icon('close', 'i')))
+      h('button', { class: 'close', type: 'button', testid: 'card-close', 'data-k': 'close', 'aria-label': `선택 해제${ctx.touch() ? '' : ' (Esc)'}`, onclick: () => app.select(-1) }, icon('close', 'i')))
   }
 
   // What the bar has to say beyond its orders: a refusal, why a field waits, why nothing can be done. Empty otherwise.
@@ -408,56 +412,57 @@ export function commandCard(ctx: Ctx, o: { onTray: (field: number) => void; onTi
     if (sel.length === 1) {
       const i = sel[0]
       const { need, hold } = needs[i] ?? { need: null, hold: null }
-      if (need && need.act === 'sell') return note([h('b', null, 'Sell. '), F.localize(need.why)])
+      if (need && need.act === 'sell') return note([h('b', null, '파세요. '), F.localize(need.why)])
       if (need && isJob(need.act)) return note('')
       // Why a field waits to be planted is said once, in the planting rule's own sentence.
       // (work the crew does by itself is said once, in the crew's line below: not in a paragraph of its own here)
-      if (hold && hold.act === 'wait' && / goes on the work list automatically\.$/.test(hold.text)) return note('')
+      if (hold && hold.act === 'wait' && /작업 목록에 자동으로 오릅니다\.$/.test(hold.text)) return note('')
       if (hold) return note(S.fieldInfo(c, i).status === 'idle' ? F.localize(hold.why) : `${F.localize(hold.text)} ${F.localize(hold.why)}`)
       if (!canAny) {
         const f = S.fieldInfo(c, i)
         const job = s.jobs.find(j => j.kind === 'dig' && j.field === i)
-        return note(s.frozen ? 'The ground has frozen, so nothing more can be done in the field.'
-          : f.status === 'rest' ? `Earns ${F.money(S.REST_INCOME)} in the fall and restores the soil.`
-            : f.status === 'planted' ? 'Planted. There\'s nothing to do here until the plants come up.'
-              : f.status === 'digging' ? `Being dug, with ${job ? F.pct(job.done / job.need) : 'part'} of the rows out so far. You'll get the weigh ticket once it's all hauled in.`
-                : f.status === 'lost' ? 'This crop is lost.'
+        return note(s.frozen ? '땅이 얼어 밭에서는 더 할 일이 없습니다.'
+          : f.status === 'rest' ? `가을에 ${F.money(S.REST_INCOME)}을(를) 벌고 흙을 회복합니다.`
+            : f.status === 'planted' ? '심었습니다. 싹이 나기까지 할 일이 없습니다.'
+              : f.status === 'digging' ? `캐는 중이며 지금까지 줄의 ${job ? F.pct(job.done / job.need) : '일부'}를 냈습니다. 다 날라오면 계근 전표를 받습니다.`
+                : f.status === 'lost' ? '이 작물은 잃었습니다.'
                   : picked(c) ? nothingFor(picked(c)!)
-                    : 'Everything this field needs is already on the work list.')
+                    : '이 밭에 필요한 일은 모두 작업 목록에 있습니다.')
       }
       return note('')
     }
     const want = sel.filter(i => isJob(needs[i]?.need?.act))
-    if (want.length) return note(`${F.list(want.map(i => S.FIELD_NAMES[i]))} ${want.length === 1 ? 'has' : 'have'} a suggested order. ${ctx.touch() ? 'Tap a stamp to give it.' : 'Press Enter to give each field its own.'}`)
-    if (!canAny) return note(s.frozen ? 'The ground has frozen, so nothing more can be done in the field.' : picked(c) ? nothingFor(picked(c)!) : 'None of these fields can take an order right now.')
+    if (want.length) return note(`${F.list(want.map(i => S.FIELD_NAMES[i]))}에 권하는 지시가 있습니다. ${ctx.touch() ? '도장을 눌러 지시하세요.' : 'Enter를 눌러 각 밭에 지시하세요.'}`)
+    if (!canAny) return note(s.frozen ? '땅이 얼어 밭에서는 더 할 일이 없습니다.' : picked(c) ? nothingFor(picked(c)!) : '지금은 이 밭들 어디에도 지시할 수 없습니다.')
     return note('')
   }
 
   function nothingFor(u: S.Unit): string {
-    return `There's nothing here that ${u.kind === 'farmer' ? 'you' : u.name} can do right now.`
+    return `지금 여기서 ${u.kind === 'farmer' ? '당신이' : `${u.name}이(가)`} 할 수 있는 일이 없습니다.`
   }
 
   function gauges(c: S.Campaign, f: S.FieldInfo): HTMLElement {
     const s = c.season!
     const watch = s.watchDay >= 0
     const waterKind = f.moistureLabel === 'wilting' ? 'bad' : f.moistureLabel === 'dry' ? 'warn' : f.tooWet ? 'wet' : undefined
-    const waterWord = f.moistureLabel === 'standing water' ? 'flooded' : f.moistureLabel
+    const waterWord = moistWord(f.moistureLabel)
     const bare = watch && f.protect < 0.35 && f.status === 'growing'
     // What the soil's state means for the crop, under the pointer (a first-time player watched fields "flooded" for
     // two weeks with nothing to say whether that hurt).
     const WATER_SAYS: Partial<Record<S.Moisture, string>> = {
-      'standing water': 'Standing water after heavy rain. The crop grows slower until it drains, usually within a few days, and machines stay off the field.',
-      wet: 'Too wet for machines today. It dries in a day or two without rain.',
-      drying: 'Starting to dry. No harm yet.',
-      dry: 'Dry soil slows growth, and while the potatoes are forming it sets scab. Rain or a watering fixes it.',
-      wilting: 'The crop is wilting and loses yield every day until it rains or you water it.',
+      'standing water': '큰비 뒤 고인 물입니다. 빠질 때까지(보통 며칠) 작물이 더디 자라고 기계가 밭에 못 들어갑니다.',
+      wet: '오늘은 기계가 못 들어갈 만큼 젖었습니다. 비가 없으면 하루 이틀이면 마릅니다.',
+      drying: '마르기 시작했습니다. 아직 해는 없습니다.',
+      dry: '마른 흙은 생장을 늦추고, 감자가 맺히는 동안에는 더부룩병을 부릅니다. 비나 물주기로 해결합니다.',
+      wilting: '작물이 시들고 있어 비가 오거나 물을 주기까지 매일 수확이 줍니다.',
     }
-    const cell = (label: string, value: string, m: HTMLElement, cls = '', says?: string) => h('div', { class: `gauge${cls ? ` ${cls}` : ''}`, title: says && !ctx.touch() ? says : undefined }, h('span', { class: 't-label' }, term(label, label === 'Hill' ? 'hilled' : label.toLowerCase())), h('b', null, value), m)
+    const GKEY: Record<string, string> = { 잎: 'leaf', 물: 'water', 보호: 'protection', 북주기: 'hilled' }
+    const cell = (label: string, value: string, m: HTMLElement, cls = '', says?: string) => h('div', { class: `gauge${cls ? ` ${cls}` : ''}`, title: says && !ctx.touch() ? says : undefined }, h('span', { class: 't-label' }, term(label, GKEY[label] ?? label)), h('b', null, value), m)
     return h('div', { class: 'gauges' },
-      cell('Leaf', F.pct(f.canopy), meter(f.canopy, { label: 'Leaf cover' })),
-      cell('Water', waterWord, meter(Math.min(1, f.moisture), { label: 'Soil water', text: `${f.moistureLabel}, ${F.pct(f.moisture)} of what plants can use`, kind: waterKind }), waterKind === 'wet' ? '' : waterKind ?? '', WATER_SAYS[f.moistureLabel]),
-      cell('Protection', f.protect > 0.02 ? F.pct(f.protect) : 'none', meter(f.protect, { label: 'Spray protection on the leaves', kind: bare ? (f.protect < 0.05 ? 'bad' : 'warn') : undefined }), bare ? (f.protect < 0.05 ? 'bad' : 'warn') : ''),
-      cell('Hill', f.hillPasses >= 2 ? 'twice' : f.hillPasses === 1 ? 'once' : 'not yet', meter(f.hillPasses / 2, { label: 'Hilled', text: hillWord(f.hillPasses), half: true })))
+      cell('잎', F.pct(f.canopy), meter(f.canopy, { label: '잎이 덮은 정도' })),
+      cell('물', waterWord, meter(Math.min(1, f.moisture), { label: '흙 수분', text: `${moistWord(f.moistureLabel)}, 작물이 쓸 수 있는 양의 ${F.pct(f.moisture)}`, kind: waterKind }), waterKind === 'wet' ? '' : waterKind ?? '', WATER_SAYS[f.moistureLabel]),
+      cell('보호', f.protect > 0.02 ? F.pct(f.protect) : '없음', meter(f.protect, { label: '잎 위 살포 보호', kind: bare ? (f.protect < 0.05 ? 'bad' : 'warn') : undefined }), bare ? (f.protect < 0.05 ? 'bad' : 'warn') : ''),
+      cell('북주기', f.hillPasses >= 2 ? '두 번' : f.hillPasses === 1 ? '한 번' : '아직', meter(f.hillPasses / 2, { label: '북주기', text: hillWord(f.hillPasses), half: true })))
   }
 
   // Blight as last seen, and how old that is; before the rows are up, the soil; once the vines are dead, the skins.
@@ -468,34 +473,34 @@ export function commandCard(ctx: Ctx, o: { onTray: (field: number) => void; onTi
     // The one planting rule (S.plantReady), the same the coach and the routine go by.
     if (f.status === 'idle' || f.status === 'planted') {
       // The reading only: why it matters is said once, on the line under the orders.
-      return [h('p', null, icon('planted', 'i'), h('span', null, `The soil here is ${F.temp(S.plantReady(app.world, c, f.index).soilT)}.`))]
+      return [h('p', null, icon('planted', 'i'), h('span', null, `이곳 흙 온도는 ${F.temp(S.plantReady(app.world, c, f.index).soilT)}입니다.`))]
     }
     if (f.status === 'dead') {
       const left = Math.ceil((1 - f.skin) * S.SKIN_DAYS)
-      return [h('p', null, icon('dead', 'i'), h('span', null, f.skin >= 1 ? 'Skins are set.' : `Skins are ${F.pct(f.skin)} set, with about ${F.plural(left, 'day')} to go.`))]
+      return [h('p', null, icon('dead', 'i'), h('span', null, f.skin >= 1 ? '껍질이 굳었습니다.' : `껍질이 ${F.pct(f.skin)} 굳었고 약 ${left}일 남았습니다.`))]
     }
     if (f.status === 'digging') {
       const job = s.jobs.find(j => j.kind === 'dig' && j.field === f.index)
-      return [h('p', null, icon('dig', 'i'), h('span', null, `${job ? F.pct(job.done / job.need) : 'Part'} of the rows are out.`))]
+      return [h('p', null, icon('dig', 'i'), h('span', null, `줄의 ${job ? F.pct(job.done / job.need) : '일부'}를 냈습니다.`))]
     }
     const age = f.scoutAge
     const stale = isStale(f)
     const seen = f.blightHills > 0 || f.blightSeen
-    const pull = f.pullBy === 'you' ? ', and pulling them is up to you' : f.pullBy ? ', and your crew will pull them automatically' : ''
+    const pull = f.pullBy === 'you' ? ', 뽑는 것은 당신 몫' : f.pullBy ? ', 일꾼들이 알아서 뽑습니다' : ''
     const blight = h('p', { class: `${seen ? 'c-red blight' : ''}${stale ? ' stale' : ''}`.trim(), testid: 'blight-reading' },
       icon(seen ? (stale ? 'blight-old' : 'blight') : stale ? 'stale' : 'check', 'i'),
-      h('span', null, f.blightHills > 0 ? `Blight on ${F.plural(f.blightHills, 'plant')}${pull}` : seen ? 'Blight seen here' : age < 0 ? 'Not scouted yet' : 'No blight seen'),
-      age >= 0 ? h('span', { class: 'quiet' }, `· scouted ${F.ago(age)}`) : seen ? h('span', { class: 'quiet' }, '· seen from the road') : null)
+      h('span', null, f.blightHills > 0 ? `포기 ${f.blightHills}개에 역병${pull}` : seen ? '여기서 역병을 봤습니다' : age < 0 ? '아직 살펴보지 않음' : '역병이 보이지 않음'),
+      age >= 0 ? h('span', { class: 'quiet' }, `· 살펴봄: ${F.ago(age)}`) : seen ? h('span', { class: 'quiet' }, '· 길에서 봄') : null)
     const e = f.estimate
-    if (!e) return [blight, h('p', { class: 'quiet' }, icon('bulk', 'i'), h('span', null, 'No yield estimate until potatoes form.'))]
+    if (!e) return [blight, h('p', { class: 'quiet' }, icon('bulk', 'i'), h('span', null, '감자가 맺히기까지 수확 추정이 없습니다.'))]
     const max = Math.max(500, Math.ceil(e.hi / 100) * 100)
     const sample = [...(c.season?.log ?? [])].reverse().find(x => x.type === 'sample' && x.field === f.index)
     return [blight, h('p', { class: 'estimate', testid: 'estimate' }, icon('bloom', 'i'), h('b', { class: 'num' }, F.metric() ? F.perAreaSpan(e.lo, e.hi) : term(F.perAreaSpan(e.lo, e.hi), 'cwt/acre')),
-      range({ lo: e.lo, hi: e.hi, max, label: `Yield estimate ${F.perAreaSpan(e.lo, e.hi)}, ${e.digs ? `from ${F.plural(e.digs, 'test dig')}` : 'estimate'}` }),
+      range({ lo: e.lo, hi: e.hi, max, label: `수확 추정 ${F.perAreaSpan(e.lo, e.hi)}, ${e.digs ? `시험 캐기 ${e.digs}회 기준` : '추정'}` }),
       sample ? h('button', {
-        class: 'btn quiet est-by', type: 'button', testid: 'sample-again', 'aria-label': `See the test dig from ${F.date(c.year, sample.day)}`, title: ctx.touch() ? undefined : `See the test dig from ${F.date(c.year, sample.day)}`,
+        class: 'btn quiet est-by', type: 'button', testid: 'sample-again', 'aria-label': `${F.date(c.year, sample.day)}의 시험 캐기 보기`, title: ctx.touch() ? undefined : `${F.date(c.year, sample.day)}의 시험 캐기 보기`,
         onclick: () => o.onTray(f.index),
-      }, icon('sample', 'i'), e.digs ? 'test dig' : 'estimate') : h('span', { class: 'quiet' }, 'estimate'))]
+      }, icon('sample', 'i'), e.digs ? '시험 캐기' : '추정') : h('span', { class: 'quiet' }, '추정'))]
   }
 
   // A tract: where its clearing stands, what it takes and yields, and the orders that move it on.
@@ -504,23 +509,23 @@ export function commandCard(ctx: Ctx, o: { onTray: (field: number) => void; onTi
     const f = S.fieldInfo(c, i)
     const cropped = t.stage === 'done' && f.status !== 'off'
     const at = t.stage === 'fell' ? 0 : t.stage === 'stump' ? 1 : t.stage === 'rocks' ? 2 : 3
-    const steps = ['Fell', 'Stumps', 'Rocks', 'Field']
+    const steps = ['벌목', '그루터기', '돌', '밭']
     const logs = t.timber * (1 - t.felled) * (S.FELL_YIELD_BASE + S.FELL_YIELD_PER * 5)
     const stone = S.ROCKS_LOADS * Math.min(t.stones, S.ROCKS_TAKE)
     const extra = [contractor(c, i, 'stump')].filter((x): x is HTMLElement => !!x)
     const sugg = t.stage === 'fell' ? 'fell' : t.stage === 'rocks' ? 'rocks' : null
     const rows = orderRow(c, [i], sugg, '', extra)
-    const next = t.works ? `The bulldozer is pulling stumps, with ${F.plural(t.works.left, 'season day')} to go.` : t.next ? `Next: ${F.localize(t.next).replace(/^./, x => x.toLowerCase())}` : f.status === 'off' ? 'Cleared. You can plant it next spring, but a year in oats and clover first will improve the raw ground.' : ''
+    const next = t.works ? `불도저가 그루터기를 뽑는 중이며 ${t.works.left}작업일 남았습니다.` : t.next ? `다음: ${F.localize(t.next).replace(/^./, x => x.toLowerCase())}` : f.status === 'off' ? '개간했습니다. 내년 봄에 심을 수 있지만 먼저 귀리와 클로버로 한 해 보내면 새 땅이 좋아집니다.' : ''
     return [
-      head(TRACT_KIND[f.cover], t.name, `${F.upper(t.coverWord)}. ${t.tenure === 'none' ? `For sale at ${F.money(t.price)}.` : S.PARCELS[i].block === 'home' ? 'Part of the home farm.' : 'Owned by the farm.'}`),
-      h('ol', { class: 'steps', testid: 'clear-track', 'aria-label': `Clearing: ${cropped ? 'a field again' : ['standing', 'felled', 'stumped', 'picked'][at]}, step ${at + 1} of ${steps.length}` },
+      head(TRACT_KIND[f.cover], t.name, `${F.upper(t.coverWord)}. ${t.tenure === 'none' ? `${F.money(t.price)}에 판매 중입니다.` : S.PARCELS[i].block === 'home' ? '집터 농장의 일부입니다.' : '농장 소유입니다.'}`),
+      h('ol', { class: 'steps', testid: 'clear-track', 'aria-label': `개간: ${cropped ? '다시 밭' : ['그대로', '벌목함', '그루터기 뽑음', '돌 주움'][at]}, ${steps.length}단계 중 ${at + 1}단계` },
         steps.map((st, k) => h('li', { class: k < at || cropped ? 'done' : k === at ? 'now' : '' }, st))),
       h('div', { class: 'readings' },
-        t.stage === 'fell' ? h('p', null, icon('woods', 'i'), h('span', null, `${F.pct(t.felled)} felled`), meter(t.felled, { label: 'Felled', text: `${F.pct(t.felled)} felled` })) : null,
-        t.stage === 'fell' ? h('p', null, icon('logs', 'i'), h('span', null, 'About ', h('b', { class: 'num' }, `${Math.round(logs)} loads`), ` of logs, worth ${F.money(Math.round(logs) * S.LOG_PRICE)} at the mill`)) : null,
-        t.stage === 'rocks' ? h('p', null, icon('stone', 'i'), h('span', null, 'About ', h('b', { class: 'num' }, `${Math.round(stone)} loads`), ' of fieldstone')) : null,
-        t.shelters.length ? h('p', { class: 'wrap' }, icon('leaf', 'i'), h('span', null, `It shelters ${F.list(t.shelters.map(x => S.FIELD_NAMES[x]))}, so ${t.shelters.length === 1 ? 'that field loses' : 'those fields lose'} less water but ${t.shelters.length === 1 ? 'gets' : 'get'} more blight weather.`)) : null,
-        t.tenure === 'none' ? h('p', null, icon('land', 'i'), h('span', null, `You can buy it in spring for ${F.money(t.price)}.`)) : null),
+        t.stage === 'fell' ? h('p', null, icon('woods', 'i'), h('span', null, `${F.pct(t.felled)} 벌목`), meter(t.felled, { label: '벌목', text: `${F.pct(t.felled)} 벌목` })) : null,
+        t.stage === 'fell' ? h('p', null, icon('logs', 'i'), h('span', null, '통나무 약 ', h('b', { class: 'num' }, `${Math.round(logs)}짐`), `, 제재소에서 ${F.money(Math.round(logs) * S.LOG_PRICE)}`)) : null,
+        t.stage === 'rocks' ? h('p', null, icon('stone', 'i'), h('span', null, '자연석 약 ', h('b', { class: 'num' }, `${Math.round(stone)}짐`))) : null,
+        t.shelters.length ? h('p', { class: 'wrap' }, icon('leaf', 'i'), h('span', null, `${F.list(t.shelters.map(x => S.FIELD_NAMES[x]))}을(를) 가려줘 수분 손실이 적지만 역병 날씨는 많아집니다.`)) : null,
+        t.tenure === 'none' ? h('p', null, icon('land', 'i'), h('span', null, `봄에 ${F.money(t.price)}에 살 수 있습니다.`)) : null),
       rows,
       !rows && t.tenure !== 'none' ? note(queuedHere(c, i)) : null,
       next ? h('p', { class: 'note' }, next) : null,
@@ -530,9 +535,9 @@ export function commandCard(ctx: Ctx, o: { onTray: (field: number) => void; onTi
   // What is on the list for a tract, in words, when nothing more can be ordered there.
   function queuedHere(c: S.Campaign, i: number): string {
     const jobs = c.season?.jobs.filter(j => j.field === i) ?? []
-    if (!jobs.length) return c.phase === 'season' ? 'Nothing more can be done here right now.' : ''
+    if (!jobs.length) return c.phase === 'season' ? '지금 여기서 더 할 수 있는 일이 없습니다.' : ''
     const who = jobs.map(j => c.crew.find(u => u.job === j.id)).find(Boolean)
-    return `${jobText(jobs[0])} is on the work list${who ? `, and ${who.kind === 'farmer' ? 'you\'re' : `${firstName(who.name)} is`} working on it` : ''}.`
+    return `${jobText(jobs[0])}이(가) 작업 목록에 있습니다${who ? `, ${who.kind === 'farmer' ? '당신이' : `${firstName(who.name)}이(가)`} 하는 중입니다` : ''}.`
   }
 
   function one(c: S.Campaign, i: number): Child {
@@ -542,29 +547,29 @@ export function commandCard(ctx: Ctx, o: { onTray: (field: number) => void; onTi
     const lot = f.lot >= 0 ? c.lots.find(l => l.id === f.lot) : undefined
     const land = landLines(c, f)
     if (f.status === 'dug' && lot && !f.weighed) {
-      return [head(fieldKind(f), f.name, `${f.variety}, dug and being hauled in`), land.length ? h('div', { class: 'readings' }, land) : null, note('You\'ll get the weigh ticket once the last barrel is in the potato house.')]
+      return [head(fieldKind(f), f.name, `${f.variety}, 캐서 나르는 중`), land.length ? h('div', { class: 'readings' }, land) : null, note('마지막 광주리가 감자 저장고에 들어가면 계근 전표를 받습니다.')]
     }
     if (f.status === 'dug' && lot) {
       const value = lot.open ? S.lotValue(app.world, c, lot) : 0
       const cull = culledAtDig(lot)
       const deal = deals(app.world, c, lot)[0]
       return [
-        head(fieldKind(f), f.name, `${f.variety}, dug ${F.date(c.year, lot.dugDay, true)}`),
+        head(fieldKind(f), f.name, `${f.variety}, ${F.date(c.year, lot.dugDay, true)}에 캠`),
         h('div', { class: 'readings' },
           h('p', { class: 'wrap' }, icon('dig', 'i'), h('span', null, lot.open
-            ? `${F.mass(S.lotCwt(lot))} in the cellar, worth ${F.money(value)} today.${lot.sold > 0 ? ` ${F.mass(lot.sold)} sold for ${F.money(lot.revenue)}.` : ''}`
-            : lot.sold > 0 ? `${F.mass(lot.sold)} sold for ${F.money(lot.revenue)}. ${F.mass(cull)} culled.` : 'None of it was good enough to sell.'))),
-        h('div', { class: 'orders', role: 'group', 'aria-label': 'The crop' },
-          deal ? order({ key: '', icon: 'deliver', name: `Deliver to ${deal.k.buyer.replace(/^The /, 'the ')}`, cost: F.money(deal.pays), catch: `${F.mass(deal.take)}, ${versusMarket(deal)}.`, suggested: true, testid: `field-deliver-${lot.id}`, onclick: () => deliver(ctx, lot, deal) }) : null,
-          lot.open ? order({ key: '', icon: 'sell', name: deal ? 'Sell all' : 'Sell', cost: F.money(value), catch: need && need.act === 'sell' ? F.localize(need.why) : 'At today\'s market price.', suggested: !deal && need?.act === 'sell', testid: `field-sell-${lot.id}`, onclick: () => ctx.run({ t: 'sell', lot: lot.id, frac: 1 }) }) : null,
-          order({ key: '', icon: 'ticket', name: 'Ticket', catch: 'See the weigh ticket again, with its grades, losses and your choices.', testid: `weighin-${lot.id}`, onclick: () => o.onTicket(lot.id) })),
+            ? `저장고에 ${F.mass(S.lotCwt(lot))}, 오늘 값 ${F.money(value)}입니다.${lot.sold > 0 ? ` ${F.mass(lot.sold)}을(를) ${F.money(lot.revenue)}에 팔았습니다.` : ''}`
+            : lot.sold > 0 ? `${F.mass(lot.sold)}을(를) ${F.money(lot.revenue)}에 팔고 ${F.mass(cull)}을(를) 골라냈습니다.` : '팔 만한 것이 하나도 없었습니다.'))),
+        h('div', { class: 'orders', role: 'group', 'aria-label': '작물' },
+          deal ? order({ key: '', icon: 'deliver', name: `${deal.k.buyer.replace(/^The /, 'the ')}에 납품`, cost: F.money(deal.pays), catch: `${F.mass(deal.take)}, ${versusMarket(deal)}.`, suggested: true, testid: `field-deliver-${lot.id}`, onclick: () => deliver(ctx, lot, deal) }) : null,
+          lot.open ? order({ key: '', icon: 'sell', name: deal ? '모두 팔기' : '팔기', cost: F.money(value), catch: need && need.act === 'sell' ? F.localize(need.why) : '오늘 시세로.', suggested: !deal && need?.act === 'sell', testid: `field-sell-${lot.id}`, onclick: () => ctx.run({ t: 'sell', lot: lot.id, frac: 1 }) }) : null,
+          order({ key: '', icon: 'ticket', name: '전표', catch: '계근 전표를 다시 봅니다. 등급, 손실, 당신의 선택이 있습니다.', testid: `weighin-${lot.id}`, onclick: () => o.onTicket(lot.id) })),
       ]
     }
     const sugg = need && isJob(need.act) ? need.act : null
     if (f.status === 'rest' || f.status === 'lost') {
       const extra = c.history.length > 0 ? [contractor(c, i, 'tile')].filter((x): x is HTMLElement => !!x) : []
       const rows = orderRow(c, [i], sugg, need && sugg ? F.localize(need.why) : '', extra)
-      return [head(fieldKind(f), f.name, f.status === 'rest' ? 'Oats and clover' : `${f.variety}, lost`), land.length ? h('div', { class: 'readings' }, land) : null, adviceLine(c, [i], !!rows), rows]
+      return [head(fieldKind(f), f.name, f.status === 'rest' ? '귀리와 클로버' : `${f.variety}, 잃음`), land.length ? h('div', { class: 'readings' }, land) : null, adviceLine(c, [i], !!rows), rows]
     }
     // The orders stand right under the gauges, so nothing above them comes or goes: a paragraph appearing never moves one.
     const g = slots(c, [i], sugg, need && sugg ? F.localize(need.why) : '')
@@ -589,7 +594,7 @@ export function commandCard(ctx: Ctx, o: { onTray: (field: number) => void; onTi
     const say = sayLine(c, sel, g.canAny, null)
     g.wire(say)
     return [
-      head('Field records', `${sel.length} fields`, F.list(sel.map(i => S.FIELD_NAMES[i]))),
+      head('밭 기록', `밭 ${sel.length}개`, F.list(sel.map(i => S.FIELD_NAMES[i]))),
       g.el,
       say,
     ]
@@ -607,27 +612,27 @@ export function commandCard(ctx: Ctx, o: { onTray: (field: number) => void; onTi
       const o = of.get(j.id)
       const u = o && o.unit >= 0 ? c.crew.find(x => x.id === o.unit) : undefined
       const me = u?.kind === 'farmer'
-      const when = !o ? '' : o.unit < 0 ? 'nobody can do it yet' : o.when === 'now' ? (me ? 'you\'re working on it' : `${firstName(u!.name)} is working on it`) : o.when === 'next' && /next\.$/.test(o.why) ? (me ? 'you\'re next' : `${firstName(u!.name)} is next`) : o.when === 'waiting' ? 'waiting' : me ? 'you\'ll get to it later' : `${firstName(u!.name)} will get to it later`
+      const when = !o ? '' : o.unit < 0 ? '아직 아무도 못 함' : o.when === 'now' ? (me ? '당신이 하는 중' : `${firstName(u!.name)}이(가) 하는 중`) : o.when === 'next' && /다음으로 합니다\.$/.test(o.why) ? (me ? '당신이 다음' : `${firstName(u!.name)}이(가) 다음`) : o.when === 'waiting' ? '기다리는 중' : me ? '당신이 나중에 함' : `${firstName(u!.name)}이(가) 나중에 함`
       return `${JOB_VERB[j.kind].toLowerCase()}${when ? ` (${when})` : ''}`
     })
     const r = S.routineInfo(c)
     const yours = r.filter(x => !x.auto && (CROP as string[]).includes(x.kind)).map(x => JOB_VERB[x.kind].toLowerCase())
     const parts: Child[] = []
-    if (crew.length) parts.push(h('span', null, icon('sprout', 'i'), h('b', null, 'Your crew: '), `${crew.join(', ')}.`))
-    else parts.push(h('span', { class: 'quiet' }, icon('sprout', 'i'), 'Your crew does the routine work.'))
-    if (yours.length) parts.push(h('span', null, ' ', h('b', null, 'You: '), `${F.list(yours)}.`))
+    if (crew.length) parts.push(h('span', null, icon('sprout', 'i'), h('b', null, '일꾼: '), `${crew.join(', ')}.`))
+    else parts.push(h('span', { class: 'quiet' }, icon('sprout', 'i'), '정해진 일은 일꾼들이 합니다.'))
+    if (yours.length) parts.push(h('span', null, ' ', h('b', null, '당신: '), `${F.list(yours)}.`))
     // When the kill is due by the coach's reckoning; the vine kill the crew does by itself, with its date, and the way
     // to refuse it.
     const due = f.status === 'growing' ? S.killOutlook(c, i) : null
-    if (due) parts.push(h('span', { testid: 'card-kill-due' }, ' ', h('b', null, 'Vine kill due: '), `around ${F.date(c.year, due.day, true)}${due.why === 'blight' ? ' because blight is winning' : due.why === 'frost' ? ' because a frost is coming' : ''}.`))
+    if (due) parts.push(h('span', { testid: 'card-kill-due' }, ' ', h('b', null, '줄기 죽이기 시기: '), `약 ${F.date(c.year, due.day, true)}${due.why === 'blight' ? ', 역병이 이기고 있어서' : due.why === 'frost' ? ', 서리가 오고 있어서' : ''}.`))
     const kill = fates(app.world, c).pressing.find(p => p.kind === 'kill' && p.field === i && p.job < 0)
     const kept = c.season!.fields[i].keepVines
     return h('div', { class: 'whose-box' },
       h('p', { class: 'whose', testid: 'card-whose' }, parts),
       kill ? h('p', { class: 'whose kill-date', testid: 'card-kill-date' }, icon('kill', 'i'), F.localize(kill.inWay), ' ',
-        h('button', { class: 'btn quiet', type: 'button', testid: 'card-keep-vines', onclick: () => { const r = ctx.run({ t: 'keepVines', field: i, keep: true }); if (r.ok) ctx.announce(`${S.FIELD_NAMES[i]}: the crew will leave the vines up.`) } }, 'Keep them up')) : null,
-      kept && f.status === 'growing' ? h('p', { class: 'whose', testid: 'card-vines-kept' }, icon('kill', 'i'), 'You\'re keeping these vines up, so killing them is your decision. ',
-        h('button', { class: 'btn quiet', type: 'button', testid: 'card-let-vines', onclick: () => { ctx.run({ t: 'keepVines', field: i, keep: false }) } }, 'Let the crew kill them')) : null)
+        h('button', { class: 'btn quiet', type: 'button', testid: 'card-keep-vines', onclick: () => { const r = ctx.run({ t: 'keepVines', field: i, keep: true }); if (r.ok) ctx.announce(`${S.FIELD_NAMES[i]}: 일꾼들이 줄기를 남겨둡니다.`) } }, '남겨두기')) : null,
+      kept && f.status === 'growing' ? h('p', { class: 'whose', testid: 'card-vines-kept' }, icon('kill', 'i'), '줄기를 남겨두기로 했으니 죽일지는 당신이 정합니다. ',
+        h('button', { class: 'btn quiet', type: 'button', testid: 'card-let-vines', onclick: () => { ctx.run({ t: 'keepVines', field: i, keep: false }) } }, '일꾼에게 맡기기')) : null)
   }
 
   // The line under the orders: a refusal, why the field waits, or why the suggested order is suggested.
@@ -679,7 +684,7 @@ export function commandCard(ctx: Ctx, o: { onTray: (field: number) => void; onTi
       fate: sel.flatMap(i => s.jobs.filter(j => j.field === i).map(j => [j.id, fates(app.world, c).of.get(j.id)?.why])),
     }
     patch(el, JSON.stringify(model), () => framed(sel.length === 1 ? one(c, sel[0]) : many(c, sel)))
-    el.setAttribute('aria-label', sel.length === 1 ? `Selected: ${S.FIELD_NAMES[sel[0]]}` : `Selected: ${sel.length} fields`)
+    el.setAttribute('aria-label', sel.length === 1 ? `선택됨: ${S.FIELD_NAMES[sel[0]]}` : `선택됨: 밭 ${sel.length}개`)
     if (was && !ctx.reduced()) { el.classList.remove('in'); void el.offsetWidth; el.classList.add('in') }
   }
 
