@@ -71,8 +71,8 @@ function fixWord(c: S.Campaign, p: S.Pressing): string {
   const f = p.fix
   if (!f) return ''
   if (f.t === 'job') return `${JOB_VERB[p.kind]} ${S.FIELD_NAMES[p.field] ?? ''}`.trim()
-  if (f.t === 'priority') { const u = c.crew.find(x => x.id === f.unit); return u ? (u.kind === 'farmer' ? `Put your ${SKILL_NAME[f.work].toLowerCase()} work first` : `Put ${SKILL_NAME[f.work].toLowerCase()} work first for ${firstName(u.name)}`) : 'Put it first' }
-  return 'Clear the way'
+  if (f.t === 'priority') { const u = c.crew.find(x => x.id === f.unit); return u ? (u.kind === 'farmer' ? `당신의 ${SKILL_NAME[f.work]}을(를) 가장 먼저 하기` : `${firstName(u.name)}의 ${SKILL_NAME[f.work]}을(를) 가장 먼저 하게 하기`) : '가장 먼저 하기' }
+  return '길을 비우기'
 }
 
 export function unitBar(ctx: Ctx, el: HTMLElement, hooks: BarHooks): { update(c: S.Campaign): void; escape(): boolean; dispose(): void } {
@@ -113,13 +113,13 @@ export function unitBar(ctx: Ctx, el: HTMLElement, hooks: BarHooks): { update(c:
     const was = { kind: j.kind, field: j.field, unit: j.unit }
     if (!ctx.run({ t: 'cancel', id }).ok) return
     const what = jobText(j, c, j.building)
-    ctx.notes.push({ level: 'info', glyph: j.kind, text: `${what} taken off the work list. Undo`, full: `${what} was taken off the work list. Press to put it back.`,
-      ttl: 9000, go: () => { if (ctx.run({ t: 'job', kind: was.kind, field: was.field, unit: was.unit >= 0 ? was.unit : undefined }).ok) ctx.announce(`${what} is back on the work list.`) } })
+    ctx.notes.push({ level: 'info', glyph: j.kind, text: `${what}이(가) 작업 목록에서 내려졌습니다. 되돌리기`, full: `${what}이(가) 작업 목록에서 내려졌습니다. 눌러서 되돌리세요.`,
+      ttl: 9000, go: () => { if (ctx.run({ t: 'job', kind: was.kind, field: was.field, unit: was.unit >= 0 ? was.unit : undefined }).ok) ctx.announce(`${what}이(가) 작업 목록에 돌아왔습니다.`) } })
   }
   function bump(id: number): void { pop = -1; ctx.run({ t: 'bump', id }) }
   function assign(id: number, unit: number, what: string, who: string): void {
     pop = -1
-    if (ctx.run({ t: 'assign', id, unit }).ok) ctx.announce(`${what}: ${unit < 0 ? 'anyone can do it' : who === 'You' ? 'you\'ll do it' : `${who} will do it`}.`)
+    if (ctx.run({ t: 'assign', id, unit }).ok) ctx.announce(`${what}: ${unit < 0 ? '아무나 할 수 있습니다' : who === '당신' ? '당신이 합니다' : `${who}이(가) 합니다`}.`)
   }
 
   function cell(c: S.Campaign, p: S.PersonInfo, d: Now, sign: Sign, many: boolean, goal: boolean, needsYou: boolean): HTMLElement {
@@ -127,11 +127,11 @@ export function unitBar(ctx: Ctx, el: HTMLElement, hooks: BarHooks): { update(c:
     const on = app.unit === p.id && (app.unitFrom === 'list' || !many)
     const name = firstName(p.name)
     const ring = ringFor(c, p.id)
-    const said = `${p.kind === 'farmer' ? 'You, the farmer' : p.name}: ${d.line}${sign ? `, ${sign.text}` : ''}.`
+    const said = `${p.kind === 'farmer' ? '농장주인 당신' : p.name}: ${d.line}${sign ? `, ${sign.text}` : ''}.`
     const bad = sign?.cls === 'bad' || needsYou
-    const word = sign?.cls === 'bad' ? F.upper(sign.text) : needsYou ? 'Stopped' : d.word
+    const word = sign?.cls === 'bad' ? F.upper(sign.text) : needsYou ? '멈춤' : d.word
     const slip = next && next.unit === p.id && performance.now() < next.until
-      ? h('span', { class: 'next tip', 'aria-hidden': 'true' }, h('span', { class: 't-label' }, 'Next'), ' ', h('span', null, icon(next.kind, 'i'), ` ${S.FIELD_NAMES[next.field]}`)) : null
+      ? h('span', { class: 'next tip', 'aria-hidden': 'true' }, h('span', { class: 't-label' }, '다음'), ' ', h('span', null, icon(next.kind, 'i'), ` ${S.FIELD_NAMES[next.field]}`)) : null
     const kids: Child[] = [
       ringed(p, ring, 46),
       h('span', { class: 'nm unit-name' }, name),
@@ -144,7 +144,7 @@ export function unitBar(ctx: Ctx, el: HTMLElement, hooks: BarHooks): { update(c:
     return h('button', {
       class: `person unit${many ? '' : ' solo'}${on ? ' is-picked' : ''}${bad ? ' needs' : ''}${goal ? ' goal-ring' : ''}`, type: 'button', testid: `unit-${p.id}`, 'aria-pressed': String(on), style: `--c:${ring}`,
       title: ctx.touch() ? undefined : said, onclick: () => { if (on) app.selectUnit(-1); else { app.select(-1); app.selectYard(0); app.selectUnit(p.id, many ? 'list' : 'land'); ctx.view.show?.({ unit: p.id }) } },
-    }, kids, h('span', { class: 'sr' }, `. ${said} ${on ? `${p.kind === 'farmer' ? 'Your' : 'Their'} card is open. Press again to close it.` : p.kind === 'farmer' ? 'Press to open your card. While it\'s open, you do the work you order.' : 'Press to open their card. While it\'s open, your orders go to them.'}`))
+    }, kids, h('span', { class: 'sr' }, `. ${said} ${on ? `${p.kind === 'farmer' ? '당신의' : '그 사람의'} 카드가 열려 있습니다. 다시 누르면 닫힙니다.` : p.kind === 'farmer' ? '눌러서 카드를 여세요. 열린 동안 지시한 일을 직접 합니다.' : '눌러서 카드를 여세요. 열린 동안 지시가 그 사람에게 갑니다.'}`))
   }
 
   // Work the season cannot wait for that nobody will take, or that is not ordered: what it is, what is in its way,
@@ -160,9 +160,9 @@ export function unitBar(ctx: Ctx, el: HTMLElement, hooks: BarHooks): { update(c:
       h('button', {
         class: 'q press-chip', type: 'button', testid: 'pressing', 'aria-expanded': String(pop === PRESS_POP), title: ctx.touch() ? undefined : said,
         onclick: () => { pop = pop === PRESS_POP ? -1 : PRESS_POP; popWho = false; ctx.dirty() },
-      }, icon(p.kind, 'i'), h('span', { class: 'press-word' }, 'Needs you'), list.length > 1 ? h('span', { class: 'num' }, ` ${list.length}`) : null,
-      h('span', { class: 'sr' }, `. ${list.map(x => `${JOB_VERB[x.kind]} ${S.FIELD_NAMES[x.field] ?? ''}: ${x.why}`).join('. ')}. Press to see how to fix it.`)),
-      pop === PRESS_POP ? h('div', { class: 'q-pop sheet press-pop', role: 'group', 'aria-label': 'Work that can\'t wait' },
+      }, icon(p.kind, 'i'), h('span', { class: 'press-word' }, '당신이 필요'), list.length > 1 ? h('span', { class: 'num' }, ` ${list.length}`) : null,
+      h('span', { class: 'sr' }, `. ${list.map(x => `${JOB_VERB[x.kind]} ${S.FIELD_NAMES[x.field] ?? ''}: ${x.why}`).join('. ')}. 눌러서 해결 방법을 보세요.`)),
+      pop === PRESS_POP ? h('div', { class: 'q-pop sheet press-pop', role: 'group', 'aria-label': '기다릴 수 없는 일' },
         list.slice(0, 3).map(x => {
           // Ordered and nobody takes it: why, person by person, and each way to get it done with what it costs.
           const held = x.job >= 0 ? S.heldUpBy(c, x.kind) : ''
@@ -171,8 +171,8 @@ export function unitBar(ctx: Ctx, el: HTMLElement, hooks: BarHooks): { update(c:
             x.job >= 0 ? remedyKeys(c, x)
               : x.fix ? h('button', {
                 class: 'btn', type: 'button', testid: `pressing-fix-${x.kind}-${x.field}`,
-                onclick: () => { pop = -1; const r = ctx.run(x.fix!); if (r.ok) ctx.announce(`${fixWord(c, x)}. Done.`) },
-              }, x.kind === 'kill' && x.job < 0 ? 'Kill them now' : fixWord(c, x)) : null,
+                onclick: () => { pop = -1; const r = ctx.run(x.fix!); if (r.ok) ctx.announce(`${fixWord(c, x)}. 완료.`) },
+              }, x.kind === 'kill' && x.job < 0 ? '지금 죽이기' : fixWord(c, x)) : null,
             x.kind === 'kill' && x.job < 0 ? keepButton(x.field, `keep-vines-${x.field}`) : null)
         })) : null)
   }
@@ -196,8 +196,8 @@ export function unitBar(ctx: Ctx, el: HTMLElement, hooks: BarHooks): { update(c:
   function keepButton(field: number, testid: string): HTMLElement {
     return h('button', {
       class: 'btn', type: 'button', testid,
-      onclick: () => { pop = -1; const r = ctx.run({ t: 'keepVines', field, keep: true }); if (r.ok) ctx.announce(`${S.FIELD_NAMES[field]}: the crew will leave the vines up.`) },
-    }, 'Keep them up')
+      onclick: () => { pop = -1; const r = ctx.run({ t: 'keepVines', field, keep: true }); if (r.ok) ctx.announce(`${S.FIELD_NAMES[field]}: 일꾼들이 줄기를 그대로 둡니다.`) },
+    }, '그대로 두기')
   }
 
   // Felling, rock picking, clearing brush or building with one person on it while someone stands idle who is set never
@@ -210,9 +210,9 @@ export function unitBar(ctx: Ctx, el: HTMLElement, hooks: BarHooks): { update(c:
     if (!idle) return null
     const name = firstName(idle.name)
     return h('button', {
-      class: 'q-help', type: 'button', testid: `help-${j.id}`, 'aria-label': `${name} is idle and set to never do ${SKILL_NAME[skill].toLowerCase()} work. Press to let them help.`,
-      title: ctx.touch() ? undefined : `${name} is idle and set to never do ${SKILL_NAME[skill].toLowerCase()} work. Click to let them help.`,
-      onclick: () => { const r = ctx.run({ t: 'priority', unit: idle.id, work: skill, level: 2 }); if (r.ok) ctx.announce(`${name} will help with the ${SKILL_NAME[skill].toLowerCase()} work.`) },
+      class: 'q-help', type: 'button', testid: `help-${j.id}`, 'aria-label': `${name}은(는) 놀고 있고 ${SKILL_NAME[skill]}을(를) 하지 않도록 설정돼 있습니다. 눌러서 돕게 하세요.`,
+      title: ctx.touch() ? undefined : `${name}은(는) 놀고 있고 ${SKILL_NAME[skill]}을(를) 하지 않도록 설정돼 있습니다. 클릭해 돕게 하세요.`,
+      onclick: () => { const r = ctx.run({ t: 'priority', unit: idle.id, work: skill, level: 2 }); if (r.ok) ctx.announce(`${name}이(가) ${SKILL_NAME[skill]}을(를) 거듭니다.`) },
     }, icon('people', 'i'), h('span', { class: 'num' }, '+1'))
   }
 
@@ -223,13 +223,13 @@ export function unitBar(ctx: Ctx, el: HTMLElement, hooks: BarHooks): { update(c:
   }
 
   function queue(c: S.Campaign, jobs: S.Job[], crews: S.CrewInfo[], people: S.PersonInfo[], waits: Record<number, string>, many: boolean, room: number, of: Map<number, S.JobOutlook>, press: Child): Child {
-    if (!jobs.length) return press ? h('ol', { class: 'queue', 'aria-label': 'Work list' }, h('li', { class: 'q-label t-label', 'aria-hidden': 'true' }, 'Work list'), press) : null
+    if (!jobs.length) return press ? h('ol', { class: 'queue', 'aria-label': '작업 목록' }, h('li', { class: 'q-label t-label', 'aria-hidden': 'true' }, '작업 목록'), press) : null
     const touch = ctx.touch()
     const head = jobs.find(j => !waits[j.id]) ?? null
     const all = expanded || jobs.length <= room
     const list = all ? jobs : jobs.slice(0, Math.max(1, room - 1))
-    return h('ol', { class: `queue${expanded ? ' all' : ''}`, 'aria-label': 'Work list, in the order your crew will do it' },
-      h('li', { class: 'q-label t-label', 'aria-hidden': 'true' }, 'Work list'),
+    return h('ol', { class: `queue${expanded ? ' all' : ''}`, 'aria-label': '작업 목록, 일꾼들이 하는 순서' },
+      h('li', { class: 'q-label t-label', 'aria-hidden': 'true' }, '작업 목록'),
       press,
       list.map((j, k) => {
         const what = jobText(j, c, j.building)
@@ -241,26 +241,26 @@ export function unitBar(ctx: Ctx, el: HTMLElement, hooks: BarHooks): { update(c:
         const taker = o && o.unit >= 0 ? c.crew.find(u => u.id === o.unit) : undefined
         const fateSaid = o ? F.localize(o.why) : ''
         const able = people.filter(p => S.unitBlock(c, j.kind, p.id) === '')
-        const whoSaid = who ? `${who.pinned ? 'assigned to' : 'being done by'} ${who.u.name === S.FARMER_NAME ? 'you' : who.u.name}` : 'open to anyone'
+        const whoSaid = who ? `${who.u.name === S.FARMER_NAME ? '당신' : who.u.name}${who.pinned ? '에게 배정됨' : '이(가) 하는 중'}` : '아무나 할 수 있음'
         // The chip in words, the ringed letter on it explained: "Digging Brook Field: you. ... The ringed Y stands for you."
         const tagged = o && o.unit < 0 ? null : taker && many ? taker : many && who ? who.u : null
-        const named = (n: string) => n === S.FARMER_NAME ? 'you' : firstName(n)
-        const whose = o && o.unit < 0 ? 'nobody yet' : taker ? named(taker.name) : who ? named(who.u.name) : 'anyone'
+        const named = (n: string) => n === S.FARMER_NAME ? '당신' : firstName(n)
+        const whose = o && o.unit < 0 ? '아직 아무도' : taker ? named(taker.name) : who ? named(who.u.name) : '아무나'
         // At a wide desk the mark is the person's name, not a ringed initial to be learned (viewers of every pass asked
         // what the letters on the work list stood for).
         const wide = ctx.layout() === 'wide'
-        const mark = (n: string) => wide ? (n === S.FARMER_NAME ? 'You' : firstName(n)) : initial(n)
-        const letter = tagged && !wide ? ` The ringed ${initial(tagged.name)} ${tagged.name === S.FARMER_NAME ? 'stands for you' : `is ${firstName(tagged.name)}'s initial`}.` : ''
+        const mark = (n: string) => wide ? (n === S.FARMER_NAME ? '당신' : firstName(n)) : initial(n)
+        const letter = tagged && !wide ? ` 테두리 있는 ${initial(tagged.name)}은(는) ${tagged.name === S.FARMER_NAME ? '당신을 나타냅니다' : `${firstName(tagged.name)}의 첫 글자입니다`}.` : ''
         const said = `${what}: ${whose}. ${fateSaid || `${F.upper(whoSaid)}.`}${letter}`
         const choices = many && able.length > 1 ? h('div', { class: 'q-who', role: 'group', 'aria-label': `${what}: choose who does it` },
-          [{ id: -1, name: 'Anyone' }, ...able.map(u => ({ id: u.id, name: firstName(u.name) }))].map(x => h('button', {
+          [{ id: -1, name: '아무나' }, ...able.map(u => ({ id: u.id, name: firstName(u.name) }))].map(x => h('button', {
             class: 'btn', type: 'button', testid: `assign-${j.id}-${x.id}`, 'aria-pressed': String(j.unit === x.id),
             onclick: () => assign(j.id, x.id, what, x.name),
           }, x.id >= 0 ? ringed(x, ringFor(c, x.id), 22) : null, x.name))) : null
         return h('li', { class: 'q-item', k: `q-${j.id}` },
           h('button', {
             class: `q${j === head ? ' active' : ''}${waits[j.id] || o?.when === 'waiting' ? ' waiting' : ''}${o && o.unit < 0 ? ' nobody' : ''} by-${by}`, type: 'button', testid: `queue-${j.id}`, 'aria-expanded': String(pop === j.id),
-            title: touch ? undefined : `${said} Click for options${k > 0 ? ', or Ctrl-click to do it first' : ''}.`,
+            title: touch ? undefined : `${said} 클릭해 옵션${k > 0 ? ', Ctrl 클릭으로 먼저 하기' : ''}.`,
             onclick: (e: Event) => {
               const m = e as MouseEvent
               if (m.ctrlKey || m.metaKey) bump(j.id)
@@ -274,29 +274,29 @@ export function unitBar(ctx: Ctx, el: HTMLElement, hooks: BarHooks): { update(c:
             : taker && many ? h('span', { class: `q-tag${wide ? ' named' : ''}${who?.pinned ? ' pinned' : ''} q-${o!.when}`, style: `--c:${ringFor(c, taker.id)}`, 'aria-hidden': 'true' }, mark(taker.name))
               : many && who ? h('span', { class: `q-tag${wide ? ' named' : ''}${who.pinned ? ' pinned' : ''}`, style: `--c:${ringFor(c, who.u.id)}`, 'aria-hidden': 'true' }, mark(who.u.name)) : null,
           o && o.when === 'waiting' && o.unit >= 0 ? h('span', { class: 'q-wait', 'aria-hidden': 'true' }, icon('stale', 'i')) : null,
-          by !== 'you' ? h('span', { class: 'q-by', title: touch ? undefined : by === 'routine' ? 'Added by your crew\'s routine' : 'Added by the foreman' }, icon(by === 'routine' ? 'sprout' : 'foreman', 'i')) : null,
-          h('span', { class: 'sr' }, `${said}${j.done > 0 && j.need > 0 ? ` ${F.pct(j.done / j.need)} done.` : ''}${by === 'routine' ? ' Added by the routine.' : by === 'foreman' ? ' Added by the foreman.' : ''} ${touch ? 'Tap' : 'Click'} for options.`)),
+          by !== 'you' ? h('span', { class: 'q-by', title: touch ? undefined : by === 'routine' ? '일꾼의 일과가 추가함' : '작업반장이 추가함' }, icon(by === 'routine' ? 'sprout' : 'foreman', 'i')) : null,
+          h('span', { class: 'sr' }, `${said}${j.done > 0 && j.need > 0 ? ` ${F.pct(j.done / j.need)} 완료.` : ''}${by === 'routine' ? ' 일과가 추가함.' : by === 'foreman' ? ' 작업반장이 추가함.' : ''} 옵션을 보려면 ${touch ? '탭' : '클릭'}하세요.`)),
           helper(c, j, crews),
-          !lockDig ? h('button', { class: 'q-x', type: 'button', testid: `list-x-${j.id}`, 'aria-label': `${what}: remove from the work list`, title: touch ? undefined : 'Remove from the work list', onclick: () => cancel(j.id) }, icon('close', 'i')) : null,
+          !lockDig ? h('button', { class: 'q-x', type: 'button', testid: `list-x-${j.id}`, 'aria-label': `${what}: 작업 목록에서 빼기`, title: touch ? undefined : '작업 목록에서 빼기', onclick: () => cancel(j.id) }, icon('close', 'i')) : null,
           !touch ? h('span', { class: 'q-tools' },
-            k > 0 ? h('button', { class: 'q-first', type: 'button', testid: `queue-first-${j.id}`, 'aria-label': `${what}: do it first`, title: 'Do it first', onclick: () => bump(j.id) }, icon('first', 'i')) : null,
+            k > 0 ? h('button', { class: 'q-first', type: 'button', testid: `queue-first-${j.id}`, 'aria-label': `${what}: 먼저 하기`, title: '먼저 하기', onclick: () => bump(j.id) }, icon('first', 'i')) : null,
             choices ? h('button', {
-              class: 'q-first', type: 'button', testid: `queue-who-${j.id}`, 'aria-label': `${what}: choose who does it`, 'aria-expanded': String(pop === j.id), title: 'Choose who does it',
+              class: 'q-first', type: 'button', testid: `queue-who-${j.id}`, 'aria-label': `${what}: 누가 할지 고르기`, 'aria-expanded': String(pop === j.id), title: '누가 할지 고르기',
               onclick: () => { pop = pop === j.id ? -1 : j.id; popWho = true; ctx.dirty() },
             }, icon('people', 'i')) : null) : null,
           // The order's own card, over the order that was clicked: everything on it is about that order.
           pop === j.id ? h('div', { class: 'q-pop order-card sheet', role: 'group', 'aria-label': what, testid: 'order-card', 'data-thing': `order-${j.id}` },
             h('span', { class: 't-label q-pop-title' }, what),
             fateSaid ? h('span', { class: `q-fate${o && o.unit < 0 ? ' c-red' : ''}`, testid: `fate-${j.id}` }, fateSaid) : null,
-            !popWho && k > 0 ? h('button', { class: 'btn', type: 'button', testid: `queue-first-${j.id}`, onclick: () => bump(j.id) }, icon('first', 'i'), 'Do it first') : null,
-            !popWho && !lockDig ? h('button', { class: 'btn', type: 'button', testid: `queue-cancel-${j.id}`, onclick: () => cancel(j.id) }, icon('close', 'i'), 'Cancel') : null,
+            !popWho && k > 0 ? h('button', { class: 'btn', type: 'button', testid: `queue-first-${j.id}`, onclick: () => bump(j.id) }, icon('first', 'i'), '먼저 하기') : null,
+            !popWho && !lockDig ? h('button', { class: 'btn', type: 'button', testid: `queue-cancel-${j.id}`, onclick: () => cancel(j.id) }, icon('close', 'i'), '취소') : null,
             choices) : null)
       }),
       jobs.length > room ? h('li', { class: 'q-item' }, h('button', {
         class: 'q more', type: 'button', testid: 'queue-more', 'aria-expanded': String(expanded),
         onclick: () => { expanded = !expanded; ctx.dirty() },
       }, expanded ? icon('back', 'i') : h('span', { class: 'num', 'aria-hidden': 'true' }, `+${jobs.length - list.length}`),
-      h('span', { class: 'sr' }, expanded ? 'Show fewer orders' : `Show all ${jobs.length} orders`))) : null)
+      h('span', { class: 'sr' }, expanded ? '적게 보기' : `${jobs.length}개 지시 모두 보기`))) : null)
   }
 
   function update(c: S.Campaign): void {
@@ -337,26 +337,26 @@ export function unitBar(ctx: Ctx, el: HTMLElement, hooks: BarHooks): { update(c:
       el.classList.toggle('many', many)
       patch(el, JSON.stringify(model), () => [
         queue(c, jobs, crews, people, waits, many, room, f.of, pressingChip(c, f.pressing.filter(p => !(p.kind === 'spray' && sprayWay(c) === 'none') && !(p.kind === 'kill' && p.job < 0 && guided)))),
-        h('section', { class: 'timebook mount sys', 'aria-label': 'People' },
-          h('div', { class: `page units${many ? ' many' : ''}${people.length > 5 ? ' crowded' : ''}`, role: 'group', 'aria-label': 'People' },
+        h('section', { class: 'timebook mount sys', 'aria-label': '사람들' },
+          h('div', { class: `page units${many ? ' many' : ''}${people.length > 5 ? ' crowded' : ''}`, role: 'group', 'aria-label': '사람들' },
             people.map((p, k) => cell(c, p, now[k], signs[k], many, goal === 'person' && k === 1, stopped.has(p.id))),
             h('div', { class: 'tools bar-tools' },
               // How spraying is done this season, and the way to change it, once blight weather has come: the whole
               // farm's, so it stands with the people and not on any one field's card.
               spraying ? h('button', {
-                class: 'iconbtn spray-way', type: 'button', testid: 'spraying-open', title: touch ? undefined : `Spraying this season: ${way === 'auto' ? 'kept sprayed' : way === 'none' ? 'not this year' : 'ask me'} · change`,
+                class: 'iconbtn spray-way', type: 'button', testid: 'spraying-open', title: touch ? undefined : `이번 시즌 살포: ${way === 'auto' ? '항상 살포' : way === 'none' ? '올해는 안 함' : '내게 묻기'} · 바꾸기`,
                 onclick: () => askSpray(ctx),
-              }, icon('spray', 'i'), h('span', { class: 'sr' }, 'Spraying this season: ', h('b', null, way === 'auto' ? 'kept sprayed' : way === 'none' ? 'not this year' : 'ask me'), h('span', { class: 'quiet' }, ' · change'))) : null,
+              }, icon('spray', 'i'), h('span', { class: 'sr' }, '이번 시즌 살포: ', h('b', null, way === 'auto' ? '항상 살포' : way === 'none' ? '올해는 안 함' : '내게 묻기'), h('span', { class: 'quiet' }, ' · 바꾸기'))) : null,
               waiting.length ? h('button', {
-                class: 'iconbtn inc-mark', type: 'button', testid: 'incident-open', 'aria-label': `${waiting[0].title}. Waiting for your answer.`, title: touch ? undefined : waiting[0].title,
+                class: 'iconbtn inc-mark', type: 'button', testid: 'incident-open', 'aria-label': `${waiting[0].title}. 답을 기다리는 중.`, title: touch ? undefined : waiting[0].title,
                 onclick: () => hooks.onIncident(),
               }, icon('ask', 'i'), waiting.length > 1 ? h('span', { class: 'inc-n num', 'aria-hidden': 'true' }, String(waiting.length)) : null) : null,
               people.length >= 3 ? h('button', {
-                class: `iconbtn${hooks.gridOpen() ? ' is-on' : ''}`, type: 'button', testid: 'grid-open', 'aria-pressed': String(hooks.gridOpen()), 'aria-label': `Who does what${touch ? '' : ' (G)'}`,
-                title: touch ? undefined : 'Who does what (G)', onclick: () => hooks.onGrid(),
+                class: `iconbtn${hooks.gridOpen() ? ' is-on' : ''}`, type: 'button', testid: 'grid-open', 'aria-pressed': String(hooks.gridOpen()), 'aria-label': `각자의 일${touch ? '' : ' (G)'}`,
+                title: touch ? undefined : '각자의 일 (G)', onclick: () => hooks.onGrid(),
               }, icon('grid', 'i')) : null,
               hooks.hireShown() ? h('button', {
-                class: `iconbtn crew-open${goal === 'hire' ? ' goal-ring' : ''}`, type: 'button', testid: 'crew-open', 'aria-label': 'Hire someone', title: touch ? undefined : 'Hire someone',
+                class: `iconbtn crew-open${goal === 'hire' ? ' goal-ring' : ''}`, type: 'button', testid: 'crew-open', 'aria-label': '사람 고용', title: touch ? undefined : '사람 고용',
                 onclick: () => openCrew(ctx),
               }, icon('hire', 'i')) : null))),
       ])
@@ -408,58 +408,58 @@ export function openCrew(ctx: Ctx): void {
         const season = c.phase === 'season'
         const l = S.labourInfo(c)
         const room = S.hireRoom(c)
-        const hired = (r: S.Result) => { if (r.ok) { ctx.announce(F.localize(r.events[0]?.text ?? 'Hired.')); draw() } else { ctx.say(r.err, 'warn') } }
+        const hired = (r: S.Result) => { if (r.ok) { ctx.announce(F.localize(r.events[0]?.text ?? '고용했습니다.')); draw() } else { ctx.say(r.err, 'warn') } }
         const hall = (kind: 'hand' | 'operator') => {
           const wage = kind === 'hand' ? S.HAND_WAGE : S.OPERATOR_WAGE
           return h('article', { class: 'applicant hall' },
             h('span', { class: 'hall-ic' }, icon(KIND_GLYPH[kind], 'i')),
-            h('div', { class: 'who' }, h('h3', null, KIND_NAME[kind]), h('p', null, `${kindDoes(kind).replace(/\.$/, '')}, but won't ${kind === 'hand' ? 'drive' : 'do field work on foot'} unless you change their priorities.`)),
+            h('div', { class: 'who' }, h('h3', null, KIND_NAME[kind]), h('p', null, `${kindDoes(kind).replace(/\.$/, '')} 우선순위를 바꾸지 않으면 ${kind === 'hand' ? '운전은 하지 않습니다' : '걸어서 하는 밭일은 하지 않습니다'}.`)),
             skillRow(kind === 'hand' ? S.HAND_SKILLS : S.OPERATOR_SKILLS),
-            h('p', { class: 'price' }, h('b', { class: 'num' }, F.money(wage)), h('span', null, 'a month'), room ? null : h('span', { class: 't-caption to-end', testid: `hire-${kind}-year-end` }, effectSays(S.moneyEffect(app.world, c, { t: 'hire', kind }), true))),
-            room ? null : h('button', { class: 'btn', type: 'button', testid: `hire-${kind}`, onclick: () => hired(ctx.run({ t: 'hire', kind })) }, 'Hire', h('span', { class: 'sr' }, `, ${F.money(wage)} a month`)))
+            h('p', { class: 'price' }, h('b', { class: 'num' }, F.money(wage)), h('span', null, '/월'), room ? null : h('span', { class: 't-caption to-end', testid: `hire-${kind}-year-end` }, effectSays(S.moneyEffect(app.world, c, { t: 'hire', kind }), true))),
+            room ? null : h('button', { class: 'btn', type: 'button', testid: `hire-${kind}`, onclick: () => hired(ctx.run({ t: 'hire', kind })) }, '고용', h('span', { class: 'sr' }, `, 월 ${F.money(wage)}`)))
         }
         const applicants = S.applicantInfo(c)
         box.replaceChildren(h('div', { class: 'crew-in' },
-          h('p', { class: 't-caption' }, 'Everyone picks jobs from the work list by their own priorities. More skill means faster, better work.'),
+          h('p', { class: 't-caption' }, '모두가 자기 우선순위대로 작업 목록에서 일을 고릅니다. 기술이 높을수록 더 빠르고 잘합니다.'),
           h('p', { class: `beds${room ? ' c-red' : ''}`, testid: 'beds' }, icon('bunk', 'i'),
-            room ? F.localize(room) : `You can hire up to ${l.housing} people (${l.hired} hired). A bunkhouse adds room for ${S.BUNK_BEDS} more.`,
-            room && S.buildingInfo(c).some(b => b.kind === 'bunk' && b.state === 'none') ? h('button', { class: 'btn', type: 'button', testid: 'beds-build', onclick: () => { ctx.papers.closeTop(); app.selectYard(S.HOME_YARD) } }, icon('bunk', 'i'), 'Build a bunkhouse') : null),
+            room ? F.localize(room) : `${l.housing}명까지 고용할 수 있습니다(${l.hired}명 고용됨). 숙소를 지으면 ${S.BUNK_BEDS}명이 더 살 수 있습니다.`,
+            room && S.buildingInfo(c).some(b => b.kind === 'bunk' && b.state === 'none') ? h('button', { class: 'btn', type: 'button', testid: 'beds-build', onclick: () => { ctx.papers.closeTop(); app.selectYard(S.HOME_YARD) } }, icon('bunk', 'i'), '숙소 짓기') : null),
           applicants.length ? [
-            h('h3', { class: 't-label crew-h' }, 'Looking for work this spring'),
+            h('h3', { class: 't-label crew-h' }, '이번 봄 일자리를 찾는 사람들'),
             applicants.map(a => h('article', { class: 'applicant' },
               portrait(a, 52),
-              h('div', { class: 'who' }, h('h3', null, a.name), h('p', null, h('b', null, a.traitName), `: ${a.traitText.replace(/^./, x => x.toLowerCase())}`)),
+              h('div', { class: 'who' }, h('h3', null, a.name), h('p', null, h('b', null, a.traitName), `: ${a.traitText}`)),
               skillRow(a.skills),
-              h('p', { class: 'price' }, h('b', { class: 'num' }, F.money(a.ask)), h('span', null, 'a month'), a.why ? null : h('span', { class: 't-caption to-end', testid: `applicant-to-end-${a.id}` }, effectSays(S.moneyEffect(app.world, c, { t: 'hire', applicant: a.id }), true))),
-              a.why ? null : h('button', { class: 'btn', type: 'button', testid: `hire-applicant-${a.id}`, onclick: () => hired(ctx.run({ t: 'hire', applicant: a.id })) }, 'Hire'))),
+              h('p', { class: 'price' }, h('b', { class: 'num' }, F.money(a.ask)), h('span', null, '/월'), a.why ? null : h('span', { class: 't-caption to-end', testid: `applicant-to-end-${a.id}` }, effectSays(S.moneyEffect(app.world, c, { t: 'hire', applicant: a.id }), true))),
+              a.why ? null : h('button', { class: 'btn', type: 'button', testid: `hire-applicant-${a.id}`, onclick: () => hired(ctx.run({ t: 'hire', applicant: a.id })) }, '고용'))),
           ] : null,
-          h('h3', { class: 't-label crew-h' }, applicants.length ? 'Or from the hiring hall' : 'From the hiring hall'),
+          h('h3', { class: 't-label crew-h' }, applicants.length ? '또는 인력소에서' : '인력소에서'),
           hall('hand'), hall('operator'),
           c.crew.length > 1 ? [
-            h('h3', { class: 't-label crew-h' }, 'On the farm'),
+            h('h3', { class: 't-label crew-h' }, '농장의 사람들'),
             c.crew.filter(u => u.kind !== 'farmer').map(u => h('article', { class: 'applicant' },
               ringed(u, ringFor(c, u.id), 52),
               h('div', { class: 'who' }, h('h3', null, u.name), h('p', null, KIND_NAME[u.kind])),
               skillRow(u.skills),
-              h('p', { class: 'price' }, h('b', { class: 'num' }, F.money(S.payOf(u))), h('span', null, 'a month')),
+              h('p', { class: 'price' }, h('b', { class: 'num' }, F.money(S.payOf(u))), h('span', null, '/월')),
               h('button', {
                 class: 'btn hazard', type: 'button', testid: `dismiss-${u.id}`,
                 onclick: async () => {
-                  const yes = await confirmPaper(ctx, { title: `Let ${firstName(u.name)} go?`, text: LET_GO_TEXT, yes: 'Let them go', danger: true })
+                  const yes = await confirmPaper(ctx, { title: `${firstName(u.name)}을(를) 내보낼까요?`, text: LET_GO_TEXT, yes: '내보내기', danger: true })
                   if (!yes) return
                   const r = ctx.run({ t: 'dismiss', unit: u.id })
-                  if (r.ok) { if (app.unit === u.id) app.selectUnit(-1); ctx.announce(F.localize(r.events[0]?.text ?? 'Let go.')); draw() }
+                  if (r.ok) { if (app.unit === u.id) app.selectUnit(-1); ctx.announce(F.localize(r.events[0]?.text ?? '내보냈습니다.')); draw() }
                 },
-              }, icon('letgo', 'i'), 'Let go'))),
+              }, icon('letgo', 'i'), '내보내기'))),
           ] : null,
           h('p', { class: 't-caption crew-foot' }, season
-            ? 'If you hire now, you pay the first month right away and then a month at a time until the season ends. You don\'t get back a month you\'ve already paid.'
-            : 'If you hire in spring, you pay the first month when the season starts. People stay on from year to year until you let them go.'),
+            ? '지금 고용하면 첫 달은 바로 내고, 그 뒤로 시즌이 끝날 때까지 한 달씩 냅니다. 이미 낸 달의 품값은 돌려받지 못합니다.'
+            : '봄에 고용하면 첫 달은 시즌이 시작될 때 냅니다. 내보낼 때까지 사람들은 해를 넘겨 계속 일합니다.',),
         ))
       }
       draw()
       return box
     },
-    foot: close => h('button', { class: 'btn go', type: 'button', testid: 'crew-close', autofocus: true, onclick: close }, 'Back', icon('arrow', 'i')),
+    foot: close => h('button', { class: 'btn go', type: 'button', testid: 'crew-close', autofocus: true, onclick: close }, '뒤로', icon('arrow', 'i')),
   })
 }
