@@ -8,7 +8,7 @@ import { icon } from './icons.ts'
 import { range } from './system/parts.ts'
 import { offContract, yearWord } from './rules.ts'
 
-const DUE_SHORT: Record<S.Due, string> = { harvest: 'by fall', winter: 'by March' }
+const DUE_SHORT: Record<S.Due, string> = { harvest: '가을까지', winter: '3월까지' }
 
 // What delivering this lot against each open contract for its variety would take, pay, and fetch on the market today.
 export interface Deal { k: S.ContractInfo; take: number; pays: number; market: number }
@@ -29,12 +29,12 @@ export function deals(world: S.World, c: S.Campaign, lot: S.Lot): Deal[] {
 // "$2,100 more than selling it today", or less.
 export function versusMarket(d: Deal): string {
   const gap = d.pays - d.market
-  return Math.abs(gap) < 50 ? 'about what the market pays today' : `${F.money(Math.abs(gap))} ${gap > 0 ? 'more' : 'less'} than the market pays today`
+  return Math.abs(gap) < 50 ? '오늘 시장가와 비슷함' : `오늘 시장가보다 ${F.money(Math.abs(gap))} ${gap > 0 ? '더' : '덜'}`
 }
 
 export function deliver(ctx: Ctx, lot: S.Lot, d: Deal): boolean {
   const r = ctx.run({ t: 'deliver', lot: lot.id, contract: d.k.id })
-  if (r.ok) ctx.announce(F.localize(r.events[0]?.text ?? 'Delivered.'))
+  if (r.ok) ctx.announce(F.localize(r.events[0]?.text ?? '납품했습니다.'))
   return r.ok
 }
 
@@ -53,15 +53,15 @@ function farmHas(c: S.Campaign, id: S.VarietyId): string {
   const name = S.variety(id).name
   if (c.phase === 'plan') {
     const g = S.contractOutlook(c, id, 0)
-    return g.fields ? `Your plan has ${F.plural(g.fields, 'field')} of ${name}, good for about ${F.mass(Math.round(g.mean / 10) * 10)} of No. 1 in a usual year.`
-      : `Your plan has no ${name}, so give it a field on the map before the season starts.`
+    return g.fields ? `계획에 ${name} 밭이 ${g.fields}곳 있어, 보통의 해에 No. 1 약 ${F.mass(Math.round(g.mean / 10) * 10)}을(를) 냅니다.`
+      : `계획에 ${name}이(가) 없으니, 시즌이 시작되기 전에 지도에서 밭을 주세요.`
   }
   const have = inHand(c, id), out = growing(c, id)
-  return `You have ${F.mass(have)} of No. 1 ${name} on hand${out ? ` and ${F.plural(out, 'field')} still to dig` : ''}.`
+  return `No. 1 ${name} ${F.mass(have)}을(를) 갖고 있습니다${out ? `, 아직 캘 밭 ${out}곳` : ''}.`
 }
 
 // What the bar on a contract shows, for its hover: the three marks it is drawn with.
-export const BAR_SAYS = 'The hatched band is what your fields look likely to produce, from low to high. The upright line is what you\'ve promised, and the violet mark is what you\'ve delivered so far.'
+export const BAR_SAYS = '빗금 띠는 밭이 낼 것으로 보이는 양, 최저에서 최고까지입니다. 세로 선은 약속한 양이고, 보라 표시는 지금까지 납품한 양입니다.'
 
 // The bar explained under the pointer and to a screen reader, where it stands.
 function barHover(el: HTMLElement): HTMLElement {
@@ -74,13 +74,13 @@ function barHover(el: HTMLElement): HTMLElement {
 function contractRange(c: S.Campaign, id: S.VarietyId, cwt: number, delivered: number): { el: HTMLElement; said: string } {
   const g = giving(c, id, cwt, delivered)
   const max = Math.max(cwt, g?.hi ?? 0, delivered) * 1.15
-  const said = g ? `your fields look likely to produce ${F.mass(g.lo)} to ${F.mass(g.hi)} of No. 1, and you've promised ${F.mass(cwt)}` : `nothing is planted for it, and you've promised ${F.mass(cwt)}`
+  const said = g ? `밭이 No. 1을 ${F.mass(g.lo)}~${F.mass(g.hi)} 낼 것으로 보이고, ${F.mass(cwt)}을(를) 약속했습니다` : `심은 것이 없고, ${F.mass(cwt)}을(를) 약속했습니다`
   return { el: range({ lo: g?.lo ?? 0, hi: g?.hi ?? 0, max, mark: delivered > 0 ? delivered : undefined, promise: cwt, label: said }), said }
 }
 
 // The band's marks named on the band, under the first contract of a list.
 function legend(): HTMLElement {
-  return h('p', { class: 'band-legend', 'aria-hidden': 'true' }, h('i', { class: 'lg-band' }), 'what your fields look likely to give', h('i', { class: 'lg-line' }), 'what you promise')
+  return h('p', { class: 'band-legend', 'aria-hidden': 'true' }, h('i', { class: 'lg-band' }), '밭이 낼 것으로 보이는 양', h('i', { class: 'lg-line' }), '약속한 양')
 }
 
 function signedCard(c: S.Campaign, k: S.ContractInfo, first = false): HTMLElement {
@@ -91,9 +91,9 @@ function signedCard(c: S.Campaign, k: S.ContractInfo, first = false): HTMLElemen
       h('span', { class: 'num' }, F.price(k.price))),
     barHover(r.el),
     first ? legend() : null,
-    h('p', { class: 't-caption' }, `${F.mass(k.delivered)} of ${F.mass(k.cwt)} delivered, due ${k.dueBy}. ${F.upper(r.said)}.`,
-      k.settled || k.needed <= 1e-6 ? null : ' On the due date the buyer takes whatever you still owe from your potato house at the contract price, and you only pay a penalty on what\'s still missing after that.',
-      k.settled && k.penalty > 0 ? h('span', { class: 'c-red' }, ` Penalty: ${F.money(-k.penalty)}.`) : why ? h('span', { class: 'c-ochre' }, ` ${why}`) : null))
+    h('p', { class: 't-caption' }, `${F.mass(k.cwt)} 중 ${F.mass(k.delivered)} 납품, 기한 ${k.dueBy}. ${F.upper(r.said)}.`,
+      k.settled || k.needed <= 1e-6 ? null : ' 기한이 되면 사자가 모자란 양을 감자 저장고에서 계약가로 가져가고, 그래도 모자란 만큼만 위약금을 냅니다.',
+      k.settled && k.penalty > 0 ? h('span', { class: 'c-red' }, ` 위약금: ${F.money(-k.penalty)}.`) : why ? h('span', { class: 'c-ochre' }, ` ${why}`) : null))
 }
 
 function offerCard(ctx: Ctx, c: S.Campaign, o: S.OfferInfo, after: () => void, first = false): HTMLElement {
@@ -105,13 +105,13 @@ function offerCard(ctx: Ctx, c: S.Campaign, o: S.OfferInfo, after: () => void, f
       h('span', { class: 'num' }, F.price(o.price))),
     barHover(r.el),
     first ? legend() : null,
-    h('p', { class: 't-caption' }, `${F.mass(o.cwt)} of No. 1 ${o.dueBy} for ${F.money(o.value)} in all, `,
-      h('span', { class: vs < -0.015 ? 'c-ochre' : null }, `${F.versus(o.price / o.usual)} ${v.contract ? 'the processing price' : 'a usual year'}`), '. ', farmHas(c, o.variety)),
-    v.contract ? h('p', { class: 't-caption c-ochre' }, `Without a contract ${v.name} sells ${offContract()} its usual price.`) : null,
+    h('p', { class: 't-caption' }, `No. 1 ${F.mass(o.cwt)}, ${o.dueBy}까지, 전부 ${F.money(o.value)}에, `,
+      h('span', { class: vs < -0.015 ? 'c-ochre' : null }, `${v.contract ? '가공 가격' : '보통의 해'}보다 ${F.versus(o.price / o.usual)}`), '. ', farmHas(c, o.variety)),
+    v.contract ? h('p', { class: 't-caption c-ochre' }, `계약이 없으면 ${v.name}은(는) 평소 값의 ${offContract()}만 받습니다.`) : null,
     h('button', {
       class: 'btn', type: 'button', testid: `accept-${o.id}`,
-      onclick: () => { if (ctx.run({ t: 'accept', offer: o.id }).ok) { ctx.announce(`Signed with ${o.buyer.toLowerCase()}.`); after() } },
-    }, 'Accept'))
+      onclick: () => { if (ctx.run({ t: 'accept', offer: o.id }).ok) { ctx.announce(`${o.buyer}와 계약했습니다.`); after() } },
+    }, '수락'))
 }
 
 // What is signed, and in spring what is offered. after: redraws whatever holds them.
@@ -119,13 +119,13 @@ function contractCards(ctx: Ctx, c: S.Campaign, after: () => void): Child {
   const offers = S.offerInfo(c)
   const signed = S.contractInfo(c)
   return [
-    h('p', { class: 't-caption', testid: 'contracts-lead' }, `A contract pays a fixed price for No. 1 potatoes delivered by a set date, and whatever is still missing then costs you ${F.pct(S.CONTRACT_PENALTY)} of its price.`),
-    signed.length ? [h('p', { class: 't-label cat-sub' }, 'Signed'), h('div', { class: 'offers' }, signed.map((k, n) => signedCard(c, k, n === 0)))] : null,
+    h('p', { class: 't-caption', testid: 'contracts-lead' }, `계약은 정한 날까지 납품한 No. 1 감자에 정해진 값을 치르고, 그때 모자란 양은 그 값의 ${F.pct(S.CONTRACT_PENALTY)}를 물어냅니다.`),
+    signed.length ? [h('p', { class: 't-label cat-sub' }, '체결됨'), h('div', { class: 'offers' }, signed.map((k, n) => signedCard(c, k, n === 0)))] : null,
     c.phase === 'plan' ? [
-      h('p', { class: 't-label cat-sub' }, offers.length ? 'Offered this spring' : 'No more offers this spring'),
+      h('p', { class: 't-label cat-sub' }, offers.length ? '이번 봄의 제안' : '이번 봄 제안은 끝남'),
       offers.length ? h('div', { class: 'offers' }, offers.map((o, n) => offerCard(ctx, c, o, after, n === 0 && !signed.length))) : null,
-      h('p', { class: 't-caption' }, `Offers expire when the season starts.${F.cwtNote()}`),
-    ] : h('p', { class: 't-caption' }, 'You can deliver from the weigh ticket, a dug field\'s card or the cellar. Harvest contracts close when the season ends, and winter ones at the end of February.'),
+      h('p', { class: 't-caption' }, `제안은 시즌이 시작되면 사라집니다.${F.cwtNote()}`),
+    ] : h('p', { class: 't-caption' }, '계근 전표, 캔 밭의 카드, 저장고에서 납품할 수 있습니다. 수확 계약은 시즌이 끝나면, 겨울 계약은 2월 말에 마감됩니다.'),
   ]
 }
 
@@ -140,7 +140,7 @@ export function openContracts(ctx: Ctx): void {
   const app = ctx.app
   if (!app.campaign) return
   ctx.papers.open({
-    title: `Contracts, ${yearWord(app.campaign.year)}`,
+    title: `계약, ${yearWord(app.campaign.year)}`,
     testid: 'contracts',
     size: 'wide',
     body: () => {
@@ -153,7 +153,7 @@ export function openContracts(ctx: Ctx): void {
       draw()
       return box
     },
-    foot: close => h('button', { class: 'btn go', type: 'button', testid: 'contracts-close', autofocus: true, onclick: close }, 'Back'),
+    foot: close => h('button', { class: 'btn go', type: 'button', testid: 'contracts-close', autofocus: true, onclick: close }, '돌아가기'),
   })
 }
 
@@ -170,24 +170,24 @@ export function contractRows(ctx: Ctx): { key(): unknown; part(c: S.Campaign): C
     part(c) {
       const ks = S.contractInfo(c)
       if (!ks.length) return null
-      return h('div', { class: 'contracts', testid: 'tracker', role: 'group', 'aria-label': 'Contracts' }, ks.map(k => {
+      return h('div', { class: 'contracts', testid: 'tracker', role: 'group', 'aria-label': '계약' }, ks.map(k => {
         const done = k.needed <= 1e-6
         const g = growing(c, k)
         const max = Math.max(k.cwt, g?.hi ?? 0, k.delivered) * 1.15
         const why = shortWhy(c, k)
-        const said = `${k.buyer}: ${F.mass(k.delivered)} of ${F.mass(k.cwt)} ${k.varietyName} delivered, due ${k.dueBy}${g ? `, and your fields look likely to produce ${F.mass(g.lo)} to ${F.mass(g.hi)} of No. 1 in all` : ''}${k.settled ? `, closed${k.penalty > 0 ? ` with a penalty of ${F.money(k.penalty)}` : ''}` : done ? ', filled' : why ? `. ${why.replace(/\.$/, '')}` : ''}. ${BAR_SAYS}`
+        const said = `${k.buyer}: ${k.varietyName} ${F.mass(k.cwt)} 중 ${F.mass(k.delivered)} 납품, 기한 ${k.dueBy}${g ? `, 밭이 No. 1을 모두 합해 ${F.mass(g.lo)}~${F.mass(g.hi)} 낼 것으로 보입니다` : ''}${k.settled ? `, 마감됨${k.penalty > 0 ? `, 위약금 ${F.money(k.penalty)}` : ''}` : done ? ', 채움' : why ? `. ${why.replace(/\.$/, '')}` : ''}. ${BAR_SAYS}`
         return h('button', { class: `contract${done ? ' done' : ''}`, type: 'button', testid: `track-${k.id}`, title: ctx.touch() ? undefined : said, onclick: () => openContracts(ctx) },
-          h('span', { class: 'who' }, icon(done ? 'check' : 'contract', 'i'), h('b', null, k.varietyName), ` for ${k.buyer.replace(/^The /, 'the ')}`),
-          h('span', { class: 't-label due' }, k.settled ? 'closed' : DUE_SHORT[k.due]),
+          h('span', { class: 'who' }, icon(done ? 'check' : 'contract', 'i'), h('b', null, k.varietyName), ` ${k.buyer}에게`),
+          h('span', { class: 't-label due' }, k.settled ? '마감됨' : DUE_SHORT[k.due]),
           h('span', { class: 'range', 'aria-hidden': 'true' },
             g ? h('span', { class: 'band', style: `left:${(g.lo / max * 100).toFixed(1)}%;width:${((g.hi - g.lo) / max * 100).toFixed(1)}%` }) : null,
             h('span', { class: 'mark', style: `left:${(k.delivered / max * 100).toFixed(1)}%` }),
             h('span', { class: 'promise', style: `left:${(k.cwt / max * 100).toFixed(1)}%` })),
           h('span', { class: 'says num' },
             h('b', { class: 'track-n' }, `${F.num(F.massValue(k.delivered))}/${F.mass(k.cwt)}`),
-            g ? ` · ${F.num(F.massValue(g.lo))}–${F.num(F.massValue(g.hi))} expected` : null,
-            k.settled && k.penalty > 0 ? h('span', { class: 'c-red' }, ` · short ${F.money(k.penalty)}`) : why ? h('span', { class: 'c-ochre' }, ' · likely short') : null),
-          h('span', { class: 'sr' }, `. ${said} Opens your contracts.`))
+            g ? ` · 예상 ${F.num(F.massValue(g.lo))}–${F.num(F.massValue(g.hi))}` : null,
+            k.settled && k.penalty > 0 ? h('span', { class: 'c-red' }, ` · 모자람 ${F.money(k.penalty)}`) : why ? h('span', { class: 'c-ochre' }, ' · 모자랄 듯') : null),
+          h('span', { class: 'sr' }, `. ${said} 계약을 엽니다.`))
       }))
     },
   }
@@ -196,7 +196,7 @@ export function contractRows(ctx: Ctx): { key(): unknown; part(c: S.Campaign): C
 // The contracts as a block of their own, for a sheet that lists them (the spring plan).
 export function tracker(ctx: Ctx): { el: HTMLElement; update(): void } {
   const rows = contractRows(ctx)
-  const el = h('section', { class: 'tracker sys', 'aria-label': 'Signed contracts', hidden: true })
+  const el = h('section', { class: 'tracker sys', 'aria-label': '체결된 계약', hidden: true })
   return {
     el,
     update() {
