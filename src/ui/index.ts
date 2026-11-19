@@ -319,7 +319,7 @@ export const mountHud: MountHud = (root, app, view, sound) => {
         const asks = app.pauseCause === 'plantAsk' || app.pauseCause === 'killCall'
         const sayPause = (why: string) => {
           if (app.speed !== 0 || app.pauseReason !== why || app.screen !== 'season' || !app.campaign || S.seasonDone(app.campaign) || papers.isOpen() || notes.has(why)) return
-          pauseSaid = `Paused: ${why}`
+          pauseSaid = `멈춤: ${why}`
           notes.push({ text: pauseSaid, level: 'info', glyph: app.pauseCause === 'plantAsk' ? 'plant' : app.pauseCause === 'killCall' ? 'kill' : undefined, ttl: asks ? 0 : 9000 })
         }
         if (e.speed === 0 && app.holding) ctx.announce(app.pauseReason)
