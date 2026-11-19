@@ -39,15 +39,15 @@ export function guidedYear(c: S.Campaign | null): boolean { return guide.on && !
 // The agent's one line inside a card the first time its kind comes (a telegram, a weigh ticket): the card is the one
 // voice, so the guide speaks in it.
 const LINES: Record<string, string> = {
-  telegram: 'Paused until you pick a reply.',
-  ticket: 'This is your first weigh ticket. It shows what the field grew and what was lost. Sell now is the safe choice.',
+  telegram: '답을 고를 때까지 멈춰 있습니다.',
+  ticket: '첫 계근 전표입니다. 밭에서 난 것과 잃은 것을 보여줍니다. 지금 팔기가 무난한 선택입니다.',
 }
 export function agentLine(kind: 'telegram' | 'ticket', key: string | number): HTMLElement | null {
   if (!guide.on) return null
   const seen = guide.p.facts.find(f => f.startsWith(`line:${kind}:`))
   if (seen && seen !== `line:${kind}:${key}`) return null
   guide.note(`line:${kind}:${key}`)
-  return h('p', { class: 'guide-line', testid: 'guide-line' }, h('span', { class: 't-label' }, 'The county agent'), ' ', LINES[kind])
+  return h('p', { class: 'guide-line', testid: 'guide-line' }, h('span', { class: 't-label' }, '군 농업 상담원'), ' ', LINES[kind])
 }
 
 // One voice: while the agent has a note to give on this screen (up, or waiting its turn), the goal slip and the
@@ -79,8 +79,8 @@ const by = (i: Input, mouse: string, touch: string, keys: string) => i === 'touc
 
 export function openGuide(ctx: Ctx): void {
   ctx.papers.open({
-    title: 'Guided first year',
-    kicker: 'From the county agent',
+    title: '배우며 하는 첫해',
+    kicker: '군 농업 상담원이 보냄',
     testid: 'guide',
     size: 'medium',
     body: close => {
@@ -91,26 +91,26 @@ export function openGuide(ctx: Ctx): void {
             type: 'checkbox', checked: guide.on, testid: 'guide-on',
             onchange: (e: Event) => { if ((e.target as HTMLInputElement).checked) guide.resume(); else guide.stop(); draw(); ctx.dirty() },
           }), h('i', { class: `tick${guide.on ? ' on' : ''}` })),
-          h('span', null, h('b', null, 'Show the tutorial'), ' ', h('span', { class: 'quiet' }, 'a tip the first time each thing comes up'))),
+          h('span', null, h('b', null, '레슨 보여주기'), ' ', h('span', { class: 'quiet' }, '각 상황이 처음 나올 때 알려주기'))),
         ...PARTS.map(part => h('section', { class: 'guide-part' },
           h('h3', { class: 't-label' }, PART_NAME[part]),
           h('ul', null, LESSONS.filter(x => x.part === part).map(x => {
             const state = guide.p.passed[x.id]
             return h('li', { class: 'lead' },
               h('i', { class: `tick bare${state === 'done' ? ' on' : ''}`, 'aria-hidden': 'true' }),
-              h('span', { class: state ? 'pencil' : null }, x.name, h('span', { class: 'sr' }, state === 'done' ? ', done' : state === 'skip' ? ', skipped' : guide.replaying(x.id) ? ', coming up again' : ', not seen yet')),
+              h('span', { class: state ? 'pencil' : null }, x.name, h('span', { class: 'sr' }, state === 'done' ? ', 완료' : state === 'skip' ? ', 건너뜀' : guide.replaying(x.id) ? ', 다시 나올 예정' : ', 아직 안 봄')),
               h('span', { class: 'dots' }),
               h('button', {
-                class: 'btn quiet', type: 'button', testid: `guide-again-${x.id}`, 'aria-label': `Replay the lesson ${x.name}`,
-                onclick: () => { guide.replay(x.id); close(); ctx.say(`You'll see "${x.name}" again the next time it comes up.`); ctx.dirty() },
-              }, guide.replaying(x.id) ? 'Coming up' : 'Replay'))
+                class: 'btn quiet', type: 'button', testid: `guide-again-${x.id}`, 'aria-label': `레슨 다시 보기: ${x.name}`,
+                onclick: () => { guide.replay(x.id); close(); ctx.say(`"${x.name}"을(를) 다음에 나올 때 다시 보여줍니다.`); ctx.dirty() },
+              }, guide.replaying(x.id) ? '나올 예정' : '다시 보기'))
           })))))
       draw()
-      return [h('p', { class: 'dlg-lead' }, 'The tutorial explains one thing at a time, the first time it comes up. You can replay any lesson here.'), box]
+      return [h('p', { class: 'dlg-lead' }, '레슨은 한 번에 하나씩, 처음 나올 때 설명합니다. 여기서 어떤 레슨이든 다시 볼 수 있습니다.'), box]
     },
     foot: shut => [
-      h('button', { class: 'btn', type: 'button', testid: 'guide-restart', onclick: () => { guide.restart(); shut(); ctx.say('The tutorial will start again from the beginning.'); ctx.dirty() } }, 'Restart the tutorial'),
-      h('button', { class: 'btn go', type: 'button', testid: 'guide-close', autofocus: true, onclick: shut }, 'Back', icon('arrow', 'i')),
+      h('button', { class: 'btn', type: 'button', testid: 'guide-restart', onclick: () => { guide.restart(); shut(); ctx.say('레슨이 처음부터 다시 시작됩니다.'); ctx.dirty() } }, '레슨 처음부터 다시'),
+      h('button', { class: 'btn go', type: 'button', testid: 'guide-close', autofocus: true, onclick: shut }, '돌아가기', icon('arrow', 'i')),
     ],
   })
 }
@@ -287,19 +287,19 @@ function slipBody(ctx: Ctx, x: Lesson, l: Look, lost = false, under = false, sho
   return [
     h('p', { class: 'guide-ask', id: 'guide-ask' }, x.ask(l)),
     h('p', { class: 'guide-why t-caption' }, x.why(l)),
-    lost ? h('p', { class: 'guide-lost t-caption', testid: 'guide-lost' }, icon('field', 'i'), by(l.input, 'It\'s off screen. Press Home or double-click open ground to see the farm again.', 'It\'s off screen. Double-tap open ground to see the farm again.', 'It\'s off screen. Press Home to see the farm again.')) : null,
-    show >= 0 && !lost ? h('p', { class: 'guide-lost t-caption', testid: 'guide-hidden' }, icon('field', 'i'), 'Something is covering it. ',
-      h('button', { class: 'btn quiet', type: 'button', testid: 'guide-show', onclick: () => ctx.app.focus(show) }, 'Show me')) : null,
-    show >= 0 && lost ? h('p', { class: 'guide-lost t-caption' }, h('button', { class: 'btn quiet', type: 'button', testid: 'guide-show', onclick: () => ctx.app.focus(show) }, 'Show me')) : null,
-    under ? h('p', { class: 'guide-lost t-caption', testid: 'guide-under' }, icon('close', 'i'), by(l.input, 'A card is in the way. Click its X to close it.', 'A card is in the way. Tap its X to close it.', 'A card is in the way. Use its X to close it.')) : null,
+    lost ? h('p', { class: 'guide-lost t-caption', testid: 'guide-lost' }, icon('field', 'i'), by(l.input, '화면 밖에 있습니다. Home을 누르거나 빈 땅을 더블클릭하면 농장이 다시 보입니다.', '화면 밖에 있습니다. 빈 땅을 두 번 두드리면 농장이 다시 보입니다.', '화면 밖에 있습니다. Home을 누르면 농장이 다시 보입니다.')) : null,
+    show >= 0 && !lost ? h('p', { class: 'guide-lost t-caption', testid: 'guide-hidden' }, icon('field', 'i'), '무엇인가 가리고 있습니다. ',
+      h('button', { class: 'btn quiet', type: 'button', testid: 'guide-show', onclick: () => ctx.app.focus(show) }, '보기')) : null,
+    show >= 0 && lost ? h('p', { class: 'guide-lost t-caption' }, h('button', { class: 'btn quiet', type: 'button', testid: 'guide-show', onclick: () => ctx.app.focus(show) }, '보기')) : null,
+    under ? h('p', { class: 'guide-lost t-caption', testid: 'guide-under' }, icon('close', 'i'), by(l.input, '카드가 가리고 있습니다. X를 눌러 닫으세요.', '카드가 가리고 있습니다. X를 두드려 닫으세요.', '카드가 가리고 있습니다. X로 닫으세요.')) : null,
     // A tip asks for nothing but what it points at: its own key where it has one (the order it is about), and two
     // quiet ones, to put it away now and to have no more tips. None of them has to be pressed.
     h('footer', { class: 'guide-foot' },
       act ? h('button', { class: 'btn guide-ok', type: 'button', testid: 'guide-act', onclick: () => { let said = ''; for (const cmd of act.cmds) { const r = ctx.run(cmd); said = (r.ok ? r.events[0]?.text : r.err) ?? said } const text = act.done ?? said; if (text) ctx.say(F.localize(text), 'good'); done() } }, icon('check', 'i'), act.label) : null,
-      go && show < 0 ? h('button', { class: 'btn quiet', type: 'button', testid: 'guide-show', onclick: () => lead(go) }, 'Show me') : null,
-      x.read || again ? h('button', { class: 'btn quiet', type: 'button', testid: 'guide-noted', onclick: done }, 'Got it')
-        : h('button', { class: 'btn quiet', type: 'button', testid: 'guide-pass', onclick: () => { guide.skip(x.id); poke(); ctx.dirty() } }, 'Skip'),
-      h('button', { class: 'btn quiet', type: 'button', testid: 'guide-stop', onclick: () => { guide.stop(); poke(); ctx.say('Tips are off. You can turn them back on from the menu.'); ctx.dirty() } }, 'No more tips')),
+      go && show < 0 ? h('button', { class: 'btn quiet', type: 'button', testid: 'guide-show', onclick: () => lead(go) }, '보기') : null,
+      x.read || again ? h('button', { class: 'btn quiet', type: 'button', testid: 'guide-noted', onclick: done }, '알았습니다')
+        : h('button', { class: 'btn quiet', type: 'button', testid: 'guide-pass', onclick: () => { guide.skip(x.id); poke(); ctx.dirty() } }, '건너뛰기'),
+      h('button', { class: 'btn quiet', type: 'button', testid: 'guide-stop', onclick: () => { guide.stop(); poke(); ctx.say('알림 레슨이 꺼졌습니다. 메뉴에서 다시 켤 수 있습니다.'); ctx.dirty() } }, '레슨 그만')),
   ]
 }
 
@@ -331,26 +331,26 @@ function offerCard(ctx: Ctx): HTMLElement {
     class: `reply${usual ? ' first usual' : ''}`, type: 'button', testid: id, 'aria-keyshortcuts': keys ? String(n) : null, onclick: () => { go(); poke(); ctx.dirty() },
   }, key(String(n)), h('b', { class: 'c-title' }, title, usual ? fist() : null), h('span', { class: 'c-does' }, does))
   return h('section', { class: 'guide-card offer telegram sheet sys', testid: 'guide-offer', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'guide-offer-h' },
-    h('header', { class: 'gc-head' }, h('p', { class: 't-label' }, 'From the county agent'), h('h2', { class: 't-title', id: 'guide-offer-h' }, 'First time on the farm?')),
-    h('p', { class: 'gc-lead' }, 'I can start your first season on a usual plan and point things out as they come up. Tips never stop the game, and you never have to click one.'),
-    h('div', { class: 'replies', role: 'group', 'aria-label': 'Your answer' },
-      reply(1, 'guide-accept', 'Play with tips', 'The usual choice. Your first season starts right away.', true, () => { guide.accept(); straightIn(ctx) }),
-      reply(2, 'guide-refuse', 'Play without tips', 'You can turn them on later from the menu.', false, () => { guide.refuse(); straightIn(ctx) })))
+    h('header', { class: 'gc-head' }, h('p', { class: 't-label' }, '군 농업 상담원이 보냄'), h('h2', { class: 't-title', id: 'guide-offer-h' }, '농장은 처음이신가요?')),
+    h('p', { class: 'gc-lead' }, '첫 시즌을 보통 계획으로 시작하고, 나오는 것마다 알려드릴 수 있습니다. 레슨은 게임을 멈추지 않고, 누르지 않아도 됩니다.'),
+    h('div', { class: 'replies', role: 'group', 'aria-label': '당신의 답' },
+      reply(1, 'guide-accept', '레슨과 함께 하기', '보통의 선택. 첫 시즌이 바로 시작됩니다.', true, () => { guide.accept(); straightIn(ctx) }),
+      reply(2, 'guide-refuse', '레슨 없이 하기', '나중에 메뉴에서 켤 수 있습니다.', false, () => { guide.refuse(); straightIn(ctx) })))
 }
 
 // What a year is, drawn: the five things the year asks, in order, and what it costs at the end.
-const YEAR: [string, string, string][] = [['plant', 'Plant', 'May'], ['hill', 'Tend', 'summer'], ['kill', 'Kill the vines', 'September'], ['dig', 'Harvest', 'fall'], ['ticket', 'Sell or store', 'fall and winter']]
+const YEAR: [string, string, string][] = [['plant', '심기', '5월'], ['hill', '돌보기', '여름'], ['kill', '줄기 죽이기', '9월'], ['dig', '수확', '가을'], ['ticket', '팔기 또는 저장', '가을과 겨울']]
 function frameCard(ctx: Ctx, x: Lesson, l: Look): HTMLElement {
   const bills = F.money(S.NOTE_PAYMENT + S.LIVING)
   return h('section', { class: 'guide-card frame telegram sheet sys', testid: 'guide-slip', 'data-lesson': x.id, role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'guide-ask' },
-    h('header', { class: 'gc-head' }, h('p', { class: 't-label' }, 'From the county agent'), h('h2', { class: 't-title', id: 'guide-ask' }, 'Keep the farm five years')),
-    h('ol', { class: 'gc-year', 'aria-label': 'The steps of each year, in order' },
+    h('header', { class: 'gc-head' }, h('p', { class: 't-label' }, '군 농업 상담원이 보냄'), h('h2', { class: 't-title', id: 'guide-ask' }, '농장을 5년 지키기')),
+    h('ol', { class: 'gc-year', 'aria-label': '매해 순서대로 거치는 일' },
       YEAR.map(([glyph, name, when]) => h('li', null, icon(glyph, 'i'), h('b', null, name), h('span', { class: 't-label' }, when)))),
-    h('p', { class: 'gc-lead' }, `At the end of each year you owe ${bills} to the bank and your family, so your crop needs to earn at least that.`),
+    h('p', { class: 'gc-lead' }, `매해 말 은행과 가족에게 ${bills}을(를) 내야 하니, 수확물이 적어도 그만큼은 벌어야 합니다.`),
     h('p', { class: 'gc-deal' }, x.why(l)),
     h('footer', { class: 'guide-foot' },
-      h('button', { class: 'btn go guide-ok', type: 'button', testid: 'guide-noted', onclick: () => { guide.noted(x.id); poke(); ctx.dirty() } }, 'Begin', icon('arrow', 'i')),
-      h('button', { class: 'btn quiet', type: 'button', testid: 'guide-stop', onclick: () => { guide.stop(); poke(); ctx.dirty() } }, 'Turn off the tutorial')))
+      h('button', { class: 'btn go guide-ok', type: 'button', testid: 'guide-noted', onclick: () => { guide.noted(x.id); poke(); ctx.dirty() } }, '시작', icon('arrow', 'i')),
+      h('button', { class: 'btn quiet', type: 'button', testid: 'guide-stop', onclick: () => { guide.stop(); poke(); ctx.dirty() } }, '레슨 끄기')))
 }
 
 // ---------------------------------------------------------------- the camera, read from the scene's anchors
