@@ -210,7 +210,7 @@ export class Papers {
       h('div', null,
         spec.kicker && !spec.bare && !plain ? h('p', { class: 't-label' }, spec.kicker) : null,
         h('h2', { id: `${id}-t`, class: spec.bare || plain ? 'sr' : 't-title' }, spec.title)),
-      plain ? null : h('button', { class: 'close', type: 'button', 'aria-label': spec.closeLabel ?? 'Close', testid: 'paper-close', onclick: close }, icon('close', 'i'))),
+      plain ? null : h('button', { class: 'close', type: 'button', 'aria-label': spec.closeLabel ?? '닫기', testid: 'paper-close', onclick: close }, icon('close', 'i'))),
     h('div', { class: 'dlg-body', 'data-scroll': 'paper' }, spec.body(close)),
     spec.foot ? h('div', { class: 'dlg-foot' }, spec.foot(close)) : null)
     const entry: Open = { el, back, spec, at: performance.now() }

@@ -108,7 +108,7 @@ export function whois(ctx: Ctx, layer: HTMLElement): Whois {
         h('div', null,
           h('h2', { class: 't-head', id: 'whois-name', testid: 'whois-name' }, name),
           h('p', { class: 't-caption' }, farmer ? '농장주 · 모든 일, 품값 없음' : `${KIND_NAME[p.kind]}${p.traitName ? ` · ${p.traitName}` : ''}`)),
-        h('button', { class: 'close', type: 'button', testid: 'whois-close', 'aria-label': `Close${keys ? ' (Escape)' : ''}`, onclick: () => app.selectUnit(-1) }, icon('close', 'i'))),
+        h('button', { class: 'close', type: 'button', testid: 'whois-close', 'aria-label': `닫기${keys ? ' (Escape)' : ''}`, onclick: () => app.selectUnit(-1) }, icon('close', 'i'))),
       h('div', { class: 'card-body', 'data-scroll': 'whois' },
       h('p', { class: 'whois-now', testid: 'whois-now' }, icon(now ? now.glyph : c.phase === 'cellar' ? 'winter' : 'idle', 'i'),
         h('span', null, h('b', null, now ? now.word : c.phase === 'cellar' ? '이번 겨울' : '봄'), ' ', h('span', { class: busy ? '' : 'quiet' }, detail))),
@@ -124,7 +124,7 @@ export function whois(ctx: Ctx, layer: HTMLElement): Whois {
         h('div', null, h('dt', null, '가장 잘함'), h('dd', null, `${SKILL_NAME[best]}, 10 중 ${p.skills[best]}`)),
         h('div', null, h('dt', null, '품값'), h('dd', { class: 'num' }, farmer ? '없음. 가족의 생활비는 연말에 나갑니다.' : `월 ${F.money(p.pay)}${p.foreman ? ', 작업반장' : ''}`))),
       // The work they take first: one press puts a kind of work first for them.
-      c.phase === 'cellar' ? h('div', { class: 'whois-first', role: 'group', 'aria-label': `${name} this winter` },
+      c.phase === 'cellar' ? h('div', { class: 'whois-first', role: 'group', 'aria-label': `${name}의 이번 겨울` },
         h('span', { class: 't-label' }, '이번 겨울'),
         S.winterInfo(c).people.find(x => x.id === p.id)?.choices.map(ch => h('button', {
           class: `btn${p.winter === ch.work ? ' is-on' : ''}`, type: 'button', testid: `whois-winter-${ch.work}`, 'aria-pressed': String(p.winter === ch.work), disabled: !ch.ok && p.winter !== ch.work, title: ch.why || undefined,
@@ -185,7 +185,7 @@ export function whois(ctx: Ctx, layer: HTMLElement): Whois {
         h('header', { class: 'whois-head' },
           h('span', { class: 'thing-ic' }, icon(w.glyph, 'i')),
           h('div', null, h('h2', { class: 't-head', id: 'thing-name', testid: 'thing-name' }, w.name), h('p', { class: 't-caption' }, w.line)),
-          h('button', { class: 'close', type: 'button', testid: 'thing-close', 'aria-label': `Close${ctx.touch() ? '' : ' (Escape)'}`, onclick: () => app.inspect(null) }, icon('close', 'i'))),
+          h('button', { class: 'close', type: 'button', testid: 'thing-close', 'aria-label': `닫기${ctx.touch() ? '' : ' (Escape)'}`, onclick: () => app.inspect(null) }, icon('close', 'i'))),
         t.thing.kind === 'asking' && c.phase === 'plan' ? h('div', { class: 'whois-acts' }, h('button', { class: 'btn', type: 'button', testid: 'thing-hire', onclick: () => { app.inspect(null); openCrew(ctx) } }, icon('hire', 'i'), '고용하기')) : null,
         t.thing.holder >= 0 ? h('div', { class: 'whois-acts' }, h('button', { class: 'btn', type: 'button', testid: 'thing-holder', onclick: () => app.selectUnit(t.thing.holder, 'land') }, icon('people', 'i'), '누가 쓰는지 보기')) : null,
       ])

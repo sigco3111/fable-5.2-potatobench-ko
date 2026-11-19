@@ -49,8 +49,8 @@ function engraving(): HTMLElement {
 
 export function titleScreen(ctx: Ctx, o: { onMenu: () => void; onHelp: () => void }): Screen {
   const app = ctx.app
-  const menu = h('nav', { class: 'cv-menu', 'aria-label': 'The County' })
-  const cover = h('section', { class: 'cover sheet sys', 'aria-label': 'The County' },
+  const menu = h('nav', { class: 'cv-menu', 'aria-label': '더 카운티' })
+  const cover = h('section', { class: 'cover sheet sys', 'aria-label': '더 카운티' },
     h('p', { class: 'cv-top', 'aria-hidden': 'true' }, h('span', null, '감자 농사'), h('i', { class: 'orn' }), h('span', null, '메인 북부')),
     h('h1', { class: 'cv-name title-name' }, h('span', { class: 'the' }, 'The'), h('span', { class: 'county' }, 'County')),
     h('hr', { class: 'rule oxford' }),

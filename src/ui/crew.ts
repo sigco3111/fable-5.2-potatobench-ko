@@ -252,7 +252,7 @@ export function unitBar(ctx: Ctx, el: HTMLElement, hooks: BarHooks): { update(c:
         const mark = (n: string) => wide ? (n === S.FARMER_NAME ? '당신' : firstName(n)) : initial(n)
         const letter = tagged && !wide ? ` 테두리 있는 ${initial(tagged.name)}은(는) ${tagged.name === S.FARMER_NAME ? '당신을 나타냅니다' : `${firstName(tagged.name)}의 첫 글자입니다`}.` : ''
         const said = `${what}: ${whose}. ${fateSaid || `${F.upper(whoSaid)}.`}${letter}`
-        const choices = many && able.length > 1 ? h('div', { class: 'q-who', role: 'group', 'aria-label': `${what}: choose who does it` },
+        const choices = many && able.length > 1 ? h('div', { class: 'q-who', role: 'group', 'aria-label': `${what}: 할 사람 고르기` },
           [{ id: -1, name: '아무나' }, ...able.map(u => ({ id: u.id, name: firstName(u.name) }))].map(x => h('button', {
             class: 'btn', type: 'button', testid: `assign-${j.id}-${x.id}`, 'aria-pressed': String(j.unit === x.id),
             onclick: () => assign(j.id, x.id, what, x.name),
@@ -397,7 +397,7 @@ export function openCrew(ctx: Ctx): void {
   const app = ctx.app
   if (!app.campaign) return
   ctx.papers.open({
-    title: 'Hiring',
+    title: '고용',
     testid: 'crew',
     size: 'medium',
     body: () => {

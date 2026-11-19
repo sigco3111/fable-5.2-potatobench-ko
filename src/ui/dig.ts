@@ -779,7 +779,7 @@ let stampSeq = 0
 function weighedStamp(date: string, year: string): SVGElement {
   const id = `wr${++stampSeq}`
   const ring = (r: number, w: number) => s('circle', { cx: 80, cy: 80, r, fill: 'none', stroke: 'currentColor', 'stroke-width': w })
-  return s('svg', { class: 'weighed', viewBox: '0 0 160 160', role: 'img', 'aria-label': `Stamped: weighed, ${date}, ${year}` },
+  return s('svg', { class: 'weighed', viewBox: '0 0 160 160', role: 'img', 'aria-label': `도장: 계근, ${date}, ${year}` },
     s('defs', null, s('path', { id: `${id}-t`, d: 'M26 80a54 54 0 0 1 108 0' }), s('path', { id: `${id}-b`, d: 'M30 80a50 50 0 0 0 100 0' })),
     ring(74, 4), ring(67, 1.6), ring(40, 1.6),
     s('text', { 'font-family': 'Gothic', 'font-size': 16, 'letter-spacing': 2.5, fill: 'currentColor' }, s('textPath', { href: `#${id}-t`, startOffset: '50%', 'text-anchor': 'middle' }, 'HOME POTATO HOUSE')),
