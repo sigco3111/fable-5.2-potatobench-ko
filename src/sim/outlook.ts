@@ -51,22 +51,22 @@ function outlookOf(world: World, c: Campaign, s: NonNullable<Campaign['season']>
   const working = workday(c, s) || copy.season!.frostHaul === s.day
   return s.jobs.map((j, place) => {
     const w = worked.find(x => x.kind === j.kind && x.field === j.field && !x.help)
-    if (w) return { id: j.id, unit: w.unit, when: 'now', why: says(c, w.unit, 'is working on it.', 'You\'re working on it.') }
-    if (dropped.has(j.id)) return { id: j.id, unit: -1, when: 'waiting', why: `It comes off the work list in the morning. ${dropped.get(j.id)}`, leaves: true }
+    if (w) return { id: j.id, unit: w.unit, when: 'now', why: says(c, w.unit, '작업 중입니다.', '') }
+    if (dropped.has(j.id)) return { id: j.id, unit: -1, when: 'waiting', why: `아침에 작업 목록에서 내려갑니다. ${dropped.get(j.id)}`, leaves: true }
     const who = takers(c, j)
     if (!who.length) return { id: j.id, unit: -1, when: 'waiting', why: nobody(c, j) }
-    if (!working) return { id: j.id, unit: who[0], when: 'next', why: 'It\'s Sunday, so nobody works today.' }
+    if (!working) return { id: j.id, unit: who[0], when: 'next', why: '일요일이라 아무도 일하지 않습니다.' }
     // Felling left for a day by everyone who would be at it: they are resting so the crop finds them fresh.
     if (who.every(id => { const u = c.crew.find(x => x.id === id); return !!u && sparing(u, j) })) {
-      return { id: j.id, unit: who[0], when: 'next', why: `${says(c, who[0], 'is', 'You\'re')} resting today to stay fresh for the crop, and will go back to it tomorrow or the day after.` }
+      return { id: j.id, unit: who[0], when: 'next', why: says(c, who[0], '작물에 지치지 않으려고 오늘 쉬고, 내일이나 모레 다시 나갑니다.', '') }
     }
     const weather = waitFor(c, s, j, d)
     if (weather) {
-      const [held, until] = WAITING[weather] ?? [`Waiting: ${weather} today.`, 'the weather allows']
-      return { id: j.id, unit: who[0], when: 'waiting', why: `${held} ${says(c, who[0], 'will do it', 'You\'ll do it')} once ${until}.` }
+      const [held, until] = WAITING[weather] ?? [`오늘은 ${weather} 때문에 기다립니다.`, '날씨가 허락하면']
+      return { id: j.id, unit: who[0], when: 'waiting', why: `${held} ${says(c, who[0], `${until} 시작합니다.`, '')}` }
     }
     if (jobSkill(j.kind) === 'machine' && tractorsRunning(c, s.day) === 0 && !(j.kind === 'haul' && c.upgrades.truck)) {
-      return { id: j.id, unit: who[0], when: 'waiting', why: 'Waiting for a tractor, because every tractor is broken down.' }
+      return { id: j.id, unit: who[0], when: 'waiting', why: '트랙터를 기다립니다. 모든 트랙터가 고장 났습니다.' }
     }
     // Held by work they are in the middle of: that work by name, how long it has to go, and for work that cannot wait
     // with only one person to do it, what would get it done sooner.
@@ -75,41 +75,41 @@ function outlookOf(world: World, c: Campaign, s: NonNullable<Campaign['season']>
     if (cur) {
       const days = Math.ceil(Math.max(0, cur.need - cur.done) - 1e-6)
       const alone = takers(c, { ...j, unit: -1 }).length === 1 && !!pressingWhy(c, s, j)
-      const sooner = alone && days >= 2 ? ` Nobody else on the farm does ${SKILL_LABEL[jobSkill(j.kind)]}, so a second person would get to it sooner.` : ''
-      const after = `${u.kind === 'farmer' ? 'you\'ve' : 'they\'ve'} finished ${FINISHING[cur.kind]} ${placeName(cur.field)}`
-      return { id: j.id, unit: who[0], when: 'next', why: `${says(c, who[0], 'will', 'You\'ll')} get to this${days >= 2 ? ` in about ${days} days,` : ''} once ${after}.${sooner}` }
+      const sooner = alone && days >= 2 ? ` 농장에 ${SKILL_LABEL[jobSkill(j.kind)]}을(를) 할 사람이 없어, 사람이 한 명 더 있으면 더 빨리 시작합니다.` : ''
+      const after = `${placeName(cur.field)} ${FINISHING[cur.kind]}을(를) 끝내고`
+      return { id: j.id, unit: who[0], when: 'next', why: `${says(c, who[0], `${after} 이 일에 들어갑니다${days >= 2 ? `(약 ${days}일 후)` : ''}.`, '')}${sooner}` }
     }
     const ahead = place
-    return { id: j.id, unit: who[0], when: 'next', why: `${says(c, who[0], 'will do it', 'You\'ll do it')} ${ahead ? `after the ${ahead === 1 ? 'order' : `${ahead} orders`} ahead of it` : 'next'}.` }
+    return { id: j.id, unit: who[0], when: 'next', why: says(c, who[0], ahead ? `앞선 지시 ${ahead}건이 끝나면 합니다.` : '다음으로 합니다.', '') }
   })
 }
 
 // A person and what is said of them: "Ada will do it", or the farmer's own wording ("You'll do it").
 function says(c: Campaign, id: number, one: string, you: string): string {
   const u = c.crew.find(x => x.id === id)
-  return u ? subject(u, one, you) : `Someone ${one}`
+  return u ? subject(u, one, you) : `누군가 ${one}`
 }
 
 // What holds an order up today, and what it waits for, by the word waitFor gives.
 const WAITING: Record<string, [string, string]> = {
-  raining: ['Waiting because it\'s raining today.', 'the rain stops'],
-  'ground too wet': ['Waiting because the ground is too wet today.', 'the ground dries out'],
-  'heavy rain': ['Waiting because it\'s raining hard today.', 'the rain eases'],
-  'too windy': ['Waiting because it\'s too windy today.', 'the wind drops'],
-  'the soil is too cold': ['Waiting because the soil is too cold.', 'the soil warms up'],
-  'waiting for the digger': ['Waiting for the digger to lift more of the crop.', 'there\'s more in barrels'],
+  raining: ['오늘은 비가 와서 기다립니다.', '비가 그치면'],
+  'ground too wet': ['오늘은 땅이 너무 젖어 기다립니다.', '땅이 마르면'],
+  'heavy rain': ['오늘은 비가 너무 많이 와서 기다립니다.', '비가 약해지면'],
+  'too windy': ['오늘은 바람이 너무 불어 기다립니다.', '바람이 잦아들면'],
+  'the soil is too cold': ['흙이 너무 차서 기다립니다.', '흙이 따뜻해지면'],
+  'waiting for the digger': ['수확기가 더 캐내기를 기다립니다.', '통이 더 나오면'],
 }
 
 // The work someone is in the middle of, before the place's name: "finished digging North Ridge".
 const FINISHING: Record<JobKind, string> = {
-  plant: 'planting', hill: 'hilling', scout: 'walking', spray: 'spraying', water: 'watering', rogue: 'pulling blighted plants in',
-  sample: 'the test dig in', kill: 'killing the vines in', dig: 'digging', fell: 'felling', rocks: 'picking rocks off',
-  brush: 'cutting brush along', build: 'building in', haul: 'hauling from',
+  plant: '파종', hill: '북주기', scout: '순찰', spray: '살포', water: '물 주기', rogue: '병든 포기 뽑기',
+  sample: '시험 캐기', kill: '줄기 죽이기', dig: '캐기', fell: '벌목', rocks: '돌 고르기',
+  brush: '관목 베기', build: '건축', haul: '운반',
 }
 
 // "you, and you're" or "Ada, who is", after "It was given to".
 function givenTo(u: Unit): string {
-  return u.kind === 'farmer' ? 'you, and you\'re' : `${u.name}, who is`
+  return u.name
 }
 
 // Who could do an order now, best first: those who may take it, are not hurt or resting, by their priority for it.
@@ -125,15 +125,15 @@ function nobody(c: Campaign, j: Job): string {
   const label = SKILL_LABEL[jobSkill(j.kind)]
   if (j.unit >= 0) {
     const u = c.crew.find(x => x.id === j.unit)
-    if (!u) return 'Nobody will do it, because the person it was given to has left.'
-    if (hurt(u, day)) return `It was given to ${givenTo(u)} hurt.`
-    if (resting(u)) return `It was given to ${givenTo(u)} resting.`
-    return `It was given to ${givenTo(u)} set to never do ${label}.`
+    if (!u) return '맡은 사람이 떠나 아무도 하지 않습니다.'
+    if (hurt(u, day)) return `맡긴 ${givenTo(u)}이(가) 다쳤습니다.`
+    if (resting(u)) return `맡긴 ${givenTo(u)}이(가) 쉬는 중입니다.`
+    return `맡긴 ${givenTo(u)}이(가) ${label}을(를) 하지 않기로 되어 있습니다.`
   }
   const willing = c.crew.filter(u => !u.foreman && willDo(u, j.kind))
-  if (!willing.length) return `Nobody on the farm will do ${label}, so set someone's priority for it.`
-  if (willing.every(u => hurt(u, day))) return `Everyone who does ${label} is hurt.`
-  return `Everyone who does ${label} is resting or hurt.`
+  if (!willing.length) return `농장에 ${label}을(를) 할 사람이 없습니다. 우선순위를 정하세요.`
+  if (willing.every(u => hurt(u, day))) return `${label}을(를) 할 사람이 모두 다쳤습니다.`
+  return `${label}을(를) 할 사람이 모두 쉬는 중이거나 다쳤습니다.`
 }
 
 // ---------------------------------------------------------------- work the season cannot wait for
@@ -159,7 +159,7 @@ export function pressing(world: World, c: Campaign, outlook?: JobOutlook[]): Pre
   for (const j of s.jobs) {
     const why = pressingWhy(c, s, j)
     const o = fate.get(j.id)
-    if (!why || !o || o.leaves || o.when === 'now' || (o.when === 'next' && o.unit >= 0 && !/Sunday/.test(o.why))) continue
+    if (!why || !o || o.leaves || o.when === 'now' || (o.when === 'next' && o.unit >= 0 && !/일요일/.test(o.why))) continue
     if (o.unit >= 0) continue
     const skill = jobSkill(j.kind)
     const best = c.crew.filter(u => !u.foreman).sort((a, b) => b.skills[skill] - a.skills[skill])[0]
@@ -174,11 +174,11 @@ export function pressing(world: World, c: Campaign, outlook?: JobOutlook[]): Pre
     const queued = (k: JobKind) => s.jobs.some(j => j.kind === k && j.field === i)
     const want = (kind: JobKind, why: string, inWay: string) => out.push({ kind, field: i, job: -1, why, inWay, fix: { t: 'job', kind, field: i } })
     if (sprays.has(i) && !standingBy(c, 'spray', i)) {
-      want('spray', 'blight weather won\'t wait', f.lastSpray >= 0
-        ? `You last sprayed on ${formatDay(s.year, f.lastSpray)} and it's wearing off. Each order is a single spray, so order another.`
-        : 'Not sprayed yet this season. Your crew won\'t spray until you order it.')
+      want('spray', '역병 날씨가 기다려 주지 않기', f.lastSpray >= 0
+        ? `마지막 살포는 ${formatDay(s.year, f.lastSpray)}였고 약효가 떨어지고 있습니다. 지시 한 건은 살포 한 번이니 다시 지시하세요.`
+        : '이번 시즌 아직 살포하지 않았습니다. 지시하기 전까지 일꾼들은 살포하지 않습니다.')
     }
-    if (f.inField >= 0.5 && !f.weighed && s.frostHaul === s.day && !queued('haul')) want('haul', 'frost is coming for the crop in barrels', 'Your crew won\'t haul until you order it.')
+    if (f.inField >= 0.5 && !f.weighed && s.frostHaul === s.day && !queued('haul')) want('haul', '통 속 작물에 서리가 다가오기', '지시하기 전까지 일꾼들은 운반하지 않습니다.')
   }
   // After the rest: the date the crew kills by itself is days off.
   return [...out, ...killsAhead(world, c, all)]
@@ -194,8 +194,8 @@ export function killsAhead(world: World, c: Campaign, all = asks(world, c)): Pre
     if (!held(c, i)) continue
     const kill = killByItself(c, i, all)
     if (kill >= 0 && !s.jobs.some(j => j.kind === 'kill' && j.field === i)) {
-      kills.push({ kind: 'kill', field: i, job: -1, why: 'the vines are due to be killed', fix: { t: 'job', kind: 'kill', field: i },
-        inWay: `The crew kills the vines on ${formatDay(s.year, Math.max(kill, s.day))} unless you keep them up, so the skins set before harvest.` })
+      kills.push({ kind: 'kill', field: i, job: -1, why: '줄기를 죽일 때가 됐기', fix: { t: 'job', kind: 'kill', field: i },
+        inWay: `계속 키우지 않으면 일꾼들이 ${formatDay(s.year, Math.max(kill, s.day))}에 줄기를 죽입니다. 수확 전에 껍질이 굳도록요.` })
     }
   }
   return kills
