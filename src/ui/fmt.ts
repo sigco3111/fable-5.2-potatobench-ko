@@ -82,7 +82,7 @@ export function storeRate(usdPerCwtMonth: number): string {
 export function hundredweight(): string { return metric() ? '톤(t)' : 'hundredweight(cwt)' }
 
 // What cwt means, said once on a screen that counts in it; nothing in metric.
-export function cwtNote(): string { return metric() ? '' : ' A cwt is a hundredweight (100 lb).' }
+export function cwtNote(): string { return metric() ? '' : ' 1 cwt는 헌드레드웨이트(100파운드)입니다.' }
 
 export function massValue(cwt: number): number { return metric() ? cwt * T_PER_CWT : cwt }
 
